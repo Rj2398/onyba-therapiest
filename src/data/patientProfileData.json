@@ -1,0 +1,105 @@
+{
+  "patientInfo": {
+    "name": "John Doe Rodriguez",
+    "avatar": "/images/patientes-profile.svg",
+    "age": 20,
+    "gender": "Male",
+    "patientId": "PT-1245",
+    "dinNo": "85486478",
+    "dob": "15 May 2011",
+    "phone": "+1 (555) 123-4567",
+    "email": "example@gmail.com",
+    "occupation": "Student",
+    "maritalStatus": "Single",
+    "insurance": "12/1234567890/12",
+    "company": "XYZ ltd.",
+    "nextSession": {
+      "date": "Apr 26, 2026",
+      "time": "10:30 AM - 11:20 AM"
+    },
+    "lastSession": "May 20, 2026",
+    "insuranceNo": "12/1234567890/12"
+  },
+  "sessionHistory": [
+    {
+      "id": "sh_1",
+      "historyNo": "25021",
+      "date": "May 20, 2026",
+      "time": "10:00 AM - 10:50 AM",
+      "mode": "Online",
+      "sessionType": "Adult",
+      "status": "In Progress",
+      "aiSummary": {
+        "status": "--"
+      },
+      "notesStatus": {
+        "status": "--",
+        "subtext": ""
+      }
+    },
+    {
+      "id": "sh_2",
+      "historyNo": "25021-002",
+      "date": "May 20, 2026",
+      "time": "10:00 AM - 10:50 AM",
+      "mode": "In-Person",
+      "sessionType": "Adult",
+      "status": "Completed",
+      "aiSummary": {
+        "status": "Generating"
+      },
+      "notesStatus": {
+        "status": "Pending",
+        "subtext": "Time Left 20h 58m 55s"
+      }
+    },
+    {
+      "id": "sh_3",
+      "historyNo": "25021-004",
+      "date": "May 20, 2026",
+      "time": "10:00 AM - 10:50 AM",
+      "mode": "Online",
+      "sessionType": "Couple",
+      "status": "Completed",
+      "aiSummary": {
+        "status": "Ready"
+      },
+      "notesStatus": {
+        "status": "Overdue",
+        "subtext": "Overdue by 6h 20m 15s"
+      }
+    },
+    {
+      "id": "sh_4",
+      "historyNo": "25021-005",
+      "date": "May 20, 2026",
+      "time": "10:00 AM - 10:50 AM",
+      "mode": "Online",
+      "sessionType": "Child",
+      "status": "Cancelled",
+      "aiSummary": {
+        "status": "--"
+      },
+      "notesStatus": {
+        "status": "--",
+        "subtext": ""
+      }
+    },
+    {
+      "id": "sh_5",
+      "historyNo": "25021-006",
+      "date": "May 20, 2026",
+      "time": "10:00 AM - 10:50 AM",
+      "mode": "Online",
+      "sessionType": "Family",
+      "status": "Completed",
+      "aiSummary": {
+        "status": "Ready"
+      },
+      "notesStatus": {
+        "status": "Ready",
+        "subtext": "May 21, 2026"
+      }
+    }
+  ]
+}

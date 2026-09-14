@@ -1,0 +1,1737 @@
+@import url('https://fonts.googleapis.com/css2?family=Red+Hat+Display:ital,wght@0,300..900;1,300..900&display=swap');
+
+/* img {
+  width: 100%;
+  height: 100%;
+  border: none;
+} */
+
+a {
+  text-decoration: none !important;
+  outline: none !important;
+}
+
+/* 
+img {
+  width: 100%;
+  height: 100%;
+  border: none;
+} */
+
+/* p:last-of-type,
+p:last-child {
+  margin-bottom: 0;
+} */
+* {
+  padding: 0;
+  margin: 0;
+}
+
+body {
+  font-family: "Red Hat Display", sans-serif;
+}
+
+/* ==========================================================================
+   Therapist Profile Scoped Layout CSS
+   ========================================================================== */
+
+.therapist-profile-container {
+  /* UI Kit Design Tokens */
+  --tp-primary-plum: #74505C;
+  --tp-primary-plum-hover: #563e49;
+  --tp-olive-green: linear-gradient(180deg, #93996d 0%, #52553e 100%);
+  --tp-olive-green-light: #f4f6f0;
+  --tp-bg-gray: #fafafa;
+  --tp-input-bg: #F4F5F07D;
+  --tp-border-color: #eaeaea;
+  --tp-text-dark: #3f3f3f;
+  --tp-text-muted: #9e9e9e;
+
+  /* Font Family Token */
+  --tp-font-family: "Red Hat Display", system-ui, -apple-system, sans-serif;
+
+  /* Radii Design System */
+  --tp-radius-lg: 30px;
+  --tp-radius-md: 20px;
+  --tp-radius-sm: 12px;
+
+  font-family: var(--tp-font-family);
+  background-color: var(--tp-bg-gray);
+  color: var(--tp-text-dark);
+  min-height: 100vh;
+}
+
+/* Enforce font family across form elements within the container */
+.therapist-profile-container input,
+.therapist-profile-container button,
+.therapist-profile-container textarea,
+.therapist-profile-container select,
+.therapist-profile-container span,
+.therapist-profile-container label {
+  font-family: var(--tp-font-family) !important;
+}
+
+/* Header Section */
+.therapist-profile-container .tp-header mb-5 {
+  margin-bottom: 3rem;
+}
+
+.therapist-profile-container .tp-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  color: #363636;
+  font-weight: 600;
+  font-size: 32px;
+  font-size: 1.5rem;
+  transition: opacity 0.2s;
+}
+
+/* .therapist-profile-container .tp-back-btn:hover {
+  opacity: 0.8;
+  color: var(--tp-text-dark);
+} */
+
+.therapist-profile-container .tp-subtitle {
+  color: #858484;
+  font-size: 0.875rem;
+  font-weight: 400;
+  font-size: 16px;
+  margin-left: 2.2rem;
+}
+
+/* Section Controls */
+
+.therapist-profile-container .tp-section-title {
+  font-size: 20px;
+  font-weight: 500;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  color: #363636;
+  gap: 10px;
+  border-bottom: 1px solid var(--tp-border-color);
+  padding-bottom: 12px;
+}
+
+.therapist-profile-container .tp-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--tp-text-muted);
+  margin-bottom: 8px;
+  display: block;
+}
+
+/* Input Fields and Interactive Elements */
+.therapist-profile-container .tp-input,
+.therapist-profile-container .tp-select-trigger,
+.therapist-profile-container .tp-multi-select-trigger {
+  width: 100%;
+  height: 48px;
+  background-color: var(--tp-input-bg);
+  border: 1px solid var(--tp-border-color);
+  border-radius: var(--tp-radius-lg);
+  padding: 0 20px;
+  font-size: 0.9rem;
+  color: var(--tp-text-dark);
+  outline: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: all 0.2s ease-in-out;
+  font-weight: 500;
+}
+
+.therapist-profile-container .tp-input:focus {
+  border-color: var(--tp-primary-plum);
+  background-color: #ffffff;
+}
+
+.therapist-profile-container .tp-textarea {
+  width: 100%;
+  background-color: var(--tp-input-bg);
+  border: 1px solid var(--tp-border-color);
+  border-radius: var(--tp-radius-md);
+  padding: 15px 20px;
+  font-size: 0.9rem;
+  outline: none;
+  resize: none;
+  font-weight: 500;
+  transition: all 0.2s ease-in-out;
+}
+
+.therapist-profile-container .tp-textarea:focus {
+  border-color: var(--tp-primary-plum);
+  background-color: #ffffff;
+}
+
+/* Profile Photo Uploader */
+.therapist-profile-container .tp-avatar-uploader {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.therapist-profile-container .avatar-preview {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background-color: var(--tp-olive-green-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed #cdd5c0;
+}
+
+/* Action Buttons */
+.therapist-profile-container .tp-btn-primary {
+  background-color: var(--tp-primary-plum);
+  color: #ffffff;
+  border: none;
+  border-radius: var(--tp-radius-lg);
+  padding: 12px 35px;
+  font-weight: 600;
+  transition: background-color 0.2s;
+  font-size: 0.95rem;
+}
+
+.therapist-profile-container .tp-btn-primary:hover {
+  background-color: var(--tp-primary-plum-hover);
+}
+
+.therapist-profile-container .tp-btn-secondary {
+  background-color: #ffffff;
+  border: 1px solid var(--tp-border-color);
+  border-radius: var(--tp-radius-lg);
+  padding: 6px 18px;
+  font-size: 0.85rem;
+  color: var(--tp-text-dark);
+  font-weight: 600;
+  transition: background-color 0.2s;
+}
+
+.therapist-profile-container .tp-btn-secondary:hover {
+  background-color: #f5f5f5;
+}
+
+.therapist-profile-container .tp-btn-action-enter {
+  background-color: var(--tp-primary-plum);
+  color: #ffffff;
+  border: none;
+  border-radius: var(--tp-radius-lg);
+  padding: 0 25px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: background-color 0.2s;
+}
+
+.therapist-profile-container .tp-btn-action-enter:hover {
+  background-color: var(--tp-primary-plum-hover);
+}
+
+/* Dynamic Configuration Custom Dropdowns */
+.therapist-profile-container .tp-custom-select-wrapper {
+  position: relative;
+}
+
+.therapist-profile-container .tp-select-trigger {
+  cursor: pointer;
+}
+
+.therapist-profile-container .tp-dropdown-menu {
+  position: absolute;
+  top: 105%;
+  left: 0;
+  right: 0;
+  background: #ffffff;
+  border-radius: var(--tp-radius-md);
+  border: 1px solid var(--tp-border-color);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+  z-index: 100;
+  display: none;
+  overflow: hidden;
+  padding: 10px 0;
+}
+
+.therapist-profile-container .tp-dropdown-menu.show {
+  display: block;
+}
+
+.therapist-profile-container .tp-dropdown-item {
+  padding: 10px 20px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  color: var(--tp-text-dark);
+  font-weight: 500;
+  transition: background-color 0.15s;
+}
+
+.therapist-profile-container .tp-dropdown-item:hover {
+  background-color: var(--tp-olive-green-light);
+}
+
+.therapist-profile-container .tp-dropdown-item.active {
+  background-color: var(--tp-olive-green-light);
+  color: var(--tp-olive-green);
+  font-weight: 600;
+}
+
+/* File Badge Subsystems */
+.therapist-profile-container .tp-file-uploader-box {
+  background: var(--tp-input-bg);
+  border: 1px solid var(--tp-border-color);
+  border-radius: var(--tp-radius-lg);
+  padding: 6px;
+  display: flex;
+  align-items: center;
+}
+
+.therapist-profile-container .tp-btn-file-select {
+  background: var(--tp-primary-plum);
+  color: #ffffff;
+  border: none;
+  border-radius: var(--tp-radius-lg);
+  padding: 6px 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: background-color 0.2s;
+}
+
+.therapist-profile-container .tp-btn-file-select:hover {
+  background-color: var(--tp-primary-plum-hover);
+}
+
+.therapist-profile-container .tp-file-badge {
+  background-color: #eaeaea;
+  border-radius: var(--tp-radius-sm);
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.therapist-profile-container .tp-file-badge .file-name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--tp-text-dark);
+}
+
+.therapist-profile-container .tp-file-badge .file-size {
+  font-size: 0.7rem;
+  color: var(--tp-text-muted);
+  font-weight: 500;
+}
+
+.therapist-profile-container .btn-close-file {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  color: var(--tp-text-dark);
+  line-height: 1;
+  padding: 0 4px;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.therapist-profile-container .btn-close-file:hover {
+  color: #ff4d4d;
+}
+
+/* Internal Category Panels & Custom Micro-Pills */
+.therapist-profile-container .tp-panel {
+  background-color: var(--tp-olive-green-light);
+  border-radius: var(--tp-radius-md);
+}
+
+.therapist-profile-container .tp-toggle-pill {
+  background-color: #ffffff;
+  color: var(--tp-text-dark);
+  border: 1px solid var(--tp-border-color);
+  border-radius: var(--tp-radius-lg);
+  padding: 8px 22px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.therapist-profile-container .tp-toggle-pill:hover {
+  opacity: 0.9;
+}
+
+.therapist-profile-container .tp-toggle-pill.active {
+  background: var(--tp-olive-green);
+  border-color: var(--tp-olive-green);
+  color: #ffffff;
+}
+
+.therapist-profile-container .tp-pill-outline {
+  background: #ffffff;
+  border: 1px solid var(--tp-border-color);
+  border-radius: var(--tp-radius-lg);
+  padding: 8px 22px;
+  font-size: 0.85rem;
+  color: var(--tp-text-dark);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.therapist-profile-container .tp-pill-outline:hover {
+  border-color: var(--tp-olive-green);
+  color: var(--tp-olive-green);
+}
+
+/* Multi-Select Tags System */
+.therapist-profile-container .tp-multi-select-trigger {
+  cursor: pointer;
+  min-height: 48px;
+  height: auto;
+  padding: 6px 20px;
+}
+
+.therapist-profile-container .tp-tag {
+  background: var(--tp-olive-green);
+  color: #ffffff;
+  padding: 4px 14px;
+  border-radius: var(--tp-radius-lg);
+  font-size: 0.8rem;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.therapist-profile-container .tag-close {
+  cursor: pointer;
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+/* Dropdown Extended Selection Dashboard Box */
+.therapist-profile-container .tp-dropdown-panel-box {
+  position: absolute;
+  top: 105%;
+  left: 0;
+  right: 0;
+  background: #ffffff;
+  border-radius: var(--tp-radius-md);
+  border: 1px solid var(--tp-border-color);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+  z-index: 110;
+  display: none;
+}
+
+.therapist-profile-container .tp-dropdown-panel-box.show {
+  display: block;
+}
+
+.therapist-profile-container .tp-search-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.therapist-profile-container .tp-search-field {
+  width: 100%;
+  height: 40px;
+  border: 1px solid var(--tp-border-color);
+  border-radius: var(--tp-radius-lg);
+  padding: 0 15px 0 38px;
+  font-size: 0.85rem;
+  outline: none;
+  font-weight: 500;
+}
+
+.therapist-profile-container .tp-search-field:focus {
+  border-color: var(--tp-olive-green);
+}
+
+.therapist-profile-container .search-icon {
+  position: absolute;
+  left: 14px;
+  color: var(--tp-text-muted);
+}
+
+.therapist-profile-container .panel-options-list {
+  max-height: 220px;
+  overflow-y: auto;
+  padding: 10px 0;
+}
+
+/* Custom Component Checkbox Realization */
+.therapist-profile-container .tp-checkbox-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 20px;
+  font-size: 0.88rem;
+  font-weight: 500;
+  cursor: pointer;
+  position: relative;
+  color: var(--tp-text-dark);
+}
+
+.therapist-profile-container .tp-checkbox-item:hover {
+  background-color: var(--tp-olive-green-light);
+}
+
+.therapist-profile-container .tp-checkbox-item input {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.therapist-profile-container .checkmark {
+  width: 18px;
+  height: 18px;
+  border: 2px solid #bcbcbc;
+  border-radius: 4px;
+  display: inline-block;
+  position: relative;
+  transition: all 0.15s;
+}
+
+.therapist-profile-container .tp-checkbox-item input:checked~.checkmark {
+  background-color: var(--tp-primary-plum);
+  border-color: var(--tp-primary-plum);
+}
+
+.therapist-profile-container .tp-checkbox-item input:checked~.checkmark:after {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 1px;
+  width: 5px;
+  height: 9px;
+  border: solid #ffffff;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+/* Action Control items inside Dropdowns */
+.therapist-profile-container .tp-panel-btn {
+  border-radius: var(--tp-radius-lg);
+  padding: 6px 22px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: 1px solid var(--tp-border-color);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.therapist-profile-container .btn-clear {
+  background: #ffffff;
+  color: var(--tp-text-dark);
+}
+
+.therapist-profile-container .btn-clear:hover {
+  background-color: #f5f5f5;
+}
+
+.therapist-profile-container .btn-apply {
+  background: var(--tp-primary-plum);
+  color: #ffffff;
+  border-color: var(--tp-primary-plum);
+}
+
+.therapist-profile-container .btn-apply:hover {
+  background-color: var(--tp-primary-plum-hover);
+}
+
+/* Utilities */
+.therapist-profile-container .tp-input-icon-wrapper {
+  position: relative;
+}
+
+.therapist-profile-container .tp-input-icon-wrapper .tp-input {
+  padding-left: 45px;
+}
+
+.therapist-profile-container .tp-input-icon-wrapper .icon-left {
+  position: absolute;
+  left: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--tp-text-muted);
+}
+
+.therapist-profile-container .arrow {
+  transition: transform 0.2s ease;
+}
+
+/* Rotate indicator arrow when dropdown is open */
+.therapist-profile-container .show~.arrow,
+.therapist-profile-container .tp-custom-select-wrapper:has(.show) .arrow {
+  transform: rotate(180deg);
+}
+
+
+
+/* Login Page Css */
+/* ==========================================================================
+   ONYBA LOGIN PAGE STYLES - START (No Grid, No Inline CSS, No Flex Shorthand)
+   ========================================================================== */
+
+/* Main Section Wrapper - Resetting and handling background/scroll without body or * */
+.onyba-login-section {
+  width: 100%;
+  height: 100vh;
+  background: radial-gradient(201.07% 201.07% at 50% 50%, #FFFFFF 0%, #93996D 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  /* Strict: Top aur Bottom se scroll hatane ke liye */
+  box-sizing: border-box;
+}
+
+/* Explicit resetting via class name to respect 'no universal selector' rule */
+/* .onyba-login-section,
+.onyba-login-wrapper,
+.onyba-login-left-banner,
+.onyba-login-right-content,
+.onyba-form-card,
+.onyba-header-logo,
+.onyba-login-form,
+.onyba-form-group,
+.onyba-icon-circle {
+  box-sizing: border-box;
+  margin-top: 0;
+  margin-bottom: 0;
+  margin-left: 0;
+  margin-right: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-left: 0;
+  padding-right: 0;
+} */
+
+/* Layout Wrapper */
+.onyba-login-wrapper {
+  display: flex;
+  flex-direction: row;
+  height: 100%;
+  width: 100%;
+  /* max-width: 1200px; */
+  padding-left: 40px;
+  padding-right: 40px;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 2;
+}
+
+/* Left Side Image Section (Brain Art) */
+.onyba-login-left-banner {
+  width: 50%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.onyba-brain-container {
+  width: 100%;
+  max-width: 500px;
+  position: relative;
+}
+
+.onyba-brain-img {
+  width: 100%;
+  height: auto;
+  display: block;
+  object-fit: contain;
+}
+
+/* Right Side Form Section */
+.onyba-login-right-content {
+  width: 50%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Form Card White Box */
+.onyba-form-card {
+  width: 100%;
+  max-width: 460px;
+  background-color: #FFFFFFA1;
+  border-radius: 40px;
+  padding-top: 50px;
+  padding-bottom: 50px;
+  padding-left: 40px;
+  padding-right: 40px;
+  box-shadow: 12px 11px 32.2px 0px #0000001C;
+  text-align: center;
+}
+
+.onyba-header-logo {
+
+  display: flex;
+}
+
+.onyba-header-logo img {
+  width: 265px;
+  height: 171px;
+  margin: auto;
+}
+
+/* Logo Styles */
+.onyba-header-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-size: 42px;
+  font-weight: 700;
+  /* margin-bottom: 35px; */
+}
+
+.onyba-logo-text.onyba-green {
+  color: #798a66;
+  /* Logo green shade */
+}
+
+.onyba-logo-icon {
+  color: #6d4c56;
+  /* Center icon/plum color */
+}
+
+/* Form Titles & Subtitles */
+.onyba-form-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: #363636;
+  margin-bottom: 8px;
+}
+
+.onyba-form-subtitle {
+  font-size: 16px;
+  font-weight: 400;
+  color: #858484;
+  margin-bottom: 35px;
+  line-height: 1.5;
+}
+
+/* Form Controls & Inputs */
+.onyba-login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.onyba-form-group {
+  width: 100%;
+}
+
+.onyba-input-field-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  width: 100%;
+}
+
+/* Green Circle Icon Container */
+.onyba-icon-circle {
+  width: 46px;
+  height: 46px;
+  background-color: #93996D;
+  color: #ffffff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-grow: 0;
+  flex-shrink: 0;
+}
+
+/* Input Box Style */
+.onyba-input-control {
+  width: 100%;
+  height: 48px;
+  padding-left: 20px;
+  padding-right: 20px;
+  font-size: 15px;
+  border: 1px solid #E4E4E4;
+  background-color: #fcfcfb;
+  border-radius: 25px;
+  outline: none;
+  color: #2d3129;
+  box-sizing: border-box;
+  margin-top: 0;
+  margin-bottom: 0;
+  margin-left: 0;
+  margin-right: 0;
+  transition: border-color 0.3s, background-color 0.3s;
+}
+
+.onyba-input-control::placeholder {
+  color: #74505C;
+}
+
+/* .onyba-input-control:focus {
+  border-color: #849175;
+  background-color: #ffffff;
+} */
+
+/* Action Button (Continue) */
+.onyba-submit-btn {
+  width: 100%;
+  height: 50px;
+  background-color: #74505C;
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 600;
+  border: none;
+  border-radius: 25px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-left: 0;
+  padding-right: 0;
+  margin-top: 5px;
+  transition: background-color 0.3s;
+  box-shadow: 0px 3px 5.2px 0px #00000040 inset;
+}
+
+/* .onyba-submit-btn:hover {
+  background-color: #553e46;
+} */
+
+/* Background Large Curve Decoration (Bottom Left) */
+.onyba-bg-curve {
+  position: absolute;
+  bottom: -55%;
+  left: 6%;
+  width: 536px;
+  height: 600px;
+  background-color: rgba(255, 255, 255, 0.25);
+  background: radial-gradient(57.18% 57.18% at 50% 50%, #93996D 0%, #FFFFFF 100%);
+  border-radius: 50%;
+  z-index: 1;
+}
+
+/* Responsive Styles for Tablets & Mobile Screens */
+@media (max-width: 868px) {
+  .onyba-login-section {
+    overflow-y: auto;
+    /* Mobile screen par content cut na ho isliye auto aur center flex change kiya */
+    align-items: flex-start;
+    padding-top: 40px;
+    padding-bottom: 40px;
+  }
+
+  .onyba-login-wrapper {
+    flex-direction: column;
+    gap: 40px;
+  }
+
+  .onyba-login-left-banner,
+  .onyba-login-right-content {
+    width: 100%;
+  }
+
+  .onyba-bg-curve {
+    display: none;
+  }
+}
+
+.onyba-icon-circle img {
+  height: 27px;
+  width: 27px;
+}
+
+/* ==========================================================================
+   ONYBA LOGIN PAGE STYLES - END
+   ========================================================================== */
+/* Login Page Css */
+
+
+/* otp */
+/* ==========================================================================
+   ONYBA VERIFICATION ELEMENT STYLES - NO REDUNDANCY
+   ========================================================================== */
+
+/* Form Layout Spacer */
+.onyba-login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  /* Base spacing inside form changed to 30px for OTP view */
+}
+
+/* 5-Inputs Wrapper Row */
+.onyba-otp-inputs-row {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  gap: 10px;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* Circle OTP Input Box Styling */
+.onyba-otp-input-box {
+  width: 50px;
+  height: 50px;
+  border: 1px solid #e9ebe6;
+  background-color: #fcfcfb;
+  border-radius: 50%;
+  /* Perfect circle inputs as shown in design */
+  text-align: center;
+  font-size: 18px;
+  font-weight: 500;
+  color: #2d3129;
+  outline: none;
+  box-sizing: border-box;
+  margin: 0;
+  transition: border-color 0.3s, background-color 0.3s;
+}
+
+/* Chrome, Safari, Edge, Opera se input arrows (spinners) hatane ke liye */
+.onyba-otp-input-box::-webkit-outer-spin-button,
+.onyba-otp-input-box::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox se input arrow hatane ke liye */
+.onyba-otp-input-box[type=number] {
+  -moz-appearance: textfield;
+}
+
+.onyba-otp-input-box:focus {
+  border-color: #849175;
+  background-color: #ffffff;
+}
+
+.onyba-otp-input-box::placeholder {
+  color: #a3a89e;
+}
+
+/* Footer Resend Area Styling */
+.onyba-otp-resend-wrapper {
+  font-size: 16px;
+  color: #2E1302;
+  font-weight: 400;
+  margin: 0;
+  padding: 0;
+}
+
+.onyba-otp-resend-wrapper .onyba-resend-text {
+  color: #74505C;
+  font-weight: 600;
+}
+
+.onyba-timer {
+  font-weight: 500;
+  color: #2d3129;
+}
+
+/* otp */
+
+
+/* Dashboard header */
+.db-card-wrapper-layout {
+  display: flex;
+  /* flex-wrap: wrap;  */
+  gap: 24px;
+  justify-content: center;
+  width: 100%;
+  /* max-width: 1200px; */
+}
+
+/* Unique Card Box Styling */
+.db-card-item-box {
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 24px;
+  width: 100%;
+  min-height: 160px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 6px 6px 54px 0px #0000000D;
+}
+
+/* Alignment Classes */
+.db-card-top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.db-card-info-block {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Typography */
+.db-card-label-text {
+  font-size: 14px;
+  color: #1a1a1a;
+  font-weight: 600;
+}
+
+.db-card-main-value {
+  font-size: 36px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* Action Links */
+.db-card-action-link {
+  font-size: 14px;
+  color: #4C2834;
+  text-decoration: none;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 15px;
+}
+
+.db-card-action-link:hover {
+  text-decoration: underline;
+}
+
+.db-card-link-arrow {
+  font-size: 15px;
+}
+
+/* Icon Badges */
+.db-card-icon-badge {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+/* Specific Color Utilities (Highly Unique Names) */
+.db-color-olive-dark {
+  color: #93996D;
+}
+
+.db-color-alert-red {
+  color: #C90101;
+}
+
+/* Background Specifics */
+.db-bg-olive-light {
+  background-color: #f1eef1;
+  color: #606643;
+}
+
+.db-bg-alert-red-light {
+  background-color: #fdeaea;
+}
+
+.db-text-alert-red-bold {
+  background-color: #F9E4E4;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  font-size: 16px;
+}
+
+.db-bg-olive-net {
+  background-color: #93996D33;
+}
+
+/* Dashboard Header */
+
+
+/* dashboard Table */
+/* Main Container: No Grid/No Flex, pure Table alignment logic using display: inline-block */
+.dbt-main-wrapper {
+  width: 100%;
+  margin: 0 auto;
+  font-size: 0;
+  display: flex;
+  gap: 20px;
+  overflow-x: auto;
+}
+
+/* Left aur Right sections ko sizing aur inline-block se side-by-side kiya */
+.dbt-section-left {
+  display: inline-block;
+  vertical-align: top;
+  width: 50%;
+  font-size: 14px;
+  background: #fff;
+  padding: 20px;
+  border-radius: 15px;
+  overflow-x: auto;
+}
+
+
+.dbt-section-right {
+  display: inline-block;
+  vertical-align: top;
+  width: 50%;
+  font-size: 14px;
+  background: #fff;
+  padding: 20px;
+  border-radius: 15px;
+}
+
+/* Headers Styling */
+.dbt-panel-header {
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.dbt-header-title {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.dbt-icon-circle {
+  display: inline-block;
+  vertical-align: middle;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  text-align: center;
+  line-height: 40px;
+  font-size: 16px;
+}
+
+.dbt-bg-olive {
+  background: linear-gradient(180deg, #93996D 0%, #52553E 100%);
+
+}
+
+.dbt-heading-text {
+  display: inline-block;
+  vertical-align: middle;
+  font-size: 20px;
+  color: #1A1A1A;
+  font-weight: 700;
+  margin-left: 12px;
+}
+
+.dbt-view-all-link {
+  float: right;
+  font-size: 16px;
+  color: #4C2834;
+  text-decoration: none;
+  font-weight: 600;
+  line-height: 40px;
+}
+
+/* Pure HTML Table Reset and Rules */
+.dbt-data-table {
+  width: max-content;
+  min-width: 100%;
+  border-collapse: collapse;
+}
+
+.dbt-table-row {
+  border-bottom: 1px solid #E1E1E1;
+  box-shadow: 0px -1px 0px 0px #E1E1E1 inset;
+}
+
+.dbt-table-row td {
+  padding: 16px 0;
+  vertical-align: middle;
+}
+
+/* Table Columns Width Custom Allocation */
+/* .dbt-col-profile { width: 40%; }
+.dbt-col-time    { width: 25%; }
+.dbt-col-status  { width: 15%; }
+.dbt-col-action  { width: 20%; text-align: right; } */
+
+/* Sub elements styling */
+.dbt-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.dbt-profile-info {
+  display: inline-block;
+  vertical-align: middle;
+  margin-left: 12px;
+}
+
+.dbt-name {
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.dbt-subtext {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: #1A1A1AB2;
+  margin-top: 2px;
+}
+
+.dbt-day {
+  display: block;
+  font-weight: 700;
+  font-size: 14px;
+  color: #1A1A1A;
+}
+
+.dbt-time {
+  display: block;
+  font-weight: 700;
+  font-size: 14px;
+  color: #1A1A1A;
+  margin-top: 2px;
+  margin-left: 25px;
+}
+
+.dbt-badge-online {
+  background-color: #93996D1A;
+  color: #52553E;
+}
+
+span.dbt-day img {
+  margin-right: 5px;
+}
+
+/* Status Badges */
+.dbt-badge {
+  display: inline-block;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+  width: 105px;
+}
+
+.dbt-badge-online {
+  background-color: #f3f5ef;
+  color: #606643;
+}
+
+.dbt-badge-inperson {
+  background-color: #74505C33;
+  color: #4C2834;
+}
+
+/* Standard Buttons */
+.dbt-btn-filled {
+  background: linear-gradient(180deg, #74505C 0%, #4C2834 100%);
+  color: #fff;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.dbt-btn-outlined {
+  background-color: transparent;
+  color: #5F5F5F;
+  border: 1px solid #5F5F5F;
+  padding: 10px 22px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* RIGHT SECTION: Cards Styling */
+.dbt-notes-container {
+  width: 100%;
+}
+
+.dbt-note-card {
+  background-color: #f6f7f3;
+  border-radius: 24px;
+  padding: 16px 20px;
+  margin-bottom: 12px;
+}
+
+.dbt-inner-note-layout {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.dbt-inner-note-layout td {
+  vertical-align: middle;
+}
+
+.dbt-due-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: #5F5F5F;
+}
+
+.dbt-due-countdown {
+  display: block;
+  font-size: 16px;
+  color: #93996D;
+  font-weight: 800;
+}
+
+.dbt-btn-maroon {
+  background-color: #5c3843;
+  color: white;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+/* Footer Alert Banner */
+.dbt-alert-banner {
+  background-color: #EAE5E7;
+  border-radius: 30px;
+  padding: 12px 16px;
+  margin-top: 16px;
+}
+
+/* 
+.dbt-alert-icon {
+    background-color: #5c3843;
+    color: white;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    display: inline-block;
+    text-align: center;
+    line-height: 18px;
+    font-size: 11px;
+    font-weight: bold;
+    vertical-align: middle;
+} */
+
+.dbt-alert-text {
+  display: inline-block;
+  font-size: 12px;
+  color: #74505C;
+  font-weight: 600;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+/* Dashboard Table */
+
+
+/* --- New Unique CSS for Screen 3 Only (No Conflict) --- */
+
+/* Sub-heading brackets text color (e.g., Awaiting Payment) */
+.dbt3-sub-heading-text {
+  font-size: 14px;
+  font-weight: 700;
+  color: #5F5F5F;
+  vertical-align: middle;
+}
+
+/* Left table custom countdown column */
+.dbt3-col-countdown {
+  width: 15%;
+  vertical-align: middle;
+}
+
+.dbt3-expire-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: #5F5F5F;
+}
+
+.dbt3-countdown-text {
+  display: block;
+  font-size: 16px;
+  font-weight: 800;
+  color: #93996D;
+}
+
+/* Urgent status color logic */
+.dbt3-color-urgent {
+  color: #93996D;
+}
+
+/* Right Table Header Styling (Gray background strip) */
+.dbt3-th-row {
+  background-color: #F1EEEF;
+}
+
+.dbt3-th-cell {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1A1A1A;
+  padding: 14px 0;
+  border: none;
+}
+
+/* Corner radius rounding for table header row */
+.dbt3-th-row th:first-child {
+  border-top-left-radius: 12px;
+  border-bottom-left-radius: 12px;
+}
+
+.dbt3-th-row th:last-child {
+  border-top-right-radius: 12px;
+  border-bottom-right-radius: 12px;
+}
+
+/* Amount formatting */
+.dbt3-amount-cell {
+  font-size: 15px;
+  font-weight: 600;
+  color: #211c1d;
+  text-align: center;
+  padding-right: 16px;
+}
+
+.dashboard-wrp-sec {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+
+/* Patients  page CSS */
+
+.dbt3-sub-heading-text {
+  font-size: 14px;
+  font-weight: 400;
+  color: #707070;
+  vertical-align: middle;
+}
+
+/* Filter Top Bar Styles */
+.dbt4-filter-bar {
+  width: 100%;
+  clear: both;
+  padding: 0 20px;
+}
+
+.dbt4-search-box {
+  display: inline-block;
+  background-color: #ffffff;
+  border: 1px solid #93996D4D;
+  border-radius: 24px;
+  padding: 8px 16px;
+  width: 240px;
+  vertical-align: middle;
+}
+
+.dbt4-search-icon {
+  font-size: 14px;
+  color: #888888;
+  vertical-align: middle;
+}
+
+.dbt4-search-input {
+  border: none;
+  outline: none;
+  font-size: 14px;
+  margin-left: 8px;
+  width: 80%;
+  vertical-align: middle;
+}
+
+.dbt4-right-filters {
+  float: right;
+}
+
+.dbt4-filter-dropdown {
+  display: inline-block;
+  background-color: #ffffff;
+  border: 1px solid #93996D4D;
+  border-radius: 24px;
+  padding: 10px 15px 10px 20px;
+  font-size: 14px;
+  color: #1A1A1AB2;
+  cursor: pointer;
+  margin-left: 12px;
+}
+
+span.dbt4-cal-icon {
+  margin-left: 20px;
+}
+
+/* Global helper alignments for table body cells */
+.dbt4-center-text {
+  text-align: center;
+}
+
+.dbt4-right-text {
+  text-align: right;
+}
+
+/* Table Header row layout */
+.dbt3-th-row {
+  background-color: #F1EEEF;
+}
+
+
+.dbt3-th-row th:first-child {
+  border-top-left-radius: 12px;
+  border-bottom-left-radius: 12px;
+}
+
+.dbt3-th-row th:last-child {
+  border-top-right-radius: 12px;
+  border-bottom-right-radius: 12px;
+}
+
+/* Padding Helpers */
+/* .dbt4-pad-left {
+    padding-left: 20px !important;
+    padding-right: 20px !important;
+}
+.dbt4-pad-right { padding-left: 20px!important;
+    padding-right: 20px!important; } */
+.dbt-main-wrapper-patients tbody td {
+  padding: 10px 20px;
+}
+
+.dbt-main-wrapper-patients thead th {
+  padding: 10px 20px;
+}
+
+/* Row item typographies */
+.dbt4-sno-text {
+  font-size: 14px;
+  color: #4a4a4a;
+  font-weight: 500;
+}
+
+.dbt4-regular-cell {
+  font-size: 14px;
+  color: #211c1d;
+  font-weight: 500;
+}
+
+.dbt4-email-cell {
+  font-size: 14px;
+  color: #111111;
+  font-weight: 600;
+}
+
+.dbt4-view-profile-btn {
+  font-size: 14px;
+  color: #4C2834;
+  text-decoration: underline;
+  font-weight: 600;
+}
+
+/* Badges Status */
+.dbt4-status-badge {
+  display: inline-block;
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  text-align: center;
+  width: 85px;
+}
+
+.dbt4-badge-active {
+  background-color: #93996D1A;
+  color: #52553E;
+}
+
+.dbt4-badge-inactive {
+  background-color: #74505C33;
+  color: #4C2834;
+}
+
+/* Pagination style */
+.dbt4-pagination-container {
+  width: 100%;
+  text-align: center;
+  margin-top: 32px;
+}
+
+.dbt4-pagination-list {
+  display: inline-block;
+}
+
+.dbt4-page-num {
+  display: inline-block;
+  width: 36px;
+  height: 36px;
+  line-height: 36px;
+  text-align: center;
+  font-size: 14px;
+  color: #4a4a4a;
+  cursor: pointer;
+  margin: 0 4px;
+  font-weight: 500;
+}
+
+.dbt4-page-active {
+ background: linear-gradient(180deg, #93996D 0%, #52553E 100%);
+ border: 1.5px solid #93996D;
+  color: #ffffff;
+  border-radius: 8px;
+}
+
+.dbt4-page-dots {
+  display: inline-block;
+  font-size: 14px;
+  color: #888888;
+  margin: 0 4px;
+}
+
+.dbt-main-wrapper.patients {
+  display: flex;
+  flex-direction: column;
+}
+
+.dbt-main-wrapper.patients {
+  padding: 20px 0;
+}
+
+.dbt-main-wrapper.patients .dbt3-th-row th:first-child {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.dbt-main-wrapper.patients .dbt3-th-row th:last-child {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+/* Bootstrap Wrapper ko side-by-side (inline-block) rakhne ke liye */
+.dbt4-bs-dropdown-wrapper {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+/* Bootstrap ke default arrow (caret) ko hatane ke liye kyunki aapka custom arrow hai */
+.dbt4-remove-arrow::after {
+  display: none !important;
+}
+
+/* Dropdown menu ki styling aapke original font aur corners ke hisab se */
+.dbt4-bs-menu-custom {
+  border-radius: 12px !important;
+  border: 1px solid #e0e0e0 !important;
+  box-shadow: 0px 8px 24px rgba(0, 0, 0, 0.05);
+  padding: 6px 0 !important;
+}
+
+/* Dropdown ke andar ke links ki design */
+.dbt4-bs-item {
+  font-size: 14px !important;
+  color: #4a4a4a !important;
+  padding: 8px 16px !important;
+}
+
+/* Hover karne par aapka theme color (Sage Green tint) */
+.dbt4-bs-item:hover {
+  background-color: #f3f5ef !important;
+  color: #606643 !important;
+}
+
+.dbt4-right-filters {
+  float: right;
+  align-items: center;
+  display: flex;
+}
+
+span.dbt4-arrow-icon {
+  margin-left: 25px;
+}
+
+/* Wrapper par relative lagaya taaki andar ka menu iski width le sake */
+.dbt4-bs-dropdown-wrapper {
+  display: inline-block;
+  vertical-align: middle;
+  margin-left: 12px;
+  position: relative;
+  /* CRITICAL: Isse child menu ko alignment milti hai */
+}
+
+/* Button ko poori width (100%) di taaki wrapper ke barabar ho */
+.dbt4-bs-dropdown-wrapper .dbt4-filter-dropdown {
+  width: 100%;
+  text-align: space-between;
+  /* Text aur arrow ke gap ke liye */
+}
+
+/* Dropdown menu ki width parent wrapper ke barabar (100%) kar di */
+.dbt4-bs-menu-custom {
+  width: 100% !important;
+  /* Button ke barabar width karne ke liye */
+  min-width: 100% !important;
+  border-radius: 12px !important;
+  border: 1px solid #e0e0e0 !important;
+  box-shadow: 0px 8px 24px rgba(0, 0, 0, 0.05);
+  padding: 6px 0 !important;
+  left: 0 !important;
+  /* Align edge to edge */
+}
+
+/* Dropdown items ki default padding reset */
+.dbt4-bs-item {
+  font-size: 14px !important;
+  color: #4a4a4a !important;
+  padding: 8px 16px !important;
+  display: block;
+  width: 100%;
+}
+
+.dbt4-bs-item:hover {
+  background-color: #f3f5ef !important;
+  color: #606643 !important;
+}
+
+.dbt4-remove-arrow::after {
+  display: none !important;
+}
+
+.dbt-main-wrapper-patients {
+  background: #fff;
+  border-radius: 20px;
+  padding: 20px 0;
+}
+
+.dbt-main-wrapper-patients tbody td {
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1A1A1A;
+}
+
+td.dbt4-email-cell {
+  font-weight: 700 !important;
+}
+
+td.dbt4-regular-cell {
+  font-weight: 700 !important;
+}
+
+span.dbt-subtext.session {
+  margin-left: 25px;
+}
+
+/* Patients  page CSS */

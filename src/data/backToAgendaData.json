@@ -1,0 +1,65 @@
+{
+  "patientInfo": {
+    "name": "John Carter",
+    "avatar": "/images/patientes-profile.svg",
+    "age": 15,
+    "gender": "Male",
+    "patientId": "PT-1245",
+    "phone": "+1 (555) 123-4567",
+    "occupation": "Student",
+    "maritalStatus": "Single",
+    "insurance": "12/1234567890/12",
+    "sessionMode": "Online",
+    "lastSession": "May 20, 2026"
+  },
+  "services": [
+    {
+      "id": "srv_1",
+      "name": "1st Adult Session"
+    }
+  ],
+  "previousSessions": [
+    {
+      "id": "ps_1",
+      "name": "Session 1",
+      "date": "May 20, 2026",
+      "details": "Anxiety & work stress"
+    },
+    {
+      "id": "ps_2",
+      "name": "Session 2",
+      "date": "May 22, 2026",
+      "details": "Anxiety & work stress"
+    },
+    {
+      "id": "ps_3",
+      "name": "Session 3",
+      "date": "May 24, 2026",
+      "details": "Anxiety & work stress"
+    },
+    {
+      "id": "ps_4",
+      "name": "Session 4",
+      "date": "May 26, 2026",
+      "details": "Anxiety & work stress"
+    },
+    {
+      "id": "ps_5",
+      "name": "Session 5",
+      "date": "May 30, 2026",
+      "details": "Depression"
+    }
+  ],
+  "financialDetails": {
+    "sessionTypePrice": "$80.00 (Paid)",
+    "paymentMethod": "Paypal",
+    "serviceAdded": {
+      "amount": "+$50.00",
+      "subtext": "-1st Free Adult Session"
+    }
+  },
+  "collectPayment": {
+    "remaining": "$30",
+    "totalSessionAmount": "$150"
+  }
+}

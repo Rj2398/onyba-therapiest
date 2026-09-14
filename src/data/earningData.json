@@ -1,0 +1,217 @@
+{
+  "metrics": {
+    "totalEarnings": {
+      "value": "$1500",
+      "trend": "↑ 12% vs March"
+    },
+    "netEarning": {
+      "value": "$750",
+      "trend": "↑ 12% vs March"
+    },
+    "sessionsThisMonth": {
+      "value": 18,
+      "subtext": "Avg $50/session"
+    },
+    "pendingPayments": {
+      "value": "$150",
+      "subtext": "3 sessions · 15-day cycle"
+    },
+    "reservedRevenue": {
+      "value": "$450",
+      "subtext": "3 upcoming sessions"
+    },
+    "monthlyBillSummary": {
+      "totalSessions": 18,
+      "subtotal": "$1,500",
+      "totalPatientPaid": "$1,200",
+      "totalAmount": "$1,700"
+    }
+  },
+  "sessionLedger": [
+    {
+      "id": 1,
+      "historyNo": "25021",
+      "patientName": "John Doe",
+      "sessionType": "Adult",
+      "date": "May 10, 2026",
+      "time": "10:00 AM - 10:50 AM",
+      "mode": "Online",
+      "amount": "$100",
+      "patientPaid": "$100",
+      "paymentType": "Credit Card",
+      "status": "Paid"
+    },
+    {
+      "id": 2,
+      "historyNo": "25021",
+      "patientName": "John Doe",
+      "sessionType": "Adult",
+      "date": "May 18, 2026",
+      "time": "10:00 AM - 10:50 AM",
+      "mode": "In-person",
+      "amount": "$100",
+      "patientPaid": "$50",
+      "paymentType": "Cash",
+      "status": "Partially Paid"
+    },
+    {
+      "id": 3,
+      "historyNo": "25021",
+      "patientName": "John Doe",
+      "sessionType": "Couple",
+      "date": "May 19, 2026",
+      "time": "10:00 AM - 10:50 AM",
+      "mode": "Online",
+      "amount": "$100",
+      "patientPaid": "$100",
+      "paymentType": "TPV Virtual (QR)",
+      "status": "Paid"
+    },
+    {
+      "id": 4,
+      "historyNo": "25021",
+      "patientName": "John Doe",
+      "sessionType": "Child",
+      "date": "May 20, 2026",
+      "time": "10:00 AM - 10:50 AM",
+      "mode": "Online",
+      "amount": "$100",
+      "patientPaid": "$100",
+      "paymentType": "Bank Transfer",
+      "status": "Paid"
+    },
+    {
+      "id": 5,
+      "historyNo": "25021",
+      "patientName": "John Doe",
+      "sessionType": "Family",
+      "date": "May 20, 2026",
+      "time": "10:00 AM - 10:50 AM",
+      "mode": "Online",
+      "amount": "$100",
+      "patientPaid": "$100",
+      "paymentType": "Cash",
+      "status": "Paid"
+    },
+    {
+      "id": 6,
+      "historyNo": "25021",
+      "patientName": "James Anderson",
+      "age": "25 yrs",
+      "sessionType": "Coaching",
+      "date": "May 20, 2026",
+      "time": "10:00 AM - 10:50 AM",
+      "mode": "Online",
+      "amount": "$100",
+      "patientPaid": "$100",
+      "paymentType": "Credit Card",
+      "status": "Paid"
+    },
+    {
+      "id": 7,
+      "historyNo": "25021",
+      "patientName": "John Doe",
+      "sessionType": "Adult",
+      "date": "May 20, 2026",
+      "time": "10:00 AM - 10:50 AM",
+      "mode": "Online",
+      "amount": "$100",
+      "patientPaid": "$50",
+      "paymentType": "Bank Transfer",
+      "status": "Paid"
+    },
+    {
+      "id": 8,
+      "historyNo": "25021",
+      "patientName": "John Doe",
+      "sessionType": "Adult",
+      "date": "May 20, 2026",
+      "time": "10:00 AM - 10:50 AM",
+      "mode": "Online",
+      "amount": "$100",
+      "patientPaid": "$30",
+      "paymentType": "Cash",
+      "status": "Paid"
+    },
+    {
+      "id": 9,
+      "historyNo": "25021",
+      "patientName": "John Doe",
+      "sessionType": "Adult",
+      "date": "May 20, 2026",
+      "time": "10:00 AM - 10:50 AM",
+      "mode": "Online",
+      "amount": "$100",
+      "patientPaid": "$100",
+      "paymentType": "Cash",
+      "status": "Paid"
+    },
+    {
+      "id": 10,
+      "historyNo": "25021",
+      "patientName": "John Doe",
+      "sessionType": "Adult",
+      "date": "May 20, 2026",
+      "time": "10:00 AM - 10:50 AM",
+      "mode": "In-person",
+      "amount": "$100",
+      "patientPaid": "$100",
+      "paymentType": "Cash",
+      "status": "Partially Paid"
+    }
+  ],
+  "previousRemuneration": [
+    {
+      "id": 1,
+      "invoiceNo": "INV-2026-04",
+      "dateRange": "Apr 1 - Apr 30, 2026",
+      "sessions": 20,
+      "totalAmount": "$1,480.00",
+      "netEarnings": "$782.00",
+      "taxDeduction": "(15%)$782.00",
+"grossEarning": "$800",
+      "bonus": "$120.00",
+      "date": "May 05, 2026",
+      "status": "Paid"
+    },
+    {
+      "id": 2,
+      "invoiceNo": "INV-2026-04",
+      "dateRange": "Apr 1 - Apr 30, 2026",
+      "sessions": 20,
+      "totalAmount": "$1,480.00",
+      "netEarnings": "$782.00",
+      "bonus": "$120.00",
+      "date": "May 05, 2026",
+      "taxDeduction": "(15%)$782.00",
+      "grossEarning": "$800",
+      "status": "Paid"
+    },
+    {
+      "id": 3,
+      "invoiceNo": "INV-2026-04",
+      "dateRange": "Apr 1 - Apr 30, 2026",
+      "sessions": 20,
+      "totalAmount": "$1,480.00",
+      "netEarnings": "$782.00",
+      "bonus": "$120.00",
+      "date": "May 05, 2026",
+      "taxDeduction": "(15%)$782.00",
+      "grossEarning": "$800",
+      "status": "Paid"
+    },
+    {
+      "id": 4,
+      "invoiceNo": "INV-2026-04",
+      "dateRange": "Apr 1 - Apr 30, 2026",
+      "sessions": 20,
+      "totalAmount": "$1,480.00",
+      "netEarnings": "$782.00",
+      "bonus": "$120.00",
+      "date": "May 05, 2026",
+      "taxDeduction": "(15%)$782.00",
+      "grossEarning": "$800",
+      "status": "Paid"
+    }
+  ]
+}

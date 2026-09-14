@@ -1,0 +1,833 @@
+/* ==========================================================================
+   GLOBAL VARIABLES & RESET
+   ========================================================================== */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
+
+:root {
+  --gl-primary-color: linear-gradient(95.74deg,
+      #004c6c -19.77%,
+      #0094d2 119.43%);
+  --gl-bg-body: #f4f7f9;
+  --gl-sidebar-width: 270px;
+  --gl-sidebar-collapsed-width: 80px;
+  --gl-text-dark: #1a202c;
+  --gl-text-muted: #718096;
+  --gl-white: #ffffff;
+  --gl-border-light: #e5e7eb;
+  --gl-transition-speed: 0.3s;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background-color: var(--gl-bg-body);
+  font-family: "Montserrat", sans-serif;
+  color: var(--gl-text-dark);
+  overflow-x: hidden;
+}
+
+/* ==========================================================================
+   MAIN DASHBOARD LAYOUT BASE (No Old Grid Conflicts)
+   ========================================================================== */
+.gl-dashboard-layout {
+  display: flex;
+  width: 100%;
+  min-height: 100vh;
+  position: relative;
+}
+
+/* ==========================================================================
+   SIDEBAR ARCHITECTURE
+   ========================================================================== */
+.gl-sidebar {
+  width: var(--gl-sidebar-width);
+  background-color: var(--gl-white);
+  /* border-right: 1px solid #dadada; */
+  height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+  /* z-index: 1000; */
+  display: flex;
+  flex-direction: column;
+  transition: width var(--gl-transition-speed) ease;
+}
+
+ul.gl-sidebar-menu li.gl-menu-item .gl-menu-link:hover span.gl-menu-text {
+  color: #fff;
+}
+
+.gl-brand-block {
+  height: 70px;
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  /* border-bottom: 1px solid #dadada; */
+  justify-content: flex-start;
+}
+
+.gl-brand-block img.gl-logo-full {
+  width: 89px;
+  height: auto;
+  display: block;
+}
+
+.gl-brand-block img.gl-logo-collapsed {
+  display: none;
+  width: 38px;
+  height: auto;
+  margin: 0 auto;
+}
+
+.gl-navigation-wrapper {
+  padding: 24px 16px;
+  overflow-y: auto;
+  flex-grow: 1;
+}
+
+.gl-nav-section-title {
+  font-size: 12px;
+  background:
+    linear-gradient(0deg, #000000, #000000),
+    linear-gradient(0deg, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.2)),
+    linear-gradient(0deg, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.2));
+
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
+
+  font-weight: 400;
+  letter-spacing: 0.8px;
+  margin-bottom: 16px;
+  display: block;
+  padding-left: 12px;
+}
+
+ul.gl-sidebar-menu li.gl-menu-item.active span.gl-menu-text {
+  color: #fff;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+ul.gl-sidebar-menu li.gl-menu-item span.gl-menu-text {
+  color: #000000;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.gl-sidebar-menu {
+  list-style: none;
+}
+
+.gl-menu-item {
+  margin-bottom: 6px;
+}
+
+.gl-menu-link {
+  display: flex;
+  align-items: center;
+  padding: 12px 14px;
+  color: var(--gl-text-dark);
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  border-radius: 30px;
+  gap: 14px;
+  transition: all 0.2s ease;
+}
+
+.gl-menu-link:hover,
+.gl-menu-item.active .gl-menu-link {
+  background: linear-gradient(180deg, #93996D 0%, #52553E 100%);
+  color: #fff;
+}
+
+.gl-menu-link:hover .gl-menu-icon,
+.gl-menu-item.active .gl-menu-link .gl-menu-icon {
+  filter: brightness(0) invert(1);
+}
+
+.gl-menu-icon {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  transition: filter 0.2s;
+}
+
+.gl-menu-link:hover .gl-menu-text,
+.gl-menu-item:hover .gl-menu-text {
+  color: #fff;
+}
+
+.inner-flag-drop-down span {
+  margin: 0 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #646464;
+}
+
+/* ==========================================================================
+   RIGHT CONTENT MAIN WRAPPER & HEADER
+   ========================================================================== */
+.gl-main-content-wrapper {
+  width: calc(100% - var(--gl-sidebar-width));
+  margin-left: var(--gl-sidebar-width);
+  display: flex;
+  flex-direction: column;
+  transition:
+    width var(--gl-transition-speed) ease,
+    margin-left var(--gl-transition-speed) ease;
+}
+
+.gl-header {
+  height: 79px;
+  background-color: var(--gl-white);
+  /* border-bottom: 1px solid #dadada; */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 30px;
+  position: sticky;
+  top: 0;
+  z-index: 999;
+}
+
+.header-left-part p.header-left-text {
+  font-size: 16px;
+  font-weight: 400;
+  color: #858484;
+  margin-bottom: 0;
+}
+
+.header-left-part {
+  margin-left: -25px;
+}
+
+.gl-header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.gl-sidebar-toggle {
+  border: 1px solid #0000000A;
+  background: transparent;
+  border-radius: 50%;
+  position: relative;
+
+}
+
+/* .gl-sidebar-toggle:hover {
+  background: #edf2f7;
+} */
+
+.gl-sidebar-toggle img {
+  width: 24px;
+  height: 24px;
+  position: absolute;
+  left: -45px;
+  top: -10px;
+}
+
+.gl-header-panel-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-bottom: 0;
+}
+
+.gl-header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Search styling from reference mockup */
+.gl-header-search-box {
+  position: relative;
+  width: 260px;
+}
+
+.gl-header-search-box input {
+  width: 100%;
+  height: 40px;
+  background-color: #fff;
+  border: 1px solid #d9d9d9;
+  color: #d9d9d9;
+  border-radius: 8px;
+  padding: 0 16px 0 38px;
+  font-size: 16px;
+  font-weight: 500;
+  outline: none;
+}
+
+.gl-header-search-box .search-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--gl-text-muted);
+  font-size: 13px;
+}
+
+.gl-action-item {
+  position: relative;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  background: transparent;
+  border: none;
+}
+
+.gl-header-icon {
+  width: 40px;
+  height: 40px;
+}
+
+.gl-user-avatar-block {
+  display: flex;
+  align-items: center;
+  padding: 5px;
+  border-radius: 30px;
+  background: transparent;
+  border: none;
+}
+
+.gl-user-avatar-block p {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 0;
+  color: #1A1A1A;
+  text-align: left;
+  margin: 0px 10px;
+}
+
+.gl-user-avatar-block p span {
+  color: #1A1A1AB2;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.gl-user-avatar {
+  width: 48px;
+  height: 50px;
+  border-radius: 50%;
+  object-fit: cover;
+  cursor: pointer;
+  border: 2px solid var(--gl-border-light);
+}
+
+.gl-user-avatar-block img.gl-user-down-icon {
+  margin-left: 15px;
+  margin-right: 5px;
+}
+
+.gl-content-body {
+  padding: 30px;
+  width: 100%;
+  background-color: #f3f4ef;
+}
+
+.gl-action-item img.gl-flag-icon {
+  height: 40px;
+  width: 40px;
+}
+
+/* ==========================================================================
+   MINI SIDEBAR COMPRESSED STATE STYLES (Triggers via Toggle Class)
+   ========================================================================== */
+.gl-dashboard-layout.mini-sidebar .gl-sidebar {
+  width: var(--gl-sidebar-collapsed-width);
+}
+
+.gl-navigation-wrapper ul.gl-sidebar-menu {
+  padding-left: 0;
+}
+
+.gl-dashboard-layout.mini-sidebar .gl-brand-block {
+  justify-content: center;
+  padding: 0;
+}
+
+.gl-dashboard-layout.mini-sidebar .gl-logo-full {
+  display: none !important;
+}
+
+.gl-dashboard-layout.mini-sidebar .gl-logo-collapsed {
+  display: block !important;
+}
+
+.gl-dashboard-layout.mini-sidebar .gl-nav-section-title,
+.gl-dashboard-layout.mini-sidebar .gl-menu-text {
+  display: none !important;
+}
+
+.gl-dashboard-layout.mini-sidebar .gl-menu-link {
+  justify-content: center;
+  padding: 12px 0;
+}
+
+.gl-dashboard-layout.mini-sidebar .gl-main-content-wrapper {
+  width: calc(100% - var(--gl-sidebar-collapsed-width));
+  margin-left: var(--gl-sidebar-collapsed-width);
+}
+
+/* Responsive Breakdown for Tablets/Mobile Screen */
+@media (max-width: 991px) {
+  .gl-sidebar {
+    transform: translateX(-100%);
+  }
+
+  .gl-main-content-wrapper {
+    width: 100% !important;
+    margin-left: 0 !important;
+  }
+
+  .gl-dashboard-layout.mini-sidebar .gl-sidebar {
+    transform: translateX(0);
+    width: var(--gl-sidebar-width);
+  }
+
+  .gl-dashboard-layout.mini-sidebar .gl-logo-full {
+    display: block !important;
+  }
+
+  .gl-dashboard-layout.mini-sidebar .gl-logo-collapsed {
+    display: none !important;
+  }
+
+  .gl-dashboard-layout.mini-sidebar .gl-nav-section-title,
+  .gl-dashboard-layout.mini-sidebar .gl-menu-text {
+    display: block !important;
+  }
+}
+
+/* ==========================================================================
+   COMPLETE RESPONSIVE LAYOUT MATRIX (CSS Only)
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. DESKTOP ONLY ACTIONS (Min-width: 992px)
+   -------------------------------------------------------------------------- */
+/* @media (min-width: 992px) {
+
+    .gl-dashboard-layout.mini-sidebar .gl-sidebar {
+        width: var(--gl-sidebar-collapsed-width);
+    }
+
+    .gl-dashboard-layout.mini-sidebar .gl-brand-block {
+        justify-content: center;
+        padding: 0;
+    }
+
+    .gl-dashboard-layout.mini-sidebar .gl-logo-full {
+        display: none !important;
+    }
+
+    .gl-dashboard-layout.mini-sidebar .gl-logo-collapsed {
+        display: block !important;
+    }
+
+    .gl-dashboard-layout.mini-sidebar .gl-nav-section-title,
+    .gl-dashboard-layout.mini-sidebar .gl-menu-text,
+    .gl-dashboard-layout.mini-sidebar .gl-user-avatar-block .gl-user-down-icon {
+        display: none !important;
+    }
+
+    .gl-dashboard-layout.mini-sidebar .gl-menu-link {
+        justify-content: center;
+        padding: 12px 0;
+    }
+
+   
+    .gl-dashboard-layout.mini-sidebar .gl-main-content-wrapper {
+        width: calc(100% - var(--gl-sidebar-collapsed-width));
+        margin-left: var(--gl-sidebar-collapsed-width);
+    }
+} */
+
+/* --------------------------------------------------------------------------
+   2. TABLET RESPONSIVE BREAKDOWN (Max-width: 991px) & (Min-width: 768px)
+   -------------------------------------------------------------------------- */
+/* @media (max-width: 991px) {
+   
+    .gl-sidebar {
+        position: fixed;
+        width: var(--gl-sidebar-width) !important;
+        transform: translateX(-100%);
+        z-index: 1001;
+        box-shadow: 4px 0 24px rgba(0, 0, 0, 0.12);
+        transition: transform var(--gl-transition-speed) cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .gl-main-content-wrapper {
+        width: 100% !important;
+        margin-left: 0 !important;
+    }
+
+
+    .gl-dashboard-layout.mobile-sidebar-open .gl-sidebar {
+        transform: translateX(0);
+    }
+
+
+    .gl-sidebar .gl-logo-full,
+    .gl-sidebar .gl-nav-section-title,
+    .gl-sidebar .gl-menu-text {
+        display: block !important;
+    }
+    .gl-sidebar .gl-logo-collapsed {
+        display: none !important;
+    }
+    .gl-sidebar .gl-menu-link {
+        justify-content: flex-start !important;
+        padding: 12px 14px !important;
+    }
+
+  
+    .gl-sidebar-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.4);
+        backdrop-filter: blur(2px);
+        z-index: 1000;
+        opacity: 0;
+        visibility: hidden;
+        transition: all var(--gl-transition-speed) ease;
+    }
+
+    .gl-dashboard-layout.mobile-sidebar-open .gl-sidebar-overlay {
+        opacity: 1;
+        visibility: visible;
+    }
+
+
+    .gl-header {
+        padding: 0 20px;
+    }
+    
+    .gl-header-search-box {
+        width: 220px; 
+    }
+} */
+
+/* --------------------------------------------------------------------------
+   3. SMARTPHONE MOBILE BREAKDOWN (Max-width: 767px)
+   -------------------------------------------------------------------------- */
+/* @media (max-width: 767px) {
+    .gl-header {
+        padding: 0 12px;
+    }
+
+    
+    .gl-header-search-box {
+        display: none !important;
+    }
+
+ 
+    .gl-header-right {
+        gap: 12px;
+    }
+
+    .gl-header-panel-title {
+        font-size: 13px; 
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 130px;
+    }
+
+
+    .gl-action-item {
+        padding: 4px;
+    }
+
+    .gl-user-avatar {
+        width: 32px;
+        height: 32px;
+    }
+    
+ 
+    .gl-user-down-icon {
+        display: none !important;
+    }
+
+
+    .gl-content-body {
+        padding: 16px 12px;
+    }
+}
+ */
+
+/* ==========================================================================
+   DYNAMIC SCREEN WITH MATH (Tablet & Desktop Joint Layout)
+   ========================================================================== */
+
+@media (min-width: 768px) {
+
+  /* 1. DEFAULT STATE: Jab Sidebar OPEN ho (Full Width 270px) */
+  .gl-sidebar {
+    /* width: var(--gl-sidebar-width) !important; */
+    transform: translateX(0) !important;
+  }
+
+  /* Header aur Main dono sidebar ki width (270px) chor kar bachi hui screen size lenge */
+  .gl-header {
+    /* width: calc(100% - var(--gl-sidebar-width)) !important; */
+    transition: width var(--gl-transition-speed) ease;
+  }
+
+  .gl-main-content-wrapper {
+    width: calc(100% - var(--gl-sidebar-width)) !important;
+    margin-left: var(--gl-sidebar-width) !important;
+    transition:
+      width var(--gl-transition-speed) ease,
+      margin-left var(--gl-transition-speed) ease;
+  }
+
+  /* 2. TOGGLE ACTIVE STATE: Jab class 'mini-sidebar' hit ho (Sidebar CLOSE ho - 80px) */
+  .gl-dashboard-layout.mini-sidebar .gl-sidebar {
+    width: var(--gl-sidebar-collapsed-width) !important;
+  }
+
+  /* Jaise hi sidebar mini hoga, Header aur Main dono auto-calculate hokar bade ho jayenge */
+  /* .gl-dashboard-layout.mini-sidebar .gl-header {
+        width: calc(100% - var(--gl-sidebar-collapsed-width)) !important;
+    } */
+
+  .gl-dashboard-layout.mini-sidebar .gl-main-content-wrapper {
+    width: calc(100% - var(--gl-sidebar-collapsed-width)) !important;
+    margin-left: var(--gl-sidebar-collapsed-width) !important;
+  }
+
+  /* --- Inside Elements Alignment Rules on Collapse --- */
+  .gl-dashboard-layout.mini-sidebar .gl-brand-block {
+    justify-content: center;
+    padding: 0;
+  }
+
+  .gl-dashboard-layout.mini-sidebar .gl-logo-full,
+  .gl-dashboard-layout.mini-sidebar .gl-nav-section-title,
+  .gl-dashboard-layout.mini-sidebar .gl-menu-text,
+  .gl-dashboard-layout.mini-sidebar .gl-user-avatar-block .gl-user-down-icon {
+    display: none !important;
+  }
+
+  .gl-dashboard-layout.mini-sidebar .gl-logo-collapsed {
+    display: block !important;
+  }
+
+  .gl-dashboard-layout.mini-sidebar .gl-menu-link {
+    justify-content: center;
+    padding: 12px 0;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   3. MOBILE DRAWER CODE (Hamesha full width overlay layer)
+   -------------------------------------------------------------------------- */
+@media (max-width: 767px) {
+  .gl-sidebar {
+    position: fixed;
+    width: var(--gl-sidebar-width) !important;
+    transform: translateX(-100%);
+    z-index: 1001;
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.12);
+    transition: transform var(--gl-transition-speed) ease;
+  }
+
+  .gl-main-content-wrapper,
+  .gl-header {
+    width: 100% !important;
+    margin-left: 0 !important;
+  }
+
+  .gl-dashboard-layout.mobile-sidebar-open .gl-sidebar {
+    transform: translateX(0);
+  }
+
+  .gl-header-search-box {
+    display: none !important;
+  }
+}
+
+.gl-menu-link:hover span.gl-menu-text {
+  color: #fff;
+}
+
+/* ==========================================================================
+   GRANTLINK NOTIFICATION DROPDOWN POP-UP INTERFACE
+   ========================================================================== */
+
+/* Dropdown Container Scope */
+.gl-notification-dropdown {
+  position: absolute;
+  top: calc(100% + 0px);
+  right: 0;
+  width: 360px;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+  border: 1px solid #f1f5f9;
+  z-index: 1050;
+  display: none;
+  /* Hidden by default */
+  flex-direction: column;
+  text-align: left;
+  cursor: default;
+  overflow: hidden;
+}
+
+/* Active Open Toggle Utility Class */
+.gl-notification-dropdown.gl-nt-show {
+  display: flex;
+  animation: glNtFadeIn 0.2s ease-out;
+}
+
+@keyframes glNtFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Header UI Elements */
+.gl-nt-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.gl-nt-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+/* Scrollable Body Setup */
+.gl-nt-list-body {
+  max-height: 420px;
+  overflow-y: auto;
+  padding: 12px 16px;
+}
+
+/* Common Item Layout rules */
+.gl-nt-item {
+  padding: 14px 12px;
+  border-bottom: 1px solid #f8fafc;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border-radius: 8px;
+  transition: background-color 0.15s ease;
+}
+
+.gl-nt-item:last-child {
+  border-bottom: none;
+}
+
+.gl-nt-item:hover {
+  background-color: #f8fafc;
+}
+
+/* Structural Header inside list item */
+.gl-nt-row-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.gl-nt-title-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Dynamic Notification Identifiers (Blue Dots) */
+.gl-nt-dot {
+  width: 8px;
+  height: 8px;
+  background-color: #026aa2;
+  /* Clean brand blue */
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.gl-nt-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.gl-nt-time {
+  font-size: 11px;
+  color: #94a3b8;
+  white-space: nowrap;
+}
+
+.gl-nt-desc {
+  margin: 0;
+  font-size: 13px;
+  color: #64748b;
+  line-height: 1.4;
+  font-weight: 400;
+  padding-left: 0;
+}
+
+/* Target indent fix for items with dot align rules */
+.gl-nt-unread .gl-nt-desc {
+  padding-left: 16px;
+}
+
+/* Specific Read State Card Box Style Mapping (Item 4) */
+.gl-nt-read-card {
+  background-color: #f4f4f5;
+  border: none;
+  margin-top: 4px;
+}
+
+.gl-nt-read-card:hover {
+  background-color: #e4e4e7;
+}
+
+/* Dropdown Bottom Control Footer Layout */
+.gl-nt-footer {
+  padding: 12px 20px;
+  border-top: 1px solid #f1f5f9;
+  display: flex;
+  justify-content: flex-end;
+  background-color: #ffffff;
+}
+
+.gl-nt-view-all-link {
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f172a;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.gl-nt-view-all-link:hover {
+  color: #026aa2;
+}
+
+.gl-nt-view-all-link i {
+  font-size: 11px;
+}
