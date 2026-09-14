@@ -274,45 +274,87 @@ const Dashboard = () => {
     },
   ];
 
+const isStartSessionAvailable = (sessionDate?: string | null, startTime?: string | null) => {
+  if (!sessionDate || !startTime) return false;
+  try {
+    const cleanDateStr = sessionDate.split("T")[0];
+    let cleanTimeStr = startTime.trim();
+
+    const parts = cleanTimeStr.split(/\s+/);
+    let hours = 0;
+    let minutes = 0;
+
+    if (parts.length >= 2) {
+      const [timePart, period] = parts;
+      const timeParts = timePart.split(":").map(Number);
+      hours = timeParts[0] || 0;
+      minutes = timeParts[1] || 0;
+      if (period.toUpperCase() === "PM" && hours !== 12) hours += 12;
+      if (period.toUpperCase() === "AM" && hours === 12) hours = 0;
+    } else {
+      const timeParts = cleanTimeStr.split(":").map(Number);
+      hours = timeParts[0] || 0;
+      minutes = timeParts[1] || 0;
+    }
+
+    const [year, month, day] = cleanDateStr.split("-").map(Number);
+    if (!year || !month || !day) return false;
+
+    const sessionDateTime = new Date(year, month - 1, day, hours, minutes, 0).getTime();
+    const now = Date.now();
+    const diffMinutes = (sessionDateTime - now) / (1000 * 60);
+
+    return diffMinutes <= 5 && diffMinutes >= -120;
+  } catch {
+    return false;
+  }
+};
+
   const handleClickSubmit = (session: UpcomingSessionItem) => {
-    const patientType = session?.patient_type?.toLowerCase();
-
+    const isOnline = session?.session_mode?.toLowerCase() === "online";
+    const canStartSession = isStartSessionAvailable(
+      session?.session_date,
+      session?.session_start_time
+    );
+    const patientId = session?.patient_id || session?.id;
     const sessionId = session?.id || (session as any)?.therapy_session_id;
-
+    const patientType = session?.patient_type?.toLowerCase();
     const patientName =
       session?.patient_name ||
       getPatientDisplayName(session?.patient_name, session?.patient_id);
 
-    // patient → Online Video Call
-    if (patientType === "patient") {
-      if (sessionId) {
-        const queryParams = new URLSearchParams();
-
-        queryParams.set("therapy_session_id", String(sessionId));
-
-        if (patientName) {
-          queryParams.set("patient_name", patientName);
+    if (canStartSession) {
+      if (isOnline) {
+        if (sessionId) {
+          const queryParams = new URLSearchParams();
+          queryParams.set("therapy_session_id", String(sessionId));
+          if (patientName) {
+            queryParams.set("patient_name", patientName);
+          }
+          router.push(`/video-confrenece?${queryParams.toString()}`);
+        } else {
+          router.push("/video-confrenece");
         }
-
-        router.push(`/video-confrenece?${queryParams.toString()}`);
-      } else {
-        router.push("/video-confrenece");
+        return;
       }
 
+      if (patientType === "clinic_patient") {
+        router.push(
+          `/back-to-agenda${sessionId ? `?therapy_session_id=${sessionId}` : ""}`
+        );
+      } else {
+        router.push(
+          `/final-back-to-agenda${sessionId ? `?therapy_session_id=${sessionId}` : ""}`
+        );
+      }
       return;
     }
 
-    if (patientType === "client_patient") {
-      router.push("/final-back-to-agenda");
-      return;
+    if (patientId) {
+      router.push(`/patient-profile?id=${patientId}`);
+    } else {
+      router.push("/patient-profile");
     }
-
-    // if (patientType === "clinic_patient") {
-    //   router.push("/back-to-agenda");
-    //   return;
-    // }
-
-    // router.push("/agenda");
   };
 
   const upcomingSessions = tablesData?.upcoming_sessions || [];
@@ -425,10 +467,14 @@ const Dashboard = () => {
                           ? "dbt-badge-online"
                           : "dbt-badge-inperson";
                         const statusText = isOnline ? "Online" : "In-Person";
-                        const actionButtonText = isOnline
+                        const canStartSession = isStartSessionAvailable(
+                          session.session_date,
+                          session.session_start_time
+                        );
+                        const actionButtonText = canStartSession
                           ? "Start Session"
                           : "View Details";
-                        const actionButtonClass = isOnline
+                        const actionButtonClass = canStartSession
                           ? "dbt-btn-filled"
                           : "dbt-btn-outlined";
                         const patientName = getPatientDisplayName(

@@ -191,6 +191,7 @@ const AgendaContent = () => {
                                 paymentStatus: item.paymentStatus || item.payment_status || 'Paid',
                                 patientType: item.patient_type === 'clinic_patient' ? 'Clinic Patients' : (modeLabel === 'Online' ? 'Patients (Online)' : 'Clinic Patients'),
                                 rawPatientType: item.patient_type || item.patientType || '',
+                                patient_type: item.patient_type || item.patientType || '',
                                 sessionType: typeLabel,
                                 sessionStatus: statusLabel,
                                 hasComment: Boolean(item.comment || item.hasComment || item.has_comment),
@@ -649,6 +650,13 @@ const AgendaContent = () => {
                                                         }}
                                                         onClick={(e) => {
                                                             e.stopPropagation();
+                                                            const sessionId = event.appId || event.id;
+                                                            const rawType = event?.patient_type || event?.rawPatientType || '';
+                                                            if (rawType === "clinic_patient") {
+                                                                router.push(`/back-to-agenda${sessionId ? `?therapy_session_id=${sessionId}` : ""}`);
+                                                            } else {
+                                                                router.push(`/final-back-to-agenda${sessionId ? `?therapy_session_id=${sessionId}` : ""}`);
+                                                            }
                                                         }}
                                                     >
                                                         {/* Header: Time & Navigation Arrow */}
@@ -678,12 +686,11 @@ const AgendaContent = () => {
                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
                                                                     const sessionId = event.appId || event.id;
-                                                                    if (event?.rawPatientType === "clinic_patient" || event?.patient_type === "clinic_patient" || event?.patientType === "Clinic Patients") {
+                                                                    const rawType = event?.patient_type || event?.rawPatientType || '';
+                                                                    if (rawType === "clinic_patient") {
                                                                         router.push(`/back-to-agenda${sessionId ? `?therapy_session_id=${sessionId}` : ""}`);
-                                                                    } else if (event?.mode === "Online") {
-                                                                        router.push(`/final-back-to-agenda${sessionId ? `?therapy_session_id=${sessionId}` : ""}`);
                                                                     } else {
-                                                                        router.push(`/back-to-agenda${sessionId ? `?therapy_session_id=${sessionId}` : ""}`);
+                                                                        router.push(`/final-back-to-agenda${sessionId ? `?therapy_session_id=${sessionId}` : ""}`);
                                                                     }
                                                                 }}
                                                             >

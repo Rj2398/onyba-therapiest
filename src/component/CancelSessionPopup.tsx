@@ -17,7 +17,7 @@ const CancelSessionPopup: React.FC<CancelSessionPopupProps> = ({
   const [cancelReason, setCancelReason] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const effectiveSessionId = sessionId || sessionData?.id || sessionData?.patient_id || '50';
+  const effectiveSessionId = sessionId || sessionData?.id || sessionData?.patient_id
 
   const handleConfirmCancel = async () => {
     if (!cancelReason.trim()) {

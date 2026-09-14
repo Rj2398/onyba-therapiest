@@ -117,9 +117,12 @@ const BackToAgendaContent = () => {
   const [isCollectingPayment, setIsCollectingPayment] = useState<boolean>(false);
   const [showAmountError, setShowAmountError] = useState<boolean>(false);
 
+  const isStartedCall = Boolean(sessionData?.is_started_call);
+  const canReschedule = Boolean(sessionData?.can_reschedule);
+
   const startSessionUrl = session_id
     ? `/back-to-calendar?therapy_session_id=${session_id}`
-    : "/agenda";
+    : "/back-to-calendar";
 
   // Added service identifiers set
   const addedServiceIdentifiers = useMemo(() => {
@@ -446,30 +449,50 @@ const BackToAgendaContent = () => {
               Back to Agendas
             </Link>
             <div className="patient-nav-container">
-              <Link href={startSessionUrl} className="patient-link-start-session">
-                Start Session
-              </Link>
+              {isStartedCall ? (
+                <Link
+                  href={startSessionUrl}
+                  className="patient-link-start-session"
+                  style={{
+                    backgroundColor: "#28a745",
+                    borderColor: "#28a745",
+                    color: "#fff",
+                  }}
+                >
+                  Back To Started Session
+                </Link>
+              ) : (
+                <Link
+                  href={startSessionUrl}
+                  className="patient-link-start-session"
+                >
+                  Start Session
+                </Link>
+              )}
+
+              {canReschedule && (
+                <button
+                  type="button"
+                  className="patient-link-back-to-patients"
+                  onClick={() => setShowRescheduleModal(true)}
+                >
+                  <img src="images/reschedule.svg" alt="" />
+                  Reschedule
+                </button>
+              )}
 
               <button
                 type="button"
-                className="patient-link-back-to-patients"
-                onClick={() => setShowRescheduleModal(true)}
-              >
-                <img src="images/reschedule.svg" alt="" />
-                Reschedule
-              </button>
-
-              <a
-                href="#"
                 className="patient-link-cancel-session"
                 data-bs-toggle="modal"
                 data-bs-target="#cancelSessionModal"
+                style={{ background: "none" }}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                   <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
                 </svg>
                 Cancel
-              </a>
+              </button>
             </div>
           </div>
 
