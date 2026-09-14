@@ -1,7 +1,7 @@
 "use client"
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, Suspense } from 'react'
 import EndSession from '../meetingmodal/EndSession';
 import { useAuth } from '@/src/app/UserProvider';
 import { Base_image_url } from '@/src/config';
@@ -54,7 +54,7 @@ const languages = [
 ];
 
 
-const Header = ({ isMiniSidebar }: { isMiniSidebar: boolean }) => {
+const HeaderContent = ({ isMiniSidebar }: { isMiniSidebar: boolean }) => {
     const pathname = usePathname()
     const router = useRouter()
     const searchParams = useSearchParams()
@@ -438,5 +438,13 @@ const Header = ({ isMiniSidebar }: { isMiniSidebar: boolean }) => {
         </>
     )
 }
+
+const Header = (props: { isMiniSidebar: boolean }) => {
+    return (
+        <Suspense fallback={null}>
+            <HeaderContent {...props} />
+        </Suspense>
+    );
+};
 
 export default Header

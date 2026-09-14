@@ -310,29 +310,32 @@ const BackToAgendaContent = () => {
           )
         );
       }
-    } else if (type === "pay_later") {
-      setAmount("0");
-    } else if (type === "partial_payment") {
-      if (
-        !amount ||
-        amount === String(totalSessionAmountNum) ||
-        amount ===
-          getFullPaymentAmount(
-            totalSessionAmountNum,
-            remainingAmountNum,
-            true,
-            true
-          ) ||
-        amount ===
-          getFullPaymentAmount(
-            totalSessionAmountNum,
-            remainingAmountNum,
-            false,
-            false
-          ) ||
-        amount === "0"
-      ) {
-        setAmount("");
+    } else {
+      setIsBonusApplied(false);
+      if (type === "pay_later") {
+        setAmount("0");
+      } else if (type === "partial_payment") {
+        if (
+          !amount ||
+          amount === String(totalSessionAmountNum) ||
+          amount ===
+            getFullPaymentAmount(
+              totalSessionAmountNum,
+              remainingAmountNum,
+              true,
+              true
+            ) ||
+          amount ===
+            getFullPaymentAmount(
+              totalSessionAmountNum,
+              remainingAmountNum,
+              false,
+              false
+            ) ||
+          amount === "0"
+        ) {
+          setAmount("");
+        }
       }
     }
   };
@@ -905,15 +908,15 @@ const BackToAgendaContent = () => {
                 </div>
               </div>
 
-              <div className="cp-checkbox-row">
-                <input
-                  type="checkbox"
-                  id="bonus-discount"
-                  checked={isBonusApplied}
-                  onChange={(e) => {
-                    const checked = e.target.checked;
-                    setIsBonusApplied(checked);
-                    if (paymentType === "full_payment") {
+              {paymentType === "full_payment" && isFirstTimePayment && (
+                <div className="cp-checkbox-row">
+                  <input
+                    type="checkbox"
+                    id="bonus-discount"
+                    checked={isBonusApplied}
+                    onChange={(e) => {
+                      const checked = e.target.checked;
+                      setIsBonusApplied(checked);
                       setAmount(
                         getFullPaymentAmount(
                           totalSessionAmountNum,
@@ -922,11 +925,11 @@ const BackToAgendaContent = () => {
                           checked
                         )
                       );
-                    }
-                  }}
-                />
-                <label htmlFor="bonus-discount">Add Bonus up to 10% OFF.</label>
-              </div>
+                    }}
+                  />
+                  <label htmlFor="bonus-discount">Add Bonus up to 10% OFF.</label>
+                </div>
+              )}
 
               <div className="cp-actions-row">
                 <button

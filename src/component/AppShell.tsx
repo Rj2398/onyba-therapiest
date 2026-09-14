@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { usePathname } from 'next/navigation'
 import Sidebar from './Sidebar'
 import Header from './common/Header'
@@ -18,38 +18,33 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     (route) => pathname === route || pathname.startsWith(route + '/')
   )
 
-    // Toggle sidebar class on the layout wrapper
-    useEffect(() => {
-      const layout = document.getElementById('dashboardLayout');
-      if (layout) {
-        layout.classList.toggle('mini-sidebar', isMiniSidebar);
-      }
-    }, [isMiniSidebar]);
-  
-    // Attach click handler to the toggle button (runs on every render)
-    // useEffect(() => {
-    //   const toggleBtn = document.getElementById('sidebarToggleBtn');
-    //   if (!toggleBtn) return;
-  
-    //   const handler = () => setIsMiniSidebar((prev) => !prev);
-    //   toggleBtn.addEventListener('click', handler);
-  
-    //   return () => toggleBtn.removeEventListener('click', handler);
-    // }, []);
+  // Toggle sidebar class on the layout wrapper
+  useEffect(() => {
+    const layout = document.getElementById('dashboardLayout');
+    if (layout) {
+      layout.classList.toggle('mini-sidebar', isMiniSidebar);
+    }
+  }, [isMiniSidebar]);
 
-    useEffect(() => {
-      const handler = (e: MouseEvent) => {
-        const target = e.target as HTMLElement;
-        if (target.closest('#sidebarToggleBtn')) {
-          setIsMiniSidebar((prev) => !prev);
-        }
-      };
-      document.addEventListener('click', handler);
-      return () => document.removeEventListener('click', handler);
-    }, []);
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.closest('#sidebarToggleBtn')) {
+        setIsMiniSidebar((prev) => !prev);
+      }
+    };
+    document.addEventListener('click', handler);
+    return () => document.removeEventListener('click', handler);
+  }, []);
 
   if (isNoShell) {
-    return <UserProvider>{children}</UserProvider>
+    return (
+      <UserProvider>
+        <Suspense fallback={null}>
+          {children}
+        </Suspense>
+      </UserProvider>
+    )
   }
 
   return (
@@ -58,7 +53,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         <Sidebar />
         <div className="gl-main-content-wrapper">
           <Header isMiniSidebar={isMiniSidebar} />
-          {children}
+          <Suspense fallback={null}>
+            {children}
+          </Suspense>
         </div>
       </div>
     </UserProvider>
