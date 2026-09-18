@@ -310,18 +310,14 @@ const AgendaContent = () => {
     };
 
     const getOverlapStyle = (event: any, dayEvents: any[]) => {
-        let start = getMinutes(event.startTime) - calendarStartMinutes;
-        if (start < 0) start += 24 * 60;
-        let end = getMinutes(event.endTime) - calendarStartMinutes;
-        if (end < 0) end += 24 * 60;
-        if (end <= start && end !== start) end += 24 * 60;
+        let start = Math.max(0, getMinutes(event.startTime) - calendarStartMinutes);
+        let end = Math.min(calendarEndMinutes - calendarStartMinutes, getMinutes(event.endTime) - calendarStartMinutes);
+        if (end <= start) end = start + 15;
 
         const overlapping = dayEvents.filter(other => {
-            let oStart = getMinutes(other.startTime) - calendarStartMinutes;
-            if (oStart < 0) oStart += 24 * 60;
-            let oEnd = getMinutes(other.endTime) - calendarStartMinutes;
-            if (oEnd < 0) oEnd += 24 * 60;
-            if (oEnd <= oStart && oEnd !== oStart) oEnd += 24 * 60;
+            let oStart = Math.max(0, getMinutes(other.startTime) - calendarStartMinutes);
+            let oEnd = Math.min(calendarEndMinutes - calendarStartMinutes, getMinutes(other.endTime) - calendarStartMinutes);
+            if (oEnd <= oStart) oEnd = oStart + 15;
 
             return Math.max(start, oStart) < Math.min(end, oEnd);
         });
@@ -344,15 +340,17 @@ const AgendaContent = () => {
     };
 
     const CALENDAR_START = "08:00 AM";
+    const CALENDAR_END = "04:30 PM";
     const SLOT_HEIGHT = 34; // Upgraded slot height for spacious card content visibility
 
     const calendarStartMinutes = getMinutes(CALENDAR_START);
+    const calendarEndMinutes = getMinutes(CALENDAR_END);
 
     const timeSlots = React.useMemo(() => {
         const slots: string[] = [];
-        const totalSlots = 24 * 4; // 96 slots of 15 minutes = 24 hours
+        const totalSlots = Math.floor((calendarEndMinutes - calendarStartMinutes) / 15);
         for (let i = 0; i < totalSlots; i++) {
-            const totalMinutes = (calendarStartMinutes + i * 15) % (24 * 60);
+            const totalMinutes = calendarStartMinutes + i * 15;
             let hour = Math.floor(totalMinutes / 60);
             const minute = totalMinutes % 60;
             const period = hour >= 12 ? "PM" : "AM";
@@ -361,7 +359,7 @@ const AgendaContent = () => {
             slots.push(`${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")} ${period}`);
         }
         return slots;
-    }, [calendarStartMinutes]);
+    }, [calendarStartMinutes, calendarEndMinutes]);
 
     const getCardStyle = (
         startTime: string,
@@ -371,17 +369,11 @@ const AgendaContent = () => {
         const start = getMinutes(startTime);
         const end = getMinutes(endTime);
 
-        let startRel = start - calendarStartMinutes;
-        if (startRel < 0) startRel += 24 * 60;
-
-        let endRel = end - calendarStartMinutes;
-        if (endRel < 0) endRel += 24 * 60;
-        if (endRel <= startRel && endRel !== startRel) {
-            endRel += 24 * 60;
-        }
+        let startRel = Math.max(0, start - calendarStartMinutes);
+        let endRel = Math.min(calendarEndMinutes - calendarStartMinutes, end - calendarStartMinutes);
 
         const top = (startRel / 15) * SLOT_HEIGHT;
-        const duration = endRel > startRel ? endRel - startRel : 45;
+        const duration = endRel > startRel ? endRel - startRel : 15;
         const height = Math.max((duration / 15) * SLOT_HEIGHT, SLOT_HEIGHT);
 
         return {
@@ -395,8 +387,8 @@ const AgendaContent = () => {
 
     const SLOT_MINUTES = 15;
 
-    let nowRel = nowMinutes - calendarStartMinutes;
-    if (nowRel < 0) nowRel += 24 * 60;
+    const nowRel = nowMinutes - calendarStartMinutes;
+    const isNowInBounds = nowMinutes >= calendarStartMinutes && nowMinutes <= calendarEndMinutes;
 
     const lineTop =
         (nowRel / SLOT_MINUTES) * SLOT_HEIGHT;
@@ -537,16 +529,18 @@ const AgendaContent = () => {
 
                             <div className="agd-days-grid">
 
-                                <div
-                                    className="agd-current-time-line"
-                                    style={{
-                                        top: `${lineTop}px`,
-                                    }}
-                                >
-                                    <span className="agd-current-time-label">
-                                        {currentTimeText}
-                                    </span>
-                                </div>
+                                {isNowInBounds && (
+                                    <div
+                                        className="agd-current-time-line"
+                                        style={{
+                                            top: `${lineTop}px`,
+                                        }}
+                                    >
+                                        <span className="agd-current-time-label">
+                                            {currentTimeText}
+                                        </span>
+                                    </div>
+                                )}
 
                                 {weekDays.map((day, dIndex) => {
                                     const dayEvents = events.filter(ev => {
@@ -555,6 +549,11 @@ const AgendaContent = () => {
                                         if (patientTypeFilter !== 'All' && ev.patientType !== patientTypeFilter) return false;
                                         if (sessionTypeFilter !== 'All' && ev.sessionType !== sessionTypeFilter) return false;
                                         if (sessionStatusFilter !== 'All' && ev.sessionStatus.toLowerCase() !== sessionStatusFilter.toLowerCase()) return false;
+
+                                        const evStart = getMinutes(ev.startTime);
+                                        const evEnd = getMinutes(ev.endTime);
+                                        if (evEnd <= calendarStartMinutes || evStart >= calendarEndMinutes) return false;
+
                                         return true;
                                     });
 
@@ -577,7 +576,9 @@ const AgendaContent = () => {
                                                     const rect = e.currentTarget.getBoundingClientRect();
                                                     const dropY = e.clientY - rect.top;
                                                     const slotIndex = Math.floor(dropY / SLOT_HEIGHT);
-                                                    const newStartMinutes = (calendarStartMinutes + slotIndex * 15) % (24 * 60);
+                                                    const maxSlotIndex = Math.floor((calendarEndMinutes - calendarStartMinutes) / 15) - 1;
+                                                    const clampedSlotIndex = Math.max(0, Math.min(slotIndex, maxSlotIndex));
+                                                    const newStartMinutes = calendarStartMinutes + clampedSlotIndex * 15;
 
                                                     const oldDuration = getMinutes(event.endTime) - getMinutes(event.startTime);
                                                     const durationMinutes = oldDuration > 0 ? oldDuration : 45;
@@ -637,7 +638,9 @@ const AgendaContent = () => {
                                                     const rect = e.currentTarget.getBoundingClientRect();
                                                     const clicky = e.clientY - rect.top;
                                                     const slotIndex = Math.floor(clicky / SLOT_HEIGHT);
-                                                    const newStartMinutes = (calendarStartMinutes + slotIndex * 15) % (24 * 60);
+                                                    const maxSlotIndex = Math.floor((calendarEndMinutes - calendarStartMinutes) / 15) - 1;
+                                                    const clampedSlotIndex = Math.max(0, Math.min(slotIndex, maxSlotIndex));
+                                                    const newStartMinutes = calendarStartMinutes + clampedSlotIndex * 15;
                                                     const durationMinutes = getMinutes(copiedEvent.endTime) - getMinutes(copiedEvent.startTime);
 
                                                     const newEvent = {
