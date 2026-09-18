@@ -137,12 +137,34 @@ const AgendaContent = () => {
                 endDate.setDate(endDate.getDate() + 6);
                 const endDateStr = formatYMD(endDate);
 
+                const getPatientTypeForApi = (filter: string) => {
+                    if (filter === 'All') return '';
+                    if (filter === 'Patients (Online)') return 'online_patient';
+                    if (filter === 'Clinic Patients') return 'clinic_patient';
+                    return filter;
+                };
+
+                const getSessionTypeForApi = (filter: string) => {
+                    if (filter === 'All') return '';
+                    return filter.replace(/ Session$/, '');
+                };
+
+                const getSessionStatusForApi = (filter: string) => {
+                    if (filter === 'All') return '';
+                    return filter.toLowerCase();
+                };
+
+                const getPaymentStatusForApi = (filter: string) => {
+                    if (filter === 'All') return '';
+                    return filter.toLowerCase();
+                };
+
                 const formData = new FormData();
                 formData.append('date_range', `${startDateStr}_${endDateStr}`);
-                formData.append('payment_status', paymentFilter === 'All' ? '' : paymentFilter);
-                formData.append('patient_type', patientTypeFilter === 'All' ? '' : patientTypeFilter);
-                formData.append('session_status', sessionStatusFilter === 'All' ? '' : sessionStatusFilter);
-                formData.append('session_type', sessionTypeFilter === 'All' ? '' : sessionTypeFilter);
+                formData.append('payment_status', getPaymentStatusForApi(paymentFilter));
+                formData.append('patient_type', getPatientTypeForApi(patientTypeFilter));
+                formData.append('session_status', getSessionStatusForApi(sessionStatusFilter));
+                formData.append('session_type', getSessionTypeForApi(sessionTypeFilter));
 
                 const response = await requestApi({
                     endpoint: 'get-appointments',
@@ -178,6 +200,14 @@ const AgendaContent = () => {
                             const rawStatus = item.session_status || item.status || 'upcoming';
                             const statusLabel = rawStatus.charAt(0).toUpperCase() + rawStatus.slice(1).toLowerCase();
 
+                            const rawPayment = item.payment_status || item.paymentStatus || item.payment || '';
+                            const paymentLabel = rawPayment ? (rawPayment.charAt(0).toUpperCase() + rawPayment.slice(1).toLowerCase()) : 'Paid';
+
+                            const rawPatientType = item.patient_type || item.patientType || '';
+                            const patientTypeLabel = (rawPatientType === 'clinic_patient' || rawPatientType === 'Clinic Patients')
+                                ? 'Clinic Patients'
+                                : ((modeLabel === 'Online' || rawPatientType === 'online_patient' || rawPatientType === 'online') ? 'Patients (Online)' : 'Clinic Patients');
+
                             return {
                                 id: item.id || idx + 1,
                                 dayIndex: dayIndex,
@@ -188,10 +218,10 @@ const AgendaContent = () => {
                                 mode: modeLabel,
                                 startTime: item.session_start_time || item.startTime || item.start_time || '09:00:00',
                                 endTime: item.session_end_time || item.endTime || item.end_time || '09:45:00',
-                                paymentStatus: item.paymentStatus || item.payment_status || 'Paid',
-                                patientType: item.patient_type === 'clinic_patient' ? 'Clinic Patients' : (modeLabel === 'Online' ? 'Patients (Online)' : 'Clinic Patients'),
-                                rawPatientType: item.patient_type || item.patientType || '',
-                                patient_type: item.patient_type || item.patientType || '',
+                                paymentStatus: paymentLabel,
+                                patientType: patientTypeLabel,
+                                rawPatientType: rawPatientType,
+                                patient_type: rawPatientType,
                                 sessionType: typeLabel,
                                 sessionStatus: statusLabel,
                                 hasComment: Boolean(item.comment || item.hasComment || item.has_comment),
@@ -280,12 +310,19 @@ const AgendaContent = () => {
     };
 
     const getOverlapStyle = (event: any, dayEvents: any[]) => {
-        const start = getMinutes(event.startTime);
-        const end = getMinutes(event.endTime);
+        let start = getMinutes(event.startTime) - calendarStartMinutes;
+        if (start < 0) start += 24 * 60;
+        let end = getMinutes(event.endTime) - calendarStartMinutes;
+        if (end < 0) end += 24 * 60;
+        if (end <= start && end !== start) end += 24 * 60;
 
         const overlapping = dayEvents.filter(other => {
-            const oStart = getMinutes(other.startTime);
-            const oEnd = getMinutes(other.endTime);
+            let oStart = getMinutes(other.startTime) - calendarStartMinutes;
+            if (oStart < 0) oStart += 24 * 60;
+            let oEnd = getMinutes(other.endTime) - calendarStartMinutes;
+            if (oEnd < 0) oEnd += 24 * 60;
+            if (oEnd <= oStart && oEnd !== oStart) oEnd += 24 * 60;
+
             return Math.max(start, oStart) < Math.min(end, oEnd);
         });
 
@@ -334,11 +371,18 @@ const AgendaContent = () => {
         const start = getMinutes(startTime);
         const end = getMinutes(endTime);
 
-        const top =
-            ((start - calendarStartMinutes) / 15) * SLOT_HEIGHT;
+        let startRel = start - calendarStartMinutes;
+        if (startRel < 0) startRel += 24 * 60;
 
-        const height =
-            Math.max(((end - start) / 15) * SLOT_HEIGHT, SLOT_HEIGHT);
+        let endRel = end - calendarStartMinutes;
+        if (endRel < 0) endRel += 24 * 60;
+        if (endRel <= startRel && endRel !== startRel) {
+            endRel += 24 * 60;
+        }
+
+        const top = (startRel / 15) * SLOT_HEIGHT;
+        const duration = endRel > startRel ? endRel - startRel : 45;
+        const height = Math.max((duration / 15) * SLOT_HEIGHT, SLOT_HEIGHT);
 
         return {
             top,
@@ -351,8 +395,11 @@ const AgendaContent = () => {
 
     const SLOT_MINUTES = 15;
 
+    let nowRel = nowMinutes - calendarStartMinutes;
+    if (nowRel < 0) nowRel += 24 * 60;
+
     const lineTop =
-        ((nowMinutes - calendarStartMinutes) / SLOT_MINUTES) * SLOT_HEIGHT;
+        (nowRel / SLOT_MINUTES) * SLOT_HEIGHT;
 
     const currentTimeText = now.toLocaleTimeString("en-US", {
         hour: "numeric",
@@ -504,10 +551,10 @@ const AgendaContent = () => {
                                 {weekDays.map((day, dIndex) => {
                                     const dayEvents = events.filter(ev => {
                                         if (ev.dayIndex !== dIndex) return false;
-                                        if (paymentFilter !== 'All' && ev.paymentStatus !== paymentFilter) return false;
+                                        if (paymentFilter !== 'All' && ev.paymentStatus.toLowerCase() !== paymentFilter.toLowerCase()) return false;
                                         if (patientTypeFilter !== 'All' && ev.patientType !== patientTypeFilter) return false;
                                         if (sessionTypeFilter !== 'All' && ev.sessionType !== sessionTypeFilter) return false;
-                                        if (sessionStatusFilter !== 'All' && ev.sessionStatus !== sessionStatusFilter) return false;
+                                        if (sessionStatusFilter !== 'All' && ev.sessionStatus.toLowerCase() !== sessionStatusFilter.toLowerCase()) return false;
                                         return true;
                                     });
 
@@ -530,7 +577,7 @@ const AgendaContent = () => {
                                                     const rect = e.currentTarget.getBoundingClientRect();
                                                     const dropY = e.clientY - rect.top;
                                                     const slotIndex = Math.floor(dropY / SLOT_HEIGHT);
-                                                    const newStartMinutes = calendarStartMinutes + slotIndex * 15;
+                                                    const newStartMinutes = (calendarStartMinutes + slotIndex * 15) % (24 * 60);
 
                                                     const oldDuration = getMinutes(event.endTime) - getMinutes(event.startTime);
                                                     const durationMinutes = oldDuration > 0 ? oldDuration : 45;
@@ -590,7 +637,7 @@ const AgendaContent = () => {
                                                     const rect = e.currentTarget.getBoundingClientRect();
                                                     const clicky = e.clientY - rect.top;
                                                     const slotIndex = Math.floor(clicky / SLOT_HEIGHT);
-                                                    const newStartMinutes = calendarStartMinutes + slotIndex * 15;
+                                                    const newStartMinutes = (calendarStartMinutes + slotIndex * 15) % (24 * 60);
                                                     const durationMinutes = getMinutes(copiedEvent.endTime) - getMinutes(copiedEvent.startTime);
 
                                                     const newEvent = {
