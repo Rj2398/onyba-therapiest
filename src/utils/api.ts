@@ -5,7 +5,7 @@ import { API_BASE_URL } from '@/src/config';
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
-    'Content-Type': 'application/json',
+    'Accept': 'application/json',
   },
 });
 
@@ -43,7 +43,7 @@ api.interceptors.response.use(
     // If the server returns a 401 Unauthorized, automatically log out
     if (error.response?.status === 401) {
       try {
-        if (typeof window !== 'undefined') {
+        if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
           window.localStorage.removeItem('loginUser');
           window.localStorage.removeItem('onyba_authenticated');
           // Force redirect to login screen
@@ -72,9 +72,16 @@ export const requestApi = async ({
 }: RequestOptions) => {
   const upperMethod = method.toString().toUpperCase();
 
-  const headers: Record<string, string> = {};
-  if (isFormData) {
-    headers['Content-Type'] = 'multipart/form-data';
+  const isForm = isFormData || (typeof FormData !== 'undefined' && data instanceof FormData);
+
+  const headers: Record<string, string> = {
+    'Accept': 'application/json',
+  };
+
+  // Only set Content-Type for JSON requests.
+  // For FormData, omit Content-Type so Axios/browser automatically injects multipart/form-data with boundary.
+  if (!isForm && upperMethod !== 'GET') {
+    headers['Content-Type'] = 'application/json';
   }
 
   const config: any = {

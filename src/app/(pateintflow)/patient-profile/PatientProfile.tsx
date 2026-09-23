@@ -47,6 +47,7 @@ interface PatientDetails {
 }
 
 interface SessionItem {
+  patient_type: string;
   id: number;
   session_date: string;
   session_start_time: string;
@@ -825,7 +826,11 @@ const PatientProfile = () => {
                           <td className="dbt-empty-cell">—</td>
                           <td className="dbt4-pad-right">
                             <Link
-                              href={`/final-back-to-agenda?id=${session.id}`}
+                              href={
+                                session?.patient_type == 'client'
+                                  ? `/back-to-agenda?therapy_session_id=${session?.id}&hide=true`
+                                  : `/final-back-to-agenda?id=${session?.id}&hide=true`
+                              }
                               className="dbt-action-btn"
                             >
                               View Details

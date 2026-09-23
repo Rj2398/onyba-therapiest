@@ -1,6 +1,7 @@
 "use client";
 import AgendaCalendarPopup from "@/src/component/AgendaCalendarPopup";
 import CancelSessionPopup from "@/src/component/CancelSessionPopup";
+import EndSession from "@/src/component/meetingmodal/EndSession";
 import Link from "next/link";
 import React, { useState, useRef, useEffect, useMemo, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -175,8 +176,8 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
     searchParams.get("therapy_session_id") ||
     searchParams.get("id") ||
     sessionData?.id ||
-    sessionData?.patient_id ||
-    "28";
+    sessionData?.patient_id;
+  const hide_button: boolean = searchParams.get("hide") === "true";
 
   const startSessionUrl = searchParams && searchParams.toString()
     ? `/video-confrenece?${searchParams.toString()}`
@@ -187,6 +188,7 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const [showRescheduleModal, setShowRescheduleModal] = useState(false);
+  const [isRequestingPayment, setIsRequestingPayment] = useState(false);
   const [verifyingOtp, setVerifyingOtp] = useState(false);
   const [isResendingCode, setIsResendingCode] = useState(false);
   const [resendTimer, setResendTimer] = useState<number>(0);
@@ -331,26 +333,28 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
     setSelectedServiceId(service.id);
     setIsServiceDropdownOpen(false);
 
-    if (!session_id) {
+    const effectiveSessionId =
+      session_id || sessionData?.id || sessionData?.therapy_session_id;
+
+    if (!effectiveSessionId) {
       toast.error("Session ID not found.");
       return;
     }
 
     try {
       toast.loading("Adding service...", { id: "add-service" });
-      const formData = new FormData();
-      formData.append("therapy_session_id", String(session_id));
-      formData.append("service_id", String(service.id));
 
       const response = await requestApi({
         endpoint: "add-session-additional-services",
         method: "POST",
-        data: formData,
-        isFormData: true,
+        data: {
+          therapy_session_id: String(effectiveSessionId),
+          service_id: String(service.id),
+        },
       });
 
       toast.dismiss("add-service");
-      if (response && response.success === true) {
+      if (response && (response.success === true)) {
         toast.success(response.message || "Service added successfully.");
         await fetchSessionDetails();
       } else {
@@ -362,6 +366,108 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
       toast.error(
         err?.response?.data?.message || err?.message || "Error adding service"
       );
+    }
+  };
+
+  const handleRequestAdditionalPayment = async () => {
+    const effectiveSessionId =
+      session_id ||
+      sessionData?.id ||
+      sessionData?.therapy_session_id ||
+      sessionData?.patient_id;
+
+    if (!effectiveSessionId) {
+      toast.error("Session ID not found.");
+      return;
+    }
+
+    const pDetails = Array.isArray(sessionData?.payment_details)
+      ? sessionData.payment_details[0]
+      : sessionData?.payment_details;
+
+    const addServices =
+      pDetails?.additional_services &&
+      Array.isArray(pDetails.additional_services) &&
+      pDetails.additional_services.length > 0
+        ? pDetails.additional_services
+        : Array.isArray(sessionData?.additional_services) &&
+          sessionData.additional_services.length > 0
+        ? sessionData.additional_services
+        : [];
+
+    let serviceIds: any[] = addServices
+      .map((srv: any) => srv.service_id ?? srv.id)
+      .filter((id: any) => id !== undefined && id !== null);
+
+    if (serviceIds.length === 0) {
+      const mainId = sessionData?.service_id || selectedServiceId;
+      if (mainId !== undefined && mainId !== null && mainId !== "") {
+        serviceIds.push(mainId);
+      }
+    }
+
+    const formattedServiceIds = serviceIds.map((id: any) =>
+      typeof id === "number" ? id : Number(id) || id
+    );
+
+    if (formattedServiceIds.length === 0) {
+      toast.error("No service selected for payment request.");
+      return;
+    }
+
+    let totalAmount = 0;
+    if (addServices.length > 0) {
+      totalAmount = addServices.reduce((acc: number, srv: any) => {
+        const price = parseFloat(srv.service_price || srv.price || 0);
+        return acc + (isNaN(price) ? 0 : price);
+      }, 0);
+    }
+
+    if (totalAmount === 0) {
+      const basePrice = parseFloat(
+        pDetails?.session_amount || sessionData?.session_price || "0"
+      );
+      totalAmount = isNaN(basePrice) ? 50 : basePrice;
+    }
+
+    setIsRequestingPayment(true);
+    try {
+      toast.loading("Sending payment request...", { id: "req-payment" });
+
+      const response = await requestApi({
+        endpoint: "additional-payment-request",
+        method: "POST",
+        data: {
+          therapy_session_id: String(effectiveSessionId),
+          service_id: formattedServiceIds,
+          amount: totalAmount,
+        },
+      });
+
+      toast.dismiss("req-payment");
+      if (
+        response &&
+        (response.success === true || response.code === 200 || response.status === true)
+      ) {
+        toast.success(
+          response.message || "Additional payment requested successfully."
+        );
+        await fetchSessionDetails();
+      } else {
+        toast.error(
+          response?.message || "Failed to request additional payment."
+        );
+      }
+    } catch (err: any) {
+      toast.dismiss("req-payment");
+      console.error("Error requesting additional payment:", err);
+      toast.error(
+        err?.response?.data?.message ||
+          err?.message ||
+          "Error requesting additional payment."
+      );
+    } finally {
+      setIsRequestingPayment(false);
     }
   };
 
@@ -420,7 +526,7 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
 
       if (
         response &&
-        (response.success === true || response.code === 200)
+        (response.success === true)
       ) {
         toast.success("Patient verified successfully!");
         const backToCalendarUrl = session_id
@@ -443,42 +549,50 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
   };
 
   const handleStartSessionNotOnline = async () => {
-    const otpCode = otp.join("");
-    if (otpCode.length !== 5) {
-      toast.error("Please enter the OTP.");
+    if (!session_id) {
+      toast.error("Session ID not found.");
       return;
     }
+    const otpCode = otp.join("");
     setVerifyingOtp(true);
     try {
-      const formData = new FormData();
-      formData.append("session_id", String(session_id));
-      formData.append("otp", otpCode);
+      let response: any = null;
+      if (otpCode.length === 5) {
+        const formData = new FormData();
+        formData.append("session_id", String(session_id));
+        formData.append("otp", otpCode);
 
-      const response = await requestApi({
-        endpoint: "verify-walkin",
-        method: "POST",
-        data: formData,
-        isFormData: true,
-      });
+        response = await requestApi({
+          endpoint: "verify-walkin",
+          method: "POST",
+          data: formData,
+          isFormData: true,
+        });
+      } else {
+        response = await requestApi({
+          endpoint: `start-session/${session_id}`,
+          method: "POST",
+        });
+      }
 
       if (
         response &&
-        (response.success === true || response.code === 200)
+        (response.success === true)
       ) {
-        toast.success("Patient verified successfully!");
+        toast.success(response.message || "Session started successfully!");
         const backToCalendarUrl = session_id
           ? `/back-to-calendar?therapy_session_id=${session_id}`
           : "/back-to-calendar";
         router.push(backToCalendarUrl);
       } else {
         toast.error(
-          response?.message || "OTP verification failed. Please check code."
+          response?.message || "Failed to start session. Please try again."
         );
       }
     } catch (err: any) {
-      console.error("Error verifying walk-in OTP:", err);
+      console.error("Error starting session:", err);
       toast.error(
-        err?.response?.data?.message || err?.message || "Error verifying OTP"
+        err?.response?.data?.message || err?.message || "Error starting session"
       );
     } finally {
       setVerifyingOtp(false);
@@ -740,101 +854,128 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
               Back to Agendas
             </Link>
             <div className="patient-nav-container">
-              {isOnline ? (
+              {!hide_button && (
                 <>
-                  {isStartedCall ? (
+                  {isOnline ? (
+                    <>
+                      {isStartedCall ? (
+                        <>
+                          <button
+                            type="button"
+                            className="patient-link-start-session"
+                            disabled
+                            style={{
+                              opacity: 0.6,
+                              cursor: "not-allowed",
+                              backgroundColor: "#9e9e9e",
+                              borderColor: "#9e9e9e",
+                            }}
+                          >
+                            Start Session
+                          </button>
+                          <Link
+                            href={startSessionUrl}
+                            className="patient-link-cancel-session"
+                            style={{
+                              backgroundColor: "#28a745",
+                              borderColor: "#28a745",
+                              color: "#fff",
+                            }}
+                          >
+                            Back To Video Call
+                          </Link>
+                        </>
+                      ) : (
+                        <Link
+                          href={startSessionUrl}
+                          className="patient-link-start-session"
+                        >
+                          Start Session
+                        </Link>
+                      )}
+
+                      {canReschedule && (
+                        <button
+                          type="button"
+                          className="patient-link-back-to-patients"
+                          onClick={() => setShowRescheduleModal(true)}
+                        >
+                          <img src="images/reschedule.svg" alt="" />
+                          Reschedule
+                        </button>
+                      )}
+
+                      <button
+                        type="button"
+                        className="patient-link-cancel-session"
+                        data-bs-toggle="modal"
+                        data-bs-target="#cancelSessionModal"
+                        style={{ background: "none" }}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                          <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
+                        </svg>
+                        Cancel
+                      </button>
+                    </>
+                  ) : (
                     <>
                       <button
                         type="button"
                         className="patient-link-start-session"
-                        disabled
-                        style={{
-                          opacity: 0.6,
-                          cursor: "not-allowed",
-                          backgroundColor: "#9e9e9e",
-                          borderColor: "#9e9e9e",
-                        }}
+                        onClick={handleStartSessionNotOnline}
+                        style={
+                          isStartedCall
+                            ? { opacity: 0.6, cursor: "not-allowed" }
+                            : {
+                                backgroundColor: "#6c2b3b",
+                                borderColor: "#6c2b3b",
+                                color: "#fff",
+                              }
+                        }
                       >
                         Start Session
                       </button>
-                      <Link
-                        href={startSessionUrl}
-                        className="patient-link-cancel-session"
+
+                      <button
+                        type="button"
+                        className="patient-link-start-session"
+                        data-bs-toggle="modal"
+                        data-bs-target="#endSessionModal"
                         style={{
-                          backgroundColor: "#28a745",
-                          borderColor: "#28a745",
+                          backgroundColor: "#6c2b3b",
+                          borderColor: "#6c2b3b",
                           color: "#fff",
                         }}
                       >
-                        Back To Video Call
-                      </Link>
+                        End Session
+                      </button>
+
+                      {canReschedule && (
+                        <button
+                          type="button"
+                          className="patient-link-back-to-patients"
+                          onClick={() => setShowRescheduleModal(true)}
+                        >
+                          <img src="images/reschedule.svg" alt="" />
+                          Reschedule
+                        </button>
+                      )}
+
+                      <button
+                        type="button"
+                        className="patient-link-cancel-session"
+                        data-bs-toggle="modal"
+                        data-bs-target="#cancelSessionModal"
+                        style={{ background: "none" }}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                          <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
+                        </svg>
+                        Cancel
+                      </button>
                     </>
-                  ) : (
-                    <Link
-                      href={startSessionUrl}
-                      className="patient-link-start-session"
-                    >
-                      Start Session
-                    </Link>
                   )}
-
-                  {canReschedule && (
-                    <button
-                      type="button"
-                      className="patient-link-back-to-patients"
-                      onClick={() => setShowRescheduleModal(true)}
-                    >
-                      <img src="images/reschedule.svg" alt="" />
-                      Reschedule
-                    </button>
-                  )}
-
-                  <button
-                    type="button"
-                    className="patient-link-cancel-session"
-                    data-bs-toggle="modal"
-                    data-bs-target="#cancelSessionModal"
-                    style={{ background: "none" }}
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                      <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
-                    </svg>
-                    Cancel
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button
-                    type="button"
-                    className="patient-link-start-session"
-                    onClick={handleStartSessionNotOnline}
-                  >
-                    Start Session
-                  </button>
-
-                  {canReschedule && (
-                    <button
-                      type="button"
-                      className="patient-link-back-to-patients"
-                      onClick={() => setShowRescheduleModal(true)}
-                    >
-                      <img src="images/reschedule.svg" alt="" />
-                      Reschedule
-                    </button>
-                  )}
-
-                  <button
-                    type="button"
-                    className="patient-link-cancel-session"
-                    data-bs-toggle="modal"
-                    data-bs-target="#cancelSessionModal"
-                    style={{ background: "none" }}
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                      <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
-                    </svg>
-                    Cancel
-                  </button>
                 </>
               )}
             </div>
@@ -940,7 +1081,7 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
               </div>
             </div>
           </div>
-          {sessionData?.session_mode !== "online" && (
+          {!hide_button && sessionData?.session_mode !== "online" && (
             <div className="session-verify-card">
               <div className="session-verify-left">
                 <div className="session-verify-icon-wrapper">
@@ -1739,33 +1880,37 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
                     </div>
                   )}
 
-                  <input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={handleFileUpload}
-                    style={{ display: "none" }}
-                  />
-
-                  <div
-                    className="ps-part2-upload-zone"
-                    onClick={() => fileInputRef.current?.click()}
-                    style={{ cursor: "pointer" }}
-                  >
-                    <svg className="ps-part2-upload-icon" viewBox="0 0 24 24">
-                      <path
-                        d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"
-                        fill="currentColor"
+                  {activeDocTab === "therapist" && (
+                    <>
+                      <input
+                        type="file"
+                        ref={fileInputRef}
+                        onChange={handleFileUpload}
+                        style={{ display: "none" }}
                       />
-                    </svg>
-                    <span className="ps-part2-upload-text">
-                      {uploadingDoc
-                        ? "Uploading Document..."
-                        : "Upload Document"}
-                    </span>
-                    <span className="ps-part2-upload-hint">
-                      Allowed: PDF, DOC, DOCX, JPG, PNG (Max. 10MB)
-                    </span>
-                  </div>
+
+                      <div
+                        className="ps-part2-upload-zone"
+                        onClick={() => fileInputRef.current?.click()}
+                        style={{ cursor: "pointer" }}
+                      >
+                        <svg className="ps-part2-upload-icon" viewBox="0 0 24 24">
+                          <path
+                            d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"
+                            fill="currentColor"
+                          />
+                        </svg>
+                        <span className="ps-part2-upload-text">
+                          {uploadingDoc
+                            ? "Uploading Document..."
+                            : "Upload Document"}
+                        </span>
+                        <span className="ps-part2-upload-hint">
+                          Allowed: PDF, DOC, DOCX, JPG, PNG (Max. 10MB)
+                        </span>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
@@ -2205,11 +2350,43 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
                 </div>
               </div>
 
-              <div className="pfd-btn-area">
-                <button className="pfd-action-trigger">
-                  Request Additional Payment
-                </button>
-              </div>
+              {(() => {
+                const pDetails = Array.isArray(sessionData?.payment_details)
+                  ? sessionData.payment_details[0]
+                  : sessionData?.payment_details;
+
+                const isAdditionalPaymentRequested = Boolean(
+                  pDetails?.additional_payment_requested ?? sessionData?.additional_payment_requested
+                );
+
+                const isDisabled = isAdditionalPaymentRequested || isRequestingPayment;
+
+                return (
+                  <div className="pfd-btn-area">
+                    <button
+                      type="button"
+                      className="pfd-action-trigger"
+                      disabled={isDisabled}
+                      onClick={handleRequestAdditionalPayment}
+                      style={
+                        isDisabled
+                          ? {
+                              opacity: 0.6,
+                              cursor: "not-allowed",
+                              backgroundColor: "#8c7b83",
+                            }
+                          : undefined
+                      }
+                    >
+                      {isRequestingPayment
+                        ? "Sending Request..."
+                        : isAdditionalPaymentRequested
+                        ? "Payment Requested"
+                        : "Request Additional Payment"}
+                    </button>
+                  </div>
+                );
+              })()}
             </div>
           </div>
         </div>
@@ -2221,6 +2398,10 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
         onClose={() => setShowRescheduleModal(false)}
         sessionId={session_id}
         isReschedule={true}
+      />
+      <EndSession
+        sessionId={session_id || undefined}
+        onConfirmEnd={() => fetchSessionDetails()}
       />
     </>
   );

@@ -3,6 +3,7 @@
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import React, { useState, useEffect, useRef, Suspense } from 'react'
 import EndSession from '../meetingmodal/EndSession';
+import CancelSessionPopup from '@/src/component/CancelSessionPopup';
 import { useAuth } from '@/src/app/UserProvider';
 import { Base_image_url } from '@/src/config';
 
@@ -435,6 +436,7 @@ const HeaderContent = ({ isMiniSidebar }: { isMiniSidebar: boolean }) => {
 
 
             <EndSession sessionId={sessionId || undefined} />
+            <CancelSessionPopup sessionId={sessionId || undefined} />
         </>
     )
 }

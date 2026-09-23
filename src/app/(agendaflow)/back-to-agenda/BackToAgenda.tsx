@@ -6,6 +6,7 @@ import Link from "next/link";
 import toast from "react-hot-toast";
 import CancelSessionPopup from "@/src/component/CancelSessionPopup";
 import AgendaCalendarPopup from "@/src/component/AgendaCalendarPopup";
+import ClinicPatientEndSession from "@/src/component/meetingmodal/ClinicPatientEndSession";
 import { Base_image_url } from "@/src/config";
 import { requestApi } from "@/src/utils/api";
 
@@ -107,7 +108,11 @@ const BackToAgendaContent = () => {
   const [isServiceDropdownOpen, setIsServiceDropdownOpen] = useState(false);
   const [prevSessionSearch, setPrevSessionSearch] = useState<string>("");
 
-  const session_id = searchParams.get("therapy_session_id");
+  const session_id =
+    searchParams.get("therapy_session_id") ||
+    searchParams.get("session_id") ||
+    searchParams.get("id");
+  const hide_button: boolean = searchParams.get("hide") === "true";
 
   // Payment form states
   const [paymentMode, setPaymentMode] = useState<string>("cash");
@@ -116,9 +121,40 @@ const BackToAgendaContent = () => {
   const [isBonusApplied, setIsBonusApplied] = useState<boolean>(false);
   const [isCollectingPayment, setIsCollectingPayment] = useState<boolean>(false);
   const [showAmountError, setShowAmountError] = useState<boolean>(false);
+  const [isConsentChecked, setIsConsentChecked] = useState<boolean>(false);
+  const [isRequestingInvoice, setIsRequestingInvoice] = useState<boolean>(false);
 
   const isStartedCall = Boolean(sessionData?.is_started_call);
   const canReschedule = Boolean(sessionData?.can_reschedule);
+
+  const [isStartingSession, setIsStartingSession] = useState<boolean>(false);
+
+  const handleStartSession = async () => {
+    if (!session_id) {
+      toast.error("Session ID not found.");
+      return;
+    }
+    setIsStartingSession(true);
+    try {
+      const response = await requestApi({
+        endpoint: `start-session/${session_id}`,
+        method: "POST",
+      });
+      if (response && (response.success === true)) {
+        toast.success(response.message || "Session started successfully.");
+        await fetchSessionDetails();
+      } else {
+        toast.error(response?.message || "Failed to start session.");
+      }
+    } catch (err: any) {
+      console.error("Error starting session:", err);
+      toast.error(
+        err?.response?.data?.message || (err?.message === "Network Error" ? "Network error: Unable to reach API server." : err?.message) || "Error starting session"
+      );
+    } finally {
+      setIsStartingSession(false);
+    }
+  };
 
   const startSessionUrl = session_id
     ? `/back-to-calendar?therapy_session_id=${session_id}`
@@ -205,26 +241,28 @@ const BackToAgendaContent = () => {
     setSelectedServiceId(service.id);
     setIsServiceDropdownOpen(false);
 
-    if (!session_id) {
+    const effectiveSessionId =
+      session_id || sessionData?.id || sessionData?.therapy_session_id;
+
+    if (!effectiveSessionId) {
       toast.error("Session ID not found.");
       return;
     }
 
     try {
       toast.loading("Adding service...", { id: "add-service" });
-      const formData = new FormData();
-      formData.append("therapy_session_id", String(session_id));
-      formData.append("service_id", String(service.id));
 
       const response = await requestApi({
         endpoint: "add-session-additional-services",
         method: "POST",
-        data: formData,
-        isFormData: true,
+        data: {
+          therapy_session_id: String(effectiveSessionId),
+          service_id: String(service.id),
+        },
       });
 
       toast.dismiss("add-service");
-      if (response && (response.success === true || response.code === 200)) {
+      if (response && (response.success === true)) {
         toast.success(response.message || "Service added successfully.");
         await fetchSessionDetails();
       } else {
@@ -322,19 +360,19 @@ const BackToAgendaContent = () => {
           !amount ||
           amount === String(totalSessionAmountNum) ||
           amount ===
-            getFullPaymentAmount(
-              totalSessionAmountNum,
-              remainingAmountNum,
-              true,
-              true
-            ) ||
+          getFullPaymentAmount(
+            totalSessionAmountNum,
+            remainingAmountNum,
+            true,
+            true
+          ) ||
           amount ===
-            getFullPaymentAmount(
-              totalSessionAmountNum,
-              remainingAmountNum,
-              false,
-              false
-            ) ||
+          getFullPaymentAmount(
+            totalSessionAmountNum,
+            remainingAmountNum,
+            false,
+            false
+          ) ||
           amount === "0"
         ) {
           setAmount("");
@@ -379,21 +417,19 @@ const BackToAgendaContent = () => {
 
     setIsCollectingPayment(true);
     try {
-      const formData = new FormData();
-      formData.append("therapy_session_id", String(effectiveSessionId));
-      formData.append("payment_mode", paymentMode);
-      formData.append("payment_type", paymentType);
-      formData.append("amount", amount || "0");
-      formData.append("is_bonus_applied", isBonusApplied ? "1" : "0");
-
       const response = await requestApi({
         endpoint: "collect-clinic-session-payment",
         method: "POST",
-        data: formData,
-        isFormData: true,
+        data: {
+          therapy_session_id: String(effectiveSessionId),
+          payment_mode: paymentMode,
+          payment_type: paymentType,
+          amount: amount || "0",
+          is_bonus_applied: isBonusApplied ? "1" : "0",
+        },
       });
 
-      if (response && (response.success === true || response.code === 200)) {
+      if (response && (response.success === true)) {
         toast.success(response.message || "Payment collected successfully.");
         await fetchSessionDetails();
       } else {
@@ -402,10 +438,47 @@ const BackToAgendaContent = () => {
     } catch (err: any) {
       console.error("Error collecting payment:", err);
       toast.error(
-        err?.response?.data?.message || err?.message || "Error collecting payment"
+        err?.response?.data?.message || (err?.message === "Network Error" ? "Network error: Unable to reach API server." : err?.message) || "Error collecting payment"
       );
     } finally {
       setIsCollectingPayment(false);
+    }
+  };
+
+  const handleRequestInvoice = async () => {
+    const effectiveSessionId = session_id || sessionData?.id || sessionData?.therapy_session_id;
+    if (!effectiveSessionId) {
+      toast.error("Session ID not found.");
+      return;
+    }
+
+    setIsRequestingInvoice(true);
+    try {
+      const response = await requestApi({
+        endpoint: "request-invoice",
+        method: "POST",
+        data: {
+          session_id: String(effectiveSessionId),
+          is_consent: isConsentChecked,
+        },
+      });
+
+      if (response && response.success === true) {
+        toast.success(response.message || "Invoice requested successfully.");
+      } else {
+        toast.error(response?.message || "Failed to request invoice.");
+      }
+    } catch (err: any) {
+      console.error("Error requesting invoice:", err);
+      toast.error(
+        err?.response?.data?.message ||
+        (err?.message === "Network Error"
+          ? "Network error: Unable to reach API server."
+          : err?.message) ||
+        "Error requesting invoice"
+      );
+    } finally {
+      setIsRequestingInvoice(false);
     }
   };
 
@@ -449,50 +522,65 @@ const BackToAgendaContent = () => {
               Back to Agendas
             </Link>
             <div className="patient-nav-container">
-              {isStartedCall ? (
-                <Link
-                  href={startSessionUrl}
-                  className="patient-link-start-session"
-                  style={{
-                    backgroundColor: "#28a745",
-                    borderColor: "#28a745",
-                    color: "#fff",
-                  }}
-                >
-                  Back To Started Session
-                </Link>
-              ) : (
-                <Link
-                  href={startSessionUrl}
-                  className="patient-link-start-session"
-                >
-                  Start Session
-                </Link>
-              )}
+              {!hide_button && (
+                <>
+                  <button
+                    type="button"
+                    className="patient-link-start-session"
+                    disabled={isStartedCall || isStartingSession}
+                    onClick={handleStartSession}
+                    style={
+                      isStartedCall
+                        ? { opacity: 0.6, cursor: "not-allowed" }
+                        : {
+                            backgroundColor: "#6c2b3b",
+                            borderColor: "#6c2b3b",
+                            color: "#fff",
+                          }
+                    }
+                  >
+                    {isStartingSession ? "Starting..." : "Start Session"}
+                  </button>
 
-              {canReschedule && (
-                <button
-                  type="button"
-                  className="patient-link-back-to-patients"
-                  onClick={() => setShowRescheduleModal(true)}
-                >
-                  <img src="images/reschedule.svg" alt="" />
-                  Reschedule
-                </button>
-              )}
+                  <button
+                    type="button"
+                    className="patient-link-start-session"
+                    data-bs-toggle="modal"
+                    data-bs-target="#clinicPatientEndSessionModal"
+                    style={{
+                      backgroundColor: "#6c2b3b",
+                      borderColor: "#6c2b3b",
+                      color: "#fff",
+                    }}
+                  >
+                    End Session
+                  </button>
 
-              <button
-                type="button"
-                className="patient-link-cancel-session"
-                data-bs-toggle="modal"
-                data-bs-target="#cancelSessionModal"
-                style={{ background: "none" }}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                  <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
-                </svg>
-                Cancel
-              </button>
+                  {canReschedule && (
+                    <button
+                      type="button"
+                      className="patient-link-back-to-patients"
+                      onClick={() => setShowRescheduleModal(true)}
+                    >
+                      <img src="images/reschedule.svg" alt="" />
+                      Reschedule
+                    </button>
+                  )}
+
+                  <button
+                    type="button"
+                    className="patient-link-cancel-session"
+                    data-bs-toggle="modal"
+                    data-bs-target="#cancelSessionModal"
+                    style={{ background: "none" }}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                      <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
+                    </svg>
+                    Cancel
+                  </button>
+                </>
+              )}
             </div>
           </div>
 
@@ -582,7 +670,12 @@ const BackToAgendaContent = () => {
                 </span>
               </div>
               <div className="dbt-consent-checkbox">
-                <input type="checkbox" id="clinicConsent" />
+                <input
+                  type="checkbox"
+                  id="clinicConsent"
+                  checked={isConsentChecked}
+                  onChange={(e) => setIsConsentChecked(e.target.checked)}
+                />
                 <label htmlFor="clinicConsent">In-Clinic Consent Form</label>
               </div>
             </div>
@@ -968,9 +1061,19 @@ const BackToAgendaContent = () => {
                 >
                   {isCollectingPayment ? "Processing..." : "Collect Payment"}
                 </button>
-                <a href="#" className="cp-btn-primary" onClick={(e) => e.preventDefault()}>
-                  Request Invoice
-                </a>
+                <button
+                  type="button"
+                  className="cp-btn-primary"
+                  onClick={handleRequestInvoice}
+                  disabled={isRequestingInvoice}
+                  style={{
+                    opacity: isRequestingInvoice ? 0.7 : 1,
+                    cursor: isRequestingInvoice ? "not-allowed" : "pointer",
+                    border: "none",
+                  }}
+                >
+                  {isRequestingInvoice ? "Requesting..." : "Request Invoice"}
+                </button>
               </div>
 
               {clinicPaymentList.length > 0 && (
@@ -1050,10 +1153,14 @@ const BackToAgendaContent = () => {
         </div>
       </main>
 
-      <CancelSessionPopup />
+      <CancelSessionPopup sessionId={session_id} sessionData={sessionData} />
       <AgendaCalendarPopup
         isOpen={showRescheduleModal}
         onClose={() => setShowRescheduleModal(false)}
+      />
+      <ClinicPatientEndSession
+        sessionId={session_id || undefined}
+        onConfirmEnd={() => fetchSessionDetails()}
       />
     </>
   );

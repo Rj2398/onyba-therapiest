@@ -400,7 +400,7 @@ const AgendaCalendarPopup: React.FC<AgendaCalendarPopupProps> = ({
 
       if (
         response &&
-        (response.success || response.code === 200 || response.status)
+        (response.success)
       ) {
         toast.success("Appointment created successfully!");
         if (onSubmit) {
@@ -425,8 +425,8 @@ const AgendaCalendarPopup: React.FC<AgendaCalendarPopupProps> = ({
       console.error("Error creating appointment:", err);
       toast.error(
         err?.response?.data?.message ||
-          err?.message ||
-          "Error processing request"
+        err?.message ||
+        "Error processing request"
       );
     } finally {
       setIsSubmitting(false);
@@ -624,9 +624,8 @@ const AgendaCalendarPopup: React.FC<AgendaCalendarPopupProps> = ({
                           const isHoliday = holidays.includes(dateKey);
                           const isSelected = selectedDay === day;
 
-                          const className = `agd-popup-day-cell agd-popup-day-clickable ${
-                            isSelected ? "agd-popup-day-active" : ""
-                          }`;
+                          const className = `agd-popup-day-cell agd-popup-day-clickable ${isSelected ? "agd-popup-day-active" : ""
+                            }`;
 
                           return (
                             <div
@@ -831,8 +830,8 @@ const AgendaCalendarPopup: React.FC<AgendaCalendarPopupProps> = ({
                       ? "Rescheduling..."
                       : "Creating..."
                     : isReschedule
-                    ? "Reschedule appointment"
-                    : "Create appointment"}
+                      ? "Reschedule appointment"
+                      : "Create appointment"}
                 </button>
               </div>
             </form>

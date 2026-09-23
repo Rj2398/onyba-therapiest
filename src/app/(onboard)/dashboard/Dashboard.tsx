@@ -274,41 +274,42 @@ const Dashboard = () => {
     },
   ];
 
-const isStartSessionAvailable = (sessionDate?: string | null, startTime?: string | null) => {
-  if (!sessionDate || !startTime) return false;
-  try {
-    const cleanDateStr = sessionDate.split("T")[0];
-    let cleanTimeStr = startTime.trim();
+  const isStartSessionAvailable = (sessionDate?: string | null, startTime?: string | null) => {
+    if (!sessionDate || !startTime) return false;
+    try {
+      const cleanDateStr = sessionDate.split("T")[0];
+      let cleanTimeStr = startTime.trim();
 
-    const parts = cleanTimeStr.split(/\s+/);
-    let hours = 0;
-    let minutes = 0;
+      const parts = cleanTimeStr.split(/\s+/);
+      let hours = 0;
+      let minutes = 0;
 
-    if (parts.length >= 2) {
-      const [timePart, period] = parts;
-      const timeParts = timePart.split(":").map(Number);
-      hours = timeParts[0] || 0;
-      minutes = timeParts[1] || 0;
-      if (period.toUpperCase() === "PM" && hours !== 12) hours += 12;
-      if (period.toUpperCase() === "AM" && hours === 12) hours = 0;
-    } else {
-      const timeParts = cleanTimeStr.split(":").map(Number);
-      hours = timeParts[0] || 0;
-      minutes = timeParts[1] || 0;
+      if (parts.length >= 2) {
+        const [timePart, period] = parts;
+        const timeParts = timePart.split(":").map(Number);
+        hours = timeParts[0] || 0;
+        minutes = timeParts[1] || 0;
+        if (period.toUpperCase() === "PM" && hours !== 12) hours += 12;
+        if (period.toUpperCase() === "AM" && hours === 12) hours = 0;
+      } else {
+        const timeParts = cleanTimeStr.split(":").map(Number);
+        hours = timeParts[0] || 0;
+        minutes = timeParts[1] || 0;
+      }
+
+      const [year, month, day] = cleanDateStr.split("-").map(Number);
+      if (!year || !month || !day) return false;
+
+      const sessionDateTime = new Date(year, month - 1, day, hours, minutes, 0).getTime();
+      // const now = Date.now();
+      const now = 1790166300000;
+      const diffMinutes = (sessionDateTime - now) / (1000 * 60);
+
+      return diffMinutes <= 5 && diffMinutes >= -120;
+    } catch {
+      return false;
     }
-
-    const [year, month, day] = cleanDateStr.split("-").map(Number);
-    if (!year || !month || !day) return false;
-
-    const sessionDateTime = new Date(year, month - 1, day, hours, minutes, 0).getTime();
-    const now = Date.now();
-    const diffMinutes = (sessionDateTime - now) / (1000 * 60);
-
-    return diffMinutes <= 5 && diffMinutes >= -120;
-  } catch {
-    return false;
-  }
-};
+  };
 
   const handleClickSubmit = (session: UpcomingSessionItem) => {
     const isOnline = session?.session_mode?.toLowerCase() === "online";
@@ -648,16 +649,16 @@ const isStartSessionAvailable = (sessionDate?: string | null, startTime?: string
                       );
                       const displayDate = formatDateLabel(
                         payment.session_date ||
-                          payment.date ||
-                          payment.created_at
+                        payment.date ||
+                        payment.created_at
                       );
                       const displayTime = formatTimeLabel(
                         payment.session_start_time || payment.time
                       );
                       const amountText = formatCurrency(
                         payment.amount ??
-                          payment.paid_amount ??
-                          payment.session_amount,
+                        payment.paid_amount ??
+                        payment.session_amount,
                         "$0"
                       );
 
@@ -780,7 +781,7 @@ const isStartSessionAvailable = (sessionDate?: string | null, startTime?: string
                       const expiresInStr = getExpiresIn(slot);
                       const expiresClass =
                         expiresInStr.includes("m") &&
-                        !expiresInStr.includes("h")
+                          !expiresInStr.includes("h")
                           ? "dbt3-countdown-text dbt3-color-urgent"
                           : "dbt3-countdown-text";
 
@@ -957,7 +958,7 @@ const isStartSessionAvailable = (sessionDate?: string | null, startTime?: string
                                   onClick={() => {
                                     if (note.id) {
                                       router.push(
-                                        `/final-back-to-agenda?id=${note.id}`
+                                        `/final-back-to-agenda?id=${note.id}&&hide=true`
                                       );
                                     }
                                   }}

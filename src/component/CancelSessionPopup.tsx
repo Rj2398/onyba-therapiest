@@ -4,7 +4,7 @@ import toast from 'react-hot-toast';
 import { requestApi } from '@/src/utils/api';
 
 export interface CancelSessionPopupProps {
-  sessionId?: string | number;
+  sessionId?: string | number | null;
   sessionData?: any;
   onSuccess?: () => void;
 }
@@ -17,9 +17,19 @@ const CancelSessionPopup: React.FC<CancelSessionPopupProps> = ({
   const [cancelReason, setCancelReason] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const effectiveSessionId = sessionId || sessionData?.id || sessionData?.patient_id
+  const effectiveSessionId =
+    sessionId ||
+    sessionData?.id ||
+    sessionData?.therapy_session_id ||
+    sessionData?.therapist_session_id ||
+    sessionData?.session_id ||
+    sessionData?.patient_id;
 
   const handleConfirmCancel = async () => {
+    if (!effectiveSessionId) {
+      toast.error("Session ID is missing.");
+      return;
+    }
     if (!cancelReason.trim()) {
       toast.error('Please enter a cancellation reason.');
       return;

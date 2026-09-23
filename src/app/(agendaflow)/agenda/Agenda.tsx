@@ -339,8 +339,8 @@ const AgendaContent = () => {
         };
     };
 
-    const CALENDAR_START = "08:00 AM";
-    const CALENDAR_END = "04:30 PM";
+    const CALENDAR_START = "06:00 AM";
+    const CALENDAR_END = "11:00 PM";
     const SLOT_HEIGHT = 34; // Upgraded slot height for spacious card content visibility
 
     const calendarStartMinutes = getMinutes(CALENDAR_START);
@@ -349,7 +349,7 @@ const AgendaContent = () => {
     const timeSlots = React.useMemo(() => {
         const slots: string[] = [];
         const totalSlots = Math.floor((calendarEndMinutes - calendarStartMinutes) / 15);
-        for (let i = 0; i < totalSlots; i++) {
+        for (let i = 0; i <= totalSlots; i++) {
             const totalMinutes = calendarStartMinutes + i * 15;
             let hour = Math.floor(totalMinutes / 60);
             const minute = totalMinutes % 60;
