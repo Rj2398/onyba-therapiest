@@ -151,10 +151,6 @@ const getApiErrorMessage = (response: any, fallbackMessage: string) => {
 };
 
 const PersonalProfile = () => {
-  const savedDetails: any = localStorage.getItem("loginUser");
-  const parsedDetails = savedDetails ? JSON.parse(savedDetails) : null;
-  const token = parsedDetails?.token;
-
   const { therapistProfile, saveTherapistProfile } = useAuth();
   const [specializationOptions, setSpecializationOptions] = useState<
     { id: any; name: string }[]
