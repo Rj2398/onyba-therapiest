@@ -1,20 +1,16 @@
 import axios, { Method } from 'axios';
 import { API_BASE_URL } from '@/src/config';
 
-// 1. Create a dedicated Axios instance
 const api = axios.create({
   baseURL: API_BASE_URL,
-  headers: {
-    'Accept': 'application/json',
-  },
 });
 
-// 2. Request Interceptor: Automatically injects Authorization header
 api.interceptors.request.use(
   (config) => {
     try {
       if (typeof window !== 'undefined') {
         const stored = window.localStorage.getItem('loginUser');
+
         if (stored) {
           const parsed = JSON.parse(stored);
           const token = parsed?.token || parsed?.user_details?.token;
@@ -27,32 +23,30 @@ api.interceptors.request.use(
     } catch (e) {
       console.error('Request interceptor token check failed:', e);
     }
+
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
-// 3. Response Interceptor: Automatically handles unauthorized or expired token sessions
 api.interceptors.response.use(
-  (response) => {
-    return response;
-  },
+  (response) => response,
   (error) => {
-    // If the server returns a 401 Unauthorized, automatically log out
     if (error.response?.status === 401) {
       try {
-        if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
+        if (
+          typeof window !== 'undefined' &&
+          window.location.pathname !== '/login'
+        ) {
           window.localStorage.removeItem('loginUser');
           window.localStorage.removeItem('onyba_authenticated');
-          // Force redirect to login screen
           window.location.href = '/login';
         }
       } catch (e) {
         console.error('Response interceptor auth reset failed:', e);
       }
     }
+
     return Promise.reject(error);
   }
 );
@@ -72,25 +66,21 @@ export const requestApi = async ({
 }: RequestOptions) => {
   const upperMethod = method.toString().toUpperCase();
 
-  const isForm = isFormData || (typeof FormData !== 'undefined' && data instanceof FormData);
-
-  const headers: Record<string, string> = {
-    'Accept': 'application/json',
-  };
-
-  // Only set Content-Type for JSON requests.
-  // For FormData, omit Content-Type so Axios/browser automatically injects multipart/form-data with boundary.
-  if (!isForm && upperMethod !== 'GET') {
-    headers['Content-Type'] = 'application/json';
-  }
+  const isForm =
+    isFormData ||
+    (typeof FormData !== 'undefined' && data instanceof FormData);
 
   const config: any = {
     url: endpoint,
     method: upperMethod as Method,
-    headers: headers,
+    headers: {},
   };
 
-  // If GET request, pass data as URL query parameters
+  // Only set JSON Content-Type for normal requests
+  if (!isForm) {
+    config.headers['Content-Type'] = 'application/json';
+  }
+
   if (upperMethod === 'GET' && data) {
     config.params = data;
   } else {
@@ -98,5 +88,6 @@ export const requestApi = async ({
   }
 
   const response = await api(config);
+
   return response.data;
 };

@@ -8,6 +8,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
 import { Base_image_url } from "@/src/config";
 import { requestApi } from "@/src/utils/api";
+import axios from "axios";
+import { API_BASE_URL } from "@/src/config";
 
 export interface FinalAgendaProps {
   sessionData?: any;
@@ -86,13 +88,13 @@ const getDocList = (docData: any) => {
       const ext = extMatch ? extMatch[1].toUpperCase() : "DOC";
       const fullUrl =
         trimmed.startsWith("http://") ||
-          trimmed.startsWith("https://") ||
-          trimmed.startsWith("data:")
+        trimmed.startsWith("https://") ||
+        trimmed.startsWith("data:")
           ? trimmed
           : `${Base_image_url.replace(/\/+$/, "")}/${trimmed.replace(
-            /^\/+/,
-            ""
-          )}`;
+              /^\/+/,
+              ""
+            )}`;
       return {
         id: idx,
         file_name: fileName,
@@ -109,9 +111,9 @@ const getDocList = (docData: any) => {
           rawUrl.startsWith("data:")
           ? rawUrl
           : `${Base_image_url.replace(/\/+$/, "")}/${rawUrl.replace(
-            /^\/+/,
-            ""
-          )}`
+              /^\/+/,
+              ""
+            )}`
         : "";
       const fileName =
         item.file_name ||
@@ -175,13 +177,15 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
     searchParams.get("session_id") ||
     searchParams.get("therapy_session_id") ||
     searchParams.get("id") ||
+    sessionData?.therapy_session_id ||
     sessionData?.id ||
-    sessionData?.patient_id;
+    initialSessionData?.id;
   const hide_button: boolean = searchParams.get("hide") === "true";
 
-  const startSessionUrl = searchParams && searchParams.toString()
-    ? `/video-confrenece?${searchParams.toString()}`
-    : "/video-confrenece";
+  const startSessionUrl =
+    searchParams && searchParams.toString()
+      ? `/video-confrenece?${searchParams.toString()}`
+      : "/video-confrenece";
 
   const [otp, setOtp] = useState(["", "", "", "", ""]);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -199,6 +203,10 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
   const [isEditingAiSummary, setIsEditingAiSummary] = useState<boolean>(false);
   const [aiSummaryText, setAiSummaryText] = useState<string>("");
   const [isSavingAiSummary, setIsSavingAiSummary] = useState<boolean>(false);
+
+  const [showTaskModal, setShowTaskModal] = useState<boolean>(false);
+  const [taskInput, setTaskInput] = useState<string>("");
+  const [isSavingTask, setIsSavingTask] = useState<boolean>(false);
 
   const [privateNotes, setPrivateNotes] = useState<string>(
     initialSessionData?.therapist_private_notes || ""
@@ -218,17 +226,24 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
   const isStartedCall = Boolean(sessionData?.is_started_call);
   const canReschedule = Boolean(sessionData?.can_reschedule);
 
-  const [serviceList, setServiceList] = useState<{ id: any; name: string }[]>([]);
-  const [selectedServiceId, setSelectedServiceId] = useState<string | number>("");
+  const [serviceList, setServiceList] = useState<{ id: any; name: string }[]>(
+    []
+  );
+  const [selectedServiceId, setSelectedServiceId] = useState<string | number>(
+    ""
+  );
   const [isServiceDropdownOpen, setIsServiceDropdownOpen] = useState(false);
 
   const addedServiceIdentifiers = useMemo(() => {
     const set = new Set<string>();
     if (Array.isArray(sessionData?.additional_services)) {
       sessionData.additional_services.forEach((item: any) => {
-        if (item.id !== undefined && item.id !== null) set.add(String(item.id).toLowerCase());
-        if (item.service_id !== undefined && item.service_id !== null) set.add(String(item.service_id).toLowerCase());
-        if (item.service_name) set.add(String(item.service_name).toLowerCase().trim());
+        if (item.id !== undefined && item.id !== null)
+          set.add(String(item.id).toLowerCase());
+        if (item.service_id !== undefined && item.service_id !== null)
+          set.add(String(item.service_id).toLowerCase());
+        if (item.service_name)
+          set.add(String(item.service_name).toLowerCase().trim());
         if (item.name) set.add(String(item.name).toLowerCase().trim());
       });
     }
@@ -238,8 +253,13 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
   const availableDropdownServices = useMemo(() => {
     return serviceList.filter((item) => {
       const itemId = String(item.id).toLowerCase();
-      const itemName = String(item.name || "").toLowerCase().trim();
-      return !addedServiceIdentifiers.has(itemId) && !addedServiceIdentifiers.has(itemName);
+      const itemName = String(item.name || "")
+        .toLowerCase()
+        .trim();
+      return (
+        !addedServiceIdentifiers.has(itemId) &&
+        !addedServiceIdentifiers.has(itemName)
+      );
     });
   }, [serviceList, addedServiceIdentifiers]);
 
@@ -277,22 +297,19 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
         endpoint: `get-session-details/${session_id}`,
         method: "POST",
       });
-      if (
-        response &&
-        response.success === true &&
-        response.data
-      ) {
+      if (response && response.success === true && response.data) {
         if (response.data.patient_type === "clinic_patient") {
-          router.push(session_id ? `/back-to-agenda?session_id=${session_id}` : "/back-to-agenda");
+          router.push(
+            session_id
+              ? `/back-to-agenda?session_id=${session_id}`
+              : "/back-to-agenda"
+          );
           return;
         }
         setSessionData(response.data);
         setPrivateNotes(response.data.therapist_private_notes || "");
         setPublicNotes(response.data.therapist_public_notes || "");
-        if (
-          response.data.task_list &&
-          Array.isArray(response.data.task_list)
-        ) {
+        if (response.data.task_list && Array.isArray(response.data.task_list)) {
           setTaskList(response.data.task_list);
         }
       } else if (response && response.success === false) {
@@ -306,7 +323,11 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
   useEffect(() => {
     if (initialSessionData) {
       if (initialSessionData.patient_type === "clinic_patient") {
-        router.push(session_id ? `/back-to-agenda?session_id=${session_id}` : "/back-to-agenda");
+        router.push(
+          session_id
+            ? `/back-to-agenda?session_id=${session_id}`
+            : "/back-to-agenda"
+        );
         return;
       }
       setSessionData(initialSessionData);
@@ -325,7 +346,11 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
 
   useEffect(() => {
     if (sessionData && sessionData.patient_type === "clinic_patient") {
-      router.push(session_id ? `/back-to-agenda?session_id=${session_id}` : "/back-to-agenda");
+      router.push(
+        session_id
+          ? `/back-to-agenda?session_id=${session_id}`
+          : "/back-to-agenda"
+      );
     }
   }, [sessionData, router, session_id]);
 
@@ -354,7 +379,7 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
       });
 
       toast.dismiss("add-service");
-      if (response && (response.success === true)) {
+      if (response && response.success === true) {
         toast.success(response.message || "Service added successfully.");
         await fetchSessionDetails();
       } else {
@@ -447,7 +472,9 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
       toast.dismiss("req-payment");
       if (
         response &&
-        (response.success === true || response.code === 200 || response.status === true)
+        (response.success === true ||
+          response.code === 200 ||
+          response.status === true)
       ) {
         toast.success(
           response.message || "Additional payment requested successfully."
@@ -524,10 +551,7 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
         isFormData: true,
       });
 
-      if (
-        response &&
-        (response.success === true)
-      ) {
+      if (response && response.success === true) {
         toast.success("Patient verified successfully!");
         const backToCalendarUrl = session_id
           ? `/back-to-calendar?therapy_session_id=${session_id}`
@@ -575,10 +599,7 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
         });
       }
 
-      if (
-        response &&
-        (response.success === true)
-      ) {
+      if (response && response.success === true) {
         toast.success(response.message || "Session started successfully!");
         const backToCalendarUrl = session_id
           ? `/back-to-calendar?therapy_session_id=${session_id}`
@@ -633,10 +654,7 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
         isFormData: true,
       });
 
-      if (
-        response &&
-        response.success === true
-      ) {
+      if (response && response.success === true) {
         toast.success(
           response?.message || "Verification code resent successfully."
         );
@@ -648,8 +666,8 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
       console.error("Error resending verification code:", err);
       toast.error(
         err?.response?.data?.message ||
-        err?.message ||
-        "Error resending verification code"
+          err?.message ||
+          "Error resending verification code"
       );
     } finally {
       setIsResendingCode(false);
@@ -676,10 +694,7 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
         isFormData: true,
       });
 
-      if (
-        response &&
-        response.success === true
-      ) {
+      if (response && response.success === true) {
         toast.success(response?.message || "AI summary updated successfully!");
         setSessionData((prev: any) => ({
           ...prev,
@@ -693,60 +708,44 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
       console.error("Error updating AI summary:", err);
       toast.error(
         err?.response?.data?.message ||
-        err?.message ||
-        "Error updating AI summary"
+          err?.message ||
+          "Error updating AI summary"
       );
     } finally {
       setIsSavingAiSummary(false);
     }
   };
 
-  const handleAddTask = async () => {
-    const newTaskName = prompt("Enter task details:");
-    if (newTaskName && newTaskName.trim()) {
-      try {
-        const formData = new FormData();
-        formData.append("session_id", String(session_id));
-        formData.append("task", newTaskName.trim());
-
-        const response = await requestApi({
-          endpoint: "add-session-task",
-          method: "POST",
-          data: formData,
-          isFormData: true,
-        });
-
-        const newObj = response?.data || {
-          id: Date.now(),
-          task: newTaskName.trim(),
-          status: false,
-        };
-        setTaskList((prev) => [...prev, newObj]);
-      } catch (err) {
-        console.error("Error adding session task:", err);
-        setTaskList((prev) => [
-          ...prev,
-          { id: Date.now(), task: newTaskName.trim(), status: false },
-        ]);
-      }
-    }
+  const handleOpenTaskModal = () => {
+    setTaskInput("");
+    setShowTaskModal(true);
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setUploadingDoc(true);
+  const handleCloseTaskModal = () => {
+    setShowTaskModal(false);
+    setTaskInput("");
+    fetchSessionDetails();
+  };
+
+  const handleSaveTask = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!taskInput || !taskInput.trim()) {
+      toast.error("Please enter task details");
+      return;
+    }
+    if (!session_id) {
+      toast.error("Session ID is missing");
+      return;
+    }
+
+    setIsSavingTask(true);
     try {
       const formData = new FormData();
       formData.append("session_id", String(session_id));
-      formData.append(
-        "type",
-        activeDocTab === "therapist" ? "therapist" : "patient"
-      );
-      formData.append("document", file);
+      formData.append("task", taskInput.trim());
 
       const response = await requestApi({
-        endpoint: "upload-session-documents",
+        endpoint: "add-session-task",
         method: "POST",
         data: formData,
         isFormData: true,
@@ -754,33 +753,290 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
 
       if (
         response &&
-        response.success === true
+        (response.success || response.code === 200 || response.status)
       ) {
-        toast.success("Document uploaded successfully!");
-        if (session_id) {
-          const refreshRes = await requestApi({
-            endpoint: `get-session-details/${session_id}`,
-            method: "POST",
-          });
-          if (refreshRes?.success && refreshRes?.data) {
-            setSessionData(refreshRes.data);
+        toast.success(response.message || "Task added successfully!");
+      }
+      await fetchSessionDetails();
+      setShowTaskModal(false);
+      setTaskInput("");
+    } catch (err: any) {
+      console.error("Error adding session task:", err);
+      toast.error(
+        err?.response?.data?.message || err?.message || "Error adding task"
+      );
+      await fetchSessionDetails();
+    } finally {
+      setIsSavingTask(false);
+    }
+  };
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+
+    if (!file) return;
+
+    const targetSessionId =
+      session_id ||
+      sessionData?.therapy_session_id ||
+      sessionData?.id ||
+      initialSessionData?.id;
+
+    if (!targetSessionId) {
+      toast.error("Session ID is missing");
+      e.target.value = "";
+      return;
+    }
+
+    setUploadingDoc(true);
+
+    try {
+      // ==========================================
+      // Get token
+      // ==========================================
+      let token = "";
+
+      if (typeof window !== "undefined") {
+        const stored = window.localStorage.getItem("loginUser");
+
+        if (stored) {
+          try {
+            const parsed = JSON.parse(stored);
+
+            token = parsed?.token || parsed?.user_details?.token || "";
+          } catch (error) {
+            console.error("Failed to parse loginUser:", error);
           }
         }
+      }
+
+      // ==========================================
+      // Create FormData
+      // ==========================================
+      const formData = new FormData();
+
+      formData.append("session_id", String(targetSessionId));
+
+      formData.append(
+        "type",
+        activeDocTab === "therapist" ? "therapist" : "patient"
+      );
+
+      formData.append("document", file);
+
+      // ==========================================
+      // Debug FormData
+      // ==========================================
+      for (const [key, value] of formData.entries()) {
+        console.log("FormData:", key, value);
+      }
+
+      // ==========================================
+      // Upload API
+      // ==========================================
+      const response = await axios.post(
+        `${API_BASE_URL}upload-session-documents`,
+        formData,
+        {
+          headers: {
+            Accept: "*/*",
+            Authorization: `Bearer ${token}`,
+            // Content-Type ko undefined rakhna zaroori hai taaki axios browser se boundary auto-calculate kare jo postman me "<calculated when request is sent>" dikha raha hai
+            "Content-Type": undefined,
+          },
+        }
+      );
+
+      console.log("Upload response:", response.data);
+
+      const responseData = response.data;
+
+      // ==========================================
+      // SUCCESS
+      // ==========================================
+      if (
+        responseData?.success === true ||
+        responseData?.code === 200 ||
+        responseData?.status === true ||
+        responseData?.status === "success"
+      ) {
+        toast.success("Document uploaded successfully!");
+
+        // ========================================
+        // Get updated session details
+        // ========================================
+        const refreshResponse = await axios.post(
+          `${API_BASE_URL}/get-session-details/${targetSessionId}`,
+          null,
+          {
+            headers: {
+              Accept: "application/json",
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        console.log("Session details:", refreshResponse.data);
+
+        if (refreshResponse.data?.success && refreshResponse.data?.data) {
+          setSessionData(refreshResponse.data.data);
+        }
       } else {
-        toast.error(response?.message || "Failed to upload document.");
+        // ==========================================
+        // API VALIDATION ERROR
+        // ==========================================
+        let errMsg = responseData?.message || "Failed to upload document.";
+
+        if (responseData?.data && typeof responseData.data === "object") {
+          const errList: string[] = [];
+
+          Object.values(responseData.data).forEach((val: any) => {
+            if (Array.isArray(val)) {
+              errList.push(...val);
+            } else if (typeof val === "string") {
+              errList.push(val);
+            }
+          });
+
+          if (errList.length > 0) {
+            errMsg = errList.join(" ");
+          }
+        }
+
+        toast.error(errMsg);
       }
     } catch (err: any) {
       console.error("Error uploading document:", err);
-      toast.error(
+
+      console.error("Status:", err?.response?.status);
+
+      console.error("Response:", err?.response?.data);
+
+      let errMsg =
         err?.response?.data?.message ||
         err?.message ||
-        "Error uploading document"
-      );
+        "Error uploading document";
+
+      const errorData = err?.response?.data?.data;
+
+      if (errorData && typeof errorData === "object") {
+        const errList: string[] = [];
+
+        Object.values(errorData).forEach((val: any) => {
+          if (Array.isArray(val)) {
+            errList.push(...val);
+          } else if (typeof val === "string") {
+            errList.push(val);
+          }
+        });
+
+        if (errList.length > 0) {
+          errMsg = errList.join(" ");
+        }
+      }
+
+      toast.error(errMsg);
     } finally {
       setUploadingDoc(false);
-      if (e.target) e.target.value = "";
+
+      // Reset file input
+      if (e.target) {
+        e.target.value = "";
+      }
     }
   };
+  // const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   const file = e.target.files?.[0];
+  //   if (!file) return;
+
+  //   const targetSessionId =
+  //     session_id ||
+  //     sessionData?.therapy_session_id ||
+  //     sessionData?.id ||
+  //     initialSessionData?.id;
+
+  //   if (!targetSessionId) {
+  //     toast.error("Session ID is missing");
+  //     return;
+  //   }
+
+  //   setUploadingDoc(true);
+  //   try {
+  //     const formData = new FormData();
+  //     formData.append("session_id", String(targetSessionId));
+  //     formData.append(
+  //       "type",
+  //       activeDocTab === "therapist" ? "therapist" : "patient"
+  //     );
+  //     formData.append("document", file);
+
+  //     const response = await requestApi({
+  //       endpoint: "upload-session-documents",
+  //       method: "POST",
+  //       data: formData,
+  //       isFormData: true,
+  //     });
+
+  //     if (
+  //       response &&
+  //       (response.success === true ||
+  //         response.code === 200 ||
+  //         response.status === true ||
+  //         response.status === "success")
+  //     ) {
+  //       toast.success("Document uploaded successfully!");
+  //       const refreshRes = await requestApi({
+  //         endpoint: `get-session-details/${targetSessionId}`,
+  //         method: "POST",
+  //       });
+  //       if (refreshRes?.success && refreshRes?.data) {
+  //         setSessionData(refreshRes.data);
+  //       }
+  //     } else {
+  //       let errMsg = response?.message || "Failed to upload document.";
+  //       if (response?.data && typeof response.data === "object") {
+  //         const errList: string[] = [];
+  //         Object.values(response.data).forEach((val: any) => {
+  //           if (Array.isArray(val)) {
+  //             errList.push(...val);
+  //           } else if (typeof val === "string") {
+  //             errList.push(val);
+  //           }
+  //         });
+  //         if (errList.length > 0) {
+  //           errMsg = errList.join(" ");
+  //         }
+  //       }
+  //       toast.error(errMsg);
+  //     }
+  //   } catch (err: any) {
+  //     console.error("Error uploading document:", err);
+  //     let errMsg =
+  //       err?.response?.data?.message ||
+  //       err?.message ||
+  //       "Error uploading document";
+  //     if (
+  //       err?.response?.data?.data &&
+  //       typeof err.response.data.data === "object"
+  //     ) {
+  //       const errList: string[] = [];
+  //       Object.values(err.response.data.data).forEach((val: any) => {
+  //         if (Array.isArray(val)) {
+  //           errList.push(...val);
+  //         } else if (typeof val === "string") {
+  //           errList.push(val);
+  //         }
+  //       });
+  //       if (errList.length > 0) {
+  //         errMsg = errList.join(" ");
+  //       }
+  //     }
+  //     toast.error(errMsg);
+  //   } finally {
+  //     setUploadingDoc(false);
+  //     if (e.target) e.target.value = "";
+  //   }
+  // };
 
   const handleSubmitNotes = async (type: "private" | "public") => {
     const notesText = type === "private" ? privateNotes : publicNotes;
@@ -800,12 +1056,10 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
         isFormData: true,
       });
 
-      if (
-        response &&
-        response.success === true
-      ) {
+      if (response && response.success === true) {
         toast.success(
-          `${type === "private" ? "Private" : "Public"
+          `${
+            type === "private" ? "Private" : "Public"
           } notes submitted successfully!`
         );
       } else {
@@ -815,8 +1069,8 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
       console.error(`Error submitting ${type} notes:`, err);
       toast.error(
         err?.response?.data?.message ||
-        err?.message ||
-        `Error submitting ${type} notes`
+          err?.message ||
+          `Error submitting ${type} notes`
       );
     } finally {
       if (type === "private") setSavingPrivateNotes(false);
@@ -912,7 +1166,10 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
                         data-bs-target="#cancelSessionModal"
                         style={{ background: "none" }}
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                        >
                           <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
                         </svg>
                         Cancel
@@ -969,7 +1226,10 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
                         data-bs-target="#cancelSessionModal"
                         style={{ background: "none" }}
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                        >
                           <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
                         </svg>
                         Cancel
@@ -1008,7 +1268,7 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
                   <span className="dbt-pcard-bullet">•</span>{" "}
                   {sessionData?.gender
                     ? sessionData.gender.charAt(0).toUpperCase() +
-                    sessionData.gender.slice(1)
+                      sessionData.gender.slice(1)
                     : "Male"}
                 </p>
                 <div className="dbt-pcard-ids">
@@ -1224,40 +1484,40 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
                         {(() => {
                           const listToRender =
                             Array.isArray(sessionData?.previous_sessions) &&
-                              sessionData.previous_sessions.length > 0
+                            sessionData.previous_sessions.length > 0
                               ? sessionData.previous_sessions
                               : [
-                                {
-                                  id: 1,
-                                  name: "Session 1",
-                                  date: "May 20, 2026",
-                                  details: "Anxiety & work stress",
-                                },
-                                {
-                                  id: 2,
-                                  name: "Session 2",
-                                  date: "May 22, 2026",
-                                  details: "Anxiety & work stress",
-                                },
-                                {
-                                  id: 3,
-                                  name: "Session 3",
-                                  date: "May 24, 2026",
-                                  details: "Anxiety & work stress",
-                                },
-                                {
-                                  id: 4,
-                                  name: "Session 4",
-                                  date: "May 26, 2026",
-                                  details: "Anxiety & work stress",
-                                },
-                                {
-                                  id: 5,
-                                  name: "Session 5",
-                                  date: "May 30, 2026",
-                                  details: "Depression",
-                                },
-                              ];
+                                  {
+                                    id: 1,
+                                    name: "Session 1",
+                                    date: "May 20, 2026",
+                                    details: "Anxiety & work stress",
+                                  },
+                                  {
+                                    id: 2,
+                                    name: "Session 2",
+                                    date: "May 22, 2026",
+                                    details: "Anxiety & work stress",
+                                  },
+                                  {
+                                    id: 3,
+                                    name: "Session 3",
+                                    date: "May 24, 2026",
+                                    details: "Anxiety & work stress",
+                                  },
+                                  {
+                                    id: 4,
+                                    name: "Session 4",
+                                    date: "May 26, 2026",
+                                    details: "Anxiety & work stress",
+                                  },
+                                  {
+                                    id: 5,
+                                    name: "Session 5",
+                                    date: "May 30, 2026",
+                                    details: "Depression",
+                                  },
+                                ];
 
                           const filtered = listToRender.filter((item: any) => {
                             if (!prevSessionSearch.trim()) return true;
@@ -1351,7 +1611,7 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
               id="patientFaqsAccordionContainer"
             >
               {Array.isArray(sessionData?.patient_intake_details) &&
-                sessionData.patient_intake_details.length > 0 ? (
+              sessionData.patient_intake_details.length > 0 ? (
                 sessionData.patient_intake_details.map(
                   (item: any, idx: number) => (
                     <div className="patient-faqs-item" key={idx}>
@@ -1384,8 +1644,8 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
                           {typeof item.answer === "string"
                             ? item.answer
                             : item.response ||
-                            item.value ||
-                            JSON.stringify(item)}
+                              item.value ||
+                              JSON.stringify(item)}
                         </div>
                       </div>
                     </div>
@@ -1504,16 +1764,36 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
               <hr className="ony-summary-v2-divider" />
 
               {/* Horizontal List of Added Services */}
-              <div className="mb-3" style={{ display: "flex", flexWrap: "wrap", gap: "8px", alignItems: "center" }}>
-                <span style={{ fontSize: "13px", fontWeight: 600, color: "#666" }}>Added Services:</span>
-                {Array.isArray(sessionData?.additional_services) && sessionData.additional_services.length > 0 ? (
-                  sessionData.additional_services.map((srv: any, idx: number) => (
-                    <div key={srv.id || idx} className="ony-summary-v2-selected-tag" style={{ margin: 0 }}>
-                      <span className="ony-summary-v2-tag-text">
-                        {srv.service_name || srv.name} {srv.service_price ? `($${srv.service_price})` : ""}
-                      </span>
-                    </div>
-                  ))
+              <div
+                className="mb-3"
+                style={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: "8px",
+                  alignItems: "center",
+                }}
+              >
+                <span
+                  style={{ fontSize: "13px", fontWeight: 600, color: "#666" }}
+                >
+                  Added Services:
+                </span>
+                {Array.isArray(sessionData?.additional_services) &&
+                sessionData.additional_services.length > 0 ? (
+                  sessionData.additional_services.map(
+                    (srv: any, idx: number) => (
+                      <div
+                        key={srv.id || idx}
+                        className="ony-summary-v2-selected-tag"
+                        style={{ margin: 0 }}
+                      >
+                        <span className="ony-summary-v2-tag-text">
+                          {srv.service_name || srv.name}{" "}
+                          {srv.service_price ? `($${srv.service_price})` : ""}
+                        </span>
+                      </div>
+                    )
+                  )
                 ) : (
                   <span style={{ fontSize: "13px", color: "#888" }}>
                     {sessionData?.service_name || "None"}
@@ -1529,7 +1809,9 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
                 <div
                   className="ony-summary-v2-select-box-wrapper"
                   style={{ position: "relative", cursor: "pointer" }}
-                  onClick={() => setIsServiceDropdownOpen(!isServiceDropdownOpen)}
+                  onClick={() =>
+                    setIsServiceDropdownOpen(!isServiceDropdownOpen)
+                  }
                 >
                   <div className="ony-summary-v2-selected-tag">
                     <span className="ony-summary-v2-tag-text">
@@ -1612,7 +1894,13 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
                           </div>
                         ))
                       ) : (
-                        <div style={{ padding: "10px 14px", fontSize: "13px", color: "#888" }}>
+                        <div
+                          style={{
+                            padding: "10px 14px",
+                            fontSize: "13px",
+                            color: "#888",
+                          }}
+                        >
                           All available services added
                         </div>
                       )}
@@ -1653,13 +1941,13 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
                       if (!isEditingAiSummary) {
                         const currentVal =
                           typeof sessionData?.post_session_ai_summary ===
-                            "string"
+                          "string"
                             ? sessionData.post_session_ai_summary
                             : sessionData?.post_session_ai_summary
-                              ? JSON.stringify(
+                            ? JSON.stringify(
                                 sessionData.post_session_ai_summary
                               )
-                              : "";
+                            : "";
                         setAiSummaryText(currentVal);
                       }
                       setIsEditingAiSummary(!isEditingAiSummary);
@@ -1728,7 +2016,7 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
                         </div>
                       ) : sessionData?.post_session_ai_summary ? (
                         typeof sessionData.post_session_ai_summary ===
-                          "string" ? (
+                        "string" ? (
                           <>
                             <h3 className="ps-part1-section-title">
                               Session Overview
@@ -1775,8 +2063,9 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
                 <div className="ps-part2-tabs-row">
                   <button
                     type="button"
-                    className={`ps-part2-tab ${activeDocTab === "therapist" ? "ps-part2-tab-active" : ""
-                      }`}
+                    className={`ps-part2-tab ${
+                      activeDocTab === "therapist" ? "ps-part2-tab-active" : ""
+                    }`}
                     onClick={() => setActiveDocTab("therapist")}
                   >
                     Shared by you{" "}
@@ -1786,8 +2075,9 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
                   </button>
                   <button
                     type="button"
-                    className={`ps-part2-tab ${activeDocTab === "patient" ? "ps-part2-tab-active" : ""
-                      }`}
+                    className={`ps-part2-tab ${
+                      activeDocTab === "patient" ? "ps-part2-tab-active" : ""
+                    }`}
                     onClick={() => setActiveDocTab("patient")}
                   >
                     Shared by Patient{" "}
@@ -1894,7 +2184,10 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
                         onClick={() => fileInputRef.current?.click()}
                         style={{ cursor: "pointer" }}
                       >
-                        <svg className="ps-part2-upload-icon" viewBox="0 0 24 24">
+                        <svg
+                          className="ps-part2-upload-icon"
+                          viewBox="0 0 24 24"
+                        >
                           <path
                             d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"
                             fill="currentColor"
@@ -2089,7 +2382,7 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
                       type="button"
                       className="ps-part4-add-btn"
                       aria-label="Add Task"
-                      onClick={handleAddTask}
+                      onClick={handleOpenTaskModal}
                     >
                       <svg viewBox="0 0 24 24">
                         <path
@@ -2227,10 +2520,10 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
                     {typeof sessionData?.feedback === "string"
                       ? sessionData.feedback
                       : sessionData?.patient_feedback?.text ||
-                      sessionData?.patient_feedback?.comment ||
-                      sessionData?.feedback?.comment ||
-                      sessionData?.feedback?.text ||
-                      "The session was really helpful. I liked how the therapist guided me through techniques. I'd like to explore more coping strategies next time."}
+                        sessionData?.patient_feedback?.comment ||
+                        sessionData?.feedback?.comment ||
+                        sessionData?.feedback?.text ||
+                        "The session was really helpful. I liked how the therapist guided me through techniques. I'd like to explore more coping strategies next time."}
                   </p>
                 </div>
               </div>
@@ -2270,14 +2563,16 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
                         (Array.isArray(sessionData?.payment_details)
                           ? sessionData.payment_details[0]?.session_amount
                           : sessionData?.payment_details?.session_amount) ||
-                        sessionData?.session_price
+                          sessionData?.session_price
                       )}{" "}
                       (
                       {formatStatus(
                         (Array.isArray(sessionData?.payment_details)
-                          ? sessionData.payment_details[0]?.session_payment_status
-                          : sessionData?.payment_details?.session_payment_status) ||
-                        sessionData?.session_status
+                          ? sessionData.payment_details[0]
+                              ?.session_payment_status
+                          : sessionData?.payment_details
+                              ?.session_payment_status) ||
+                          sessionData?.session_status
                       )}
                       )
                     </span>
@@ -2298,19 +2593,28 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
                     <div className="pfd-text-column">
                       <span className="pfd-label-main">Service Added</span>
                       {(() => {
-                        const pDetails = Array.isArray(sessionData?.payment_details)
+                        const pDetails = Array.isArray(
+                          sessionData?.payment_details
+                        )
                           ? sessionData.payment_details[0]
                           : sessionData?.payment_details;
                         const addServices =
-                          pDetails?.additional_services && Array.isArray(pDetails.additional_services) && pDetails.additional_services.length > 0
+                          pDetails?.additional_services &&
+                          Array.isArray(pDetails.additional_services) &&
+                          pDetails.additional_services.length > 0
                             ? pDetails.additional_services
-                            : Array.isArray(sessionData?.additional_services) && sessionData.additional_services.length > 0
-                              ? sessionData.additional_services
-                              : [];
+                            : Array.isArray(sessionData?.additional_services) &&
+                              sessionData.additional_services.length > 0
+                            ? sessionData.additional_services
+                            : [];
 
                         if (addServices.length > 0) {
                           return addServices.map((srv: any, idx: number) => (
-                            <span key={srv.id || srv.service_id || idx} className="pfd-label-sub" style={{ display: "block" }}>
+                            <span
+                              key={srv.id || srv.service_id || idx}
+                              className="pfd-label-sub"
+                              style={{ display: "block" }}
+                            >
                               -1st {srv.service_name || srv.name} Session
                             </span>
                           ));
@@ -2323,22 +2627,37 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
                         );
                       })()}
                     </div>
-                    <div className="pfd-value-column" style={{ textAlign: "right" }}>
+                    <div
+                      className="pfd-value-column"
+                      style={{ textAlign: "right" }}
+                    >
                       {(() => {
-                        const pDetails = Array.isArray(sessionData?.payment_details)
+                        const pDetails = Array.isArray(
+                          sessionData?.payment_details
+                        )
                           ? sessionData.payment_details[0]
                           : sessionData?.payment_details;
                         const addServices =
-                          pDetails?.additional_services && Array.isArray(pDetails.additional_services) && pDetails.additional_services.length > 0
+                          pDetails?.additional_services &&
+                          Array.isArray(pDetails.additional_services) &&
+                          pDetails.additional_services.length > 0
                             ? pDetails.additional_services
-                            : Array.isArray(sessionData?.additional_services) && sessionData.additional_services.length > 0
-                              ? sessionData.additional_services
-                              : [];
+                            : Array.isArray(sessionData?.additional_services) &&
+                              sessionData.additional_services.length > 0
+                            ? sessionData.additional_services
+                            : [];
 
                         if (addServices.length > 0) {
                           return addServices.map((srv: any, idx: number) => (
-                            <span key={srv.id || srv.service_id || idx} className="pfd-value-text" style={{ display: "block" }}>
-                              +{formatCurrencyValue(srv.service_price || srv.price || 0)}
+                            <span
+                              key={srv.id || srv.service_id || idx}
+                              className="pfd-value-text"
+                              style={{ display: "block" }}
+                            >
+                              +
+                              {formatCurrencyValue(
+                                srv.service_price || srv.price || 0
+                              )}
                             </span>
                           ));
                         }
@@ -2356,10 +2675,12 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
                   : sessionData?.payment_details;
 
                 const isAdditionalPaymentRequested = Boolean(
-                  pDetails?.additional_payment_requested ?? sessionData?.additional_payment_requested
+                  pDetails?.additional_payment_requested ??
+                    sessionData?.additional_payment_requested
                 );
 
-                const isDisabled = isAdditionalPaymentRequested || isRequestingPayment;
+                const isDisabled =
+                  isAdditionalPaymentRequested || isRequestingPayment;
 
                 return (
                   <div className="pfd-btn-area">
@@ -2391,6 +2712,70 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
           </div>
         </div>
       </main>
+
+      {showTaskModal && (
+        <div
+          className="modal fade show d-block"
+          tabIndex={-1}
+          style={{ backgroundColor: "rgba(0, 0, 0, 0.5)", zIndex: 1060 }}
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content shadow-lg border-0 rounded-4">
+              <div className="modal-header border-bottom-0 pb-0">
+                <h5 className="modal-title fw-bold text-dark fs-5">
+                  Add Task & Next Step
+                </h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={handleCloseTaskModal}
+                  aria-label="Close"
+                ></button>
+              </div>
+              <form onSubmit={handleSaveTask}>
+                <div className="modal-body py-3">
+                  <div className="mb-3">
+                    <label className="form-label fw-semibold text-secondary small">
+                      Task Details
+                    </label>
+                    <textarea
+                      className="form-control rounded-3"
+                      rows={3}
+                      placeholder="Enter task details..."
+                      value={taskInput}
+                      onChange={(e) => setTaskInput(e.target.value)}
+                      autoFocus
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="modal-footer border-top-0 pt-0">
+                  <button
+                    type="button"
+                    className="btn btn-light px-4 py-2 rounded-3 fw-medium"
+                    onClick={handleCloseTaskModal}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn text-white px-4 py-2 rounded-3 fw-medium"
+                    style={{
+                      backgroundColor: "#800020",
+                      borderColor: "#800020",
+                    }}
+                    disabled={isSavingTask}
+                  >
+                    {isSavingTask ? "Saving..." : "Save"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
 
       <CancelSessionPopup sessionId={session_id} sessionData={sessionData} />
       <AgendaCalendarPopup

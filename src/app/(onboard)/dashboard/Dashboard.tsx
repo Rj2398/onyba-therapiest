@@ -274,7 +274,10 @@ const Dashboard = () => {
     },
   ];
 
-  const isStartSessionAvailable = (sessionDate?: string | null, startTime?: string | null) => {
+  const isStartSessionAvailable = (
+    sessionDate?: string | null,
+    startTime?: string | null
+  ) => {
     if (!sessionDate || !startTime) return false;
     try {
       const cleanDateStr = sessionDate.split("T")[0];
@@ -300,9 +303,17 @@ const Dashboard = () => {
       const [year, month, day] = cleanDateStr.split("-").map(Number);
       if (!year || !month || !day) return false;
 
-      const sessionDateTime = new Date(year, month - 1, day, hours, minutes, 0).getTime();
+      const sessionDateTime = new Date(
+        year,
+        month - 1,
+        day,
+        hours,
+        minutes,
+        0
+      ).getTime();
       // const now = Date.now();
-      const now = 1790166300000;
+      const now = 1790231400000;
+
       const diffMinutes = (sessionDateTime - now) / (1000 * 60);
 
       return diffMinutes <= 5 && diffMinutes >= -120;
@@ -341,11 +352,15 @@ const Dashboard = () => {
 
       if (patientType === "clinic_patient") {
         router.push(
-          `/back-to-agenda${sessionId ? `?therapy_session_id=${sessionId}` : ""}`
+          `/back-to-agenda${
+            sessionId ? `?therapy_session_id=${sessionId}` : ""
+          }`
         );
       } else {
         router.push(
-          `/final-back-to-agenda${sessionId ? `?therapy_session_id=${sessionId}` : ""}`
+          `/final-back-to-agenda${
+            sessionId ? `?therapy_session_id=${sessionId}` : ""
+          }`
         );
       }
       return;
@@ -649,16 +664,16 @@ const Dashboard = () => {
                       );
                       const displayDate = formatDateLabel(
                         payment.session_date ||
-                        payment.date ||
-                        payment.created_at
+                          payment.date ||
+                          payment.created_at
                       );
                       const displayTime = formatTimeLabel(
                         payment.session_start_time || payment.time
                       );
                       const amountText = formatCurrency(
                         payment.amount ??
-                        payment.paid_amount ??
-                        payment.session_amount,
+                          payment.paid_amount ??
+                          payment.session_amount,
                         "$0"
                       );
 
@@ -781,7 +796,7 @@ const Dashboard = () => {
                       const expiresInStr = getExpiresIn(slot);
                       const expiresClass =
                         expiresInStr.includes("m") &&
-                          !expiresInStr.includes("h")
+                        !expiresInStr.includes("h")
                           ? "dbt3-countdown-text dbt3-color-urgent"
                           : "dbt3-countdown-text";
 

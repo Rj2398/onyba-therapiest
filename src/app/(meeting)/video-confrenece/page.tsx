@@ -40,14 +40,13 @@ const VideoConferenceContent: React.FC = () => {
         setLoading(true);
         setError(null);
 
-        const formData = new FormData();
-        formData.append("therapy_session_id", therapySessionId);
-
         const response = await requestApi({
           endpoint: "therapist-start-call",
           method: "POST",
-          data: formData,
-          isFormData: true,
+          data: {
+            therapy_session_id: Number(therapySessionId) || therapySessionId,
+          },
+          isFormData: false,
         });
 
         if (response && response.data) {

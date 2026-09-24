@@ -29,14 +29,13 @@ const ClinicPatientEndSession: React.FC<ClinicPatientEndSessionProps> = ({
     if (effectiveSessionId) {
       setIsSubmitting(true);
       try {
-        const formData = new FormData();
-        formData.append("therapy_session_id", String(effectiveSessionId));
-
         const res = await requestApi({
           endpoint: "session-end",
           method: "POST",
-          data: formData,
-          isFormData: true,
+          data: {
+            therapy_session_id: String(effectiveSessionId),
+          },
+          isFormData: false,
         });
         console.log("session-end API response in ClinicPatientEndSession:", res);
         if (res && (res.success || res.code === 200 || res.status)) {
