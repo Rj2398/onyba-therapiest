@@ -9,9 +9,10 @@ import DateRangePicker, { DateRange } from "@/src/component/DateRangePicker";
 import { ImBin } from "react-icons/im";
 import { useAuth } from "@/src/app/UserProvider";
 import { requestApi } from "@/src/utils/api";
-import { Base_image_url } from "@/src/config";
+import { API_BASE_URL, Base_image_url } from "@/src/config";
 import Autocomplete from "react-google-autocomplete";
-
+import axios from "axios";
+import { uploadMedia } from "@/src/utils/formdataApi";
 // Helper functions for Date formatting and conversion
 const formatDateToYMD = (date: Date | null) => {
   if (!date) return "";
@@ -150,6 +151,10 @@ const getApiErrorMessage = (response: any, fallbackMessage: string) => {
 };
 
 const PersonalProfile = () => {
+  const savedDetails: any = localStorage.getItem("loginUser");
+  const parsedDetails = savedDetails ? JSON.parse(savedDetails) : null;
+  const token = parsedDetails?.token;
+
   const { therapistProfile, saveTherapistProfile } = useAuth();
   const [specializationOptions, setSpecializationOptions] = useState<
     { id: any; name: string }[]
@@ -324,8 +329,8 @@ const PersonalProfile = () => {
         const rawImg = therapistProfile.profile_image;
         const imgUrl =
           rawImg.startsWith("http") ||
-            rawImg.startsWith("data:") ||
-            rawImg.startsWith("/")
+          rawImg.startsWith("data:") ||
+          rawImg.startsWith("/")
             ? rawImg
             : `${Base_image_url}${rawImg}`;
         setProfileImage(imgUrl);
@@ -349,19 +354,21 @@ const PersonalProfile = () => {
       }
 
       if (Array.isArray(therapistProfile.therapist_certificates)) {
-        const certs = therapistProfile.therapist_certificates.map((cert: any) => ({
-          id: cert.id,
-          certificationName:
-            cert.certificate_name ||
-            (cert.certificate_path
-              ? cert.certificate_path.substring(
-                cert.certificate_path.lastIndexOf("/") + 1
-              )
-              : "Uploaded Document"),
-          issuingOrganization: "Uploaded Document",
-          verificationStatus: "Verified",
-          path: cert.certificate_path,
-        }));
+        const certs = therapistProfile.therapist_certificates.map(
+          (cert: any) => ({
+            id: cert.id,
+            certificationName:
+              cert.certificate_name ||
+              (cert.certificate_path
+                ? cert.certificate_path.substring(
+                    cert.certificate_path.lastIndexOf("/") + 1
+                  )
+                : "Uploaded Document"),
+            issuingOrganization: "Uploaded Document",
+            verificationStatus: "Verified",
+            path: cert.certificate_path,
+          })
+        );
         setCertifications(certs);
       } else {
         setCertifications([]);
@@ -503,8 +510,8 @@ const PersonalProfile = () => {
         console.error("Failed to update profile:", err);
         toast.error(
           err.response?.data?.message ||
-          err.message ||
-          "Failed to update profile"
+            err.message ||
+            "Failed to update profile"
         );
       }
     }
@@ -601,15 +608,17 @@ const PersonalProfile = () => {
         setSaveForDate(false);
         setSaveForDay(false);
       } else {
-        toast.error(getApiErrorMessage(response, "Failed to save availability"));
+        toast.error(
+          getApiErrorMessage(response, "Failed to save availability")
+        );
       }
     } catch (err: any) {
       toast.dismiss("save-avail");
       console.error("Failed to save availability:", err);
       toast.error(
         err.response?.data?.message ||
-        err.message ||
-        "Failed to save availability"
+          err.message ||
+          "Failed to save availability"
       );
     }
   };
@@ -622,6 +631,91 @@ const PersonalProfile = () => {
     );
   };
 
+  // const handleCertificateFormSubmit = async (e: React.FormEvent) => {
+  //   e.preventDefault();
+
+  //   if (!certFile) {
+  //     toast.error("Please select a file to upload");
+  //     return;
+  //   }
+  //   if (!certName.trim()) {
+  //     toast.error("Please enter a certificate name");
+  //     return;
+  //   }
+
+  //   try {
+  //     toast.loading("Uploading certificate...", { toastId: "upload-cert" });
+  //     const formData = new FormData();
+
+  //     formData.append("certificates", certFile);
+  //     formData.append("certificates_name", certName.trim());
+
+  //     // Replace the URL with your base URL/config if necessary
+  //     const res = await axios.post(
+  //       `${API_BASE_URL}upload-certificates`,
+  //       formData,
+  //       {
+  //         headers: {
+  //           "Content-Type": "multipart/form-data",
+  //           Authorization: `Bearer ${token}`,
+  //         },
+  //       }
+  //     );
+
+  //     const response = res.data;
+
+  //     toast.dismiss("upload-cert");
+  //     if (response && response.success) {
+  //       toast.success("Certificate uploaded successfully!");
+  //       if (response.data) {
+  //         saveTherapistProfile(response.data);
+  //       }
+  //       setShowCertModal(false);
+  //       setCertName("");
+  //       setCertFile(null);
+  //     } else {
+  //       let errMsg = response?.message || "Failed to upload certificate";
+  //       if (response?.data && typeof response.data === "object") {
+  //         const errList: string[] = [];
+  //         Object.values(response.data).forEach((val: any) => {
+  //           if (Array.isArray(val)) {
+  //             errList.push(...val);
+  //           } else if (typeof val === "string") {
+  //             errList.push(val);
+  //           }
+  //         });
+  //         if (errList.length > 0) {
+  //           errMsg = errList.join(" ");
+  //         }
+  //       }
+  //       toast.error(errMsg);
+  //     }
+  //   } catch (err: any) {
+  //     toast.dismiss("upload-cert");
+  //     console.error("Failed to upload certificate:", err);
+  //     let errMsg =
+  //       err.response?.data?.message ||
+  //       err.message ||
+  //       "Failed to upload certificate";
+  //     if (
+  //       err.response?.data?.data &&
+  //       typeof err.response.data.data === "object"
+  //     ) {
+  //       const errList: string[] = [];
+  //       Object.values(err.response.data.data).forEach((val: any) => {
+  //         if (Array.isArray(val)) {
+  //           errList.push(...val);
+  //         } else if (typeof val === "string") {
+  //           errList.push(val);
+  //         }
+  //       });
+  //       if (errList.length > 0) {
+  //         errMsg = errList.join(" ");
+  //       }
+  //     }
+  //     toast.error(errMsg);
+  //   }
+  // };
   const handleCertificateFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -637,17 +731,11 @@ const PersonalProfile = () => {
     try {
       toast.loading("Uploading certificate...", { toastId: "upload-cert" });
       const formData = new FormData();
-
       formData.append("certificates", certFile);
       formData.append("certificates_name", certName.trim());
 
-
-      const response = await requestApi({
-        endpoint: "upload-certificates",
-        method: "POST",
-        data: formData,
-        isFormData: true,
-      });
+      // Just pass endpoint and the formData body
+      const response = await uploadMedia("upload-certificates", formData);
 
       toast.dismiss("upload-cert");
       if (response && response.success) {
@@ -682,7 +770,10 @@ const PersonalProfile = () => {
         err.response?.data?.message ||
         err.message ||
         "Failed to upload certificate";
-      if (err.response?.data?.data && typeof err.response.data.data === "object") {
+      if (
+        err.response?.data?.data &&
+        typeof err.response.data.data === "object"
+      ) {
         const errList: string[] = [];
         Object.values(err.response.data.data).forEach((val: any) => {
           if (Array.isArray(val)) {
@@ -717,20 +808,20 @@ const PersonalProfile = () => {
         if (response.data) {
           saveTherapistProfile(response.data);
         } else {
-          setCertifications((prev) =>
-            prev.filter((c) => c.id !== certId)
-          );
+          setCertifications((prev) => prev.filter((c) => c.id !== certId));
         }
       } else {
-        toast.error(getApiErrorMessage(response, "Failed to delete certificate"));
+        toast.error(
+          getApiErrorMessage(response, "Failed to delete certificate")
+        );
       }
     } catch (err: any) {
       toast.dismiss("delete-cert");
       console.error("Failed to delete certificate:", err);
       toast.error(
         err.response?.data?.message ||
-        err.message ||
-        "Failed to delete certificate"
+          err.message ||
+          "Failed to delete certificate"
       );
     }
   };
@@ -886,7 +977,10 @@ const PersonalProfile = () => {
         setSelectSession(false);
       } else {
         toast.error(
-          getApiErrorMessage(response, "Failed to update category and clinic address")
+          getApiErrorMessage(
+            response,
+            "Failed to update category and clinic address"
+          )
         );
       }
     } catch (err: any) {
@@ -894,8 +988,8 @@ const PersonalProfile = () => {
       console.error("Failed to update category and clinic address:", err);
       toast.error(
         err.response?.data?.message ||
-        err.message ||
-        "Failed to update category and clinic address"
+          err.message ||
+          "Failed to update category and clinic address"
       );
     }
   };
@@ -920,15 +1014,17 @@ const PersonalProfile = () => {
           saveTherapistProfile(response.data);
         }
       } else {
-        toast.error(getApiErrorMessage(response, "Failed to update specializations"));
+        toast.error(
+          getApiErrorMessage(response, "Failed to update specializations")
+        );
       }
     } catch (err: any) {
       toast.dismiss("update-spec");
       console.error("Failed to update specializations:", err);
       toast.error(
         err.response?.data?.message ||
-        err.message ||
-        "Failed to update specializations"
+          err.message ||
+          "Failed to update specializations"
       );
     }
   };
@@ -974,8 +1070,8 @@ const PersonalProfile = () => {
       console.error("Failed to add specialization:", err);
       toast.error(
         err.response?.data?.message ||
-        err.message ||
-        "Failed to add specialization"
+          err.message ||
+          "Failed to add specialization"
       );
     }
   };
@@ -1003,7 +1099,10 @@ const PersonalProfile = () => {
         }
       } else {
         toast.error(
-          getApiErrorMessage(response, "Failed to update reasons of consultation")
+          getApiErrorMessage(
+            response,
+            "Failed to update reasons of consultation"
+          )
         );
       }
     } catch (err: any) {
@@ -1011,8 +1110,8 @@ const PersonalProfile = () => {
       console.error("Failed to update reasons of consultation:", err);
       toast.error(
         err.response?.data?.message ||
-        err.message ||
-        "Failed to update reasons of consultation"
+          err.message ||
+          "Failed to update reasons of consultation"
       );
     }
   };
@@ -1038,15 +1137,17 @@ const PersonalProfile = () => {
         }
         setIsEditingTax(false);
       } else {
-        toast.error(getApiErrorMessage(response, "Failed to update tax percentage"));
+        toast.error(
+          getApiErrorMessage(response, "Failed to update tax percentage")
+        );
       }
     } catch (err: any) {
       toast.dismiss("update-tax");
       console.error("Failed to update tax percentage:", err);
       toast.error(
         err.response?.data?.message ||
-        err.message ||
-        "Failed to update tax percentage"
+          err.message ||
+          "Failed to update tax percentage"
       );
     }
   };
@@ -1379,8 +1480,8 @@ const PersonalProfile = () => {
                   {selectSession
                     ? "Cancel"
                     : therapistProfile?.session_mode
-                      ? "Edit"
-                      : "Add"}
+                    ? "Edit"
+                    : "Add"}
                 </button>
               </div>
 
@@ -1394,20 +1495,22 @@ const PersonalProfile = () => {
                     style={{ marginBottom: "15px" }}
                   >
                     <button
-                      className={`onyba-prof-btn-mode ${selectedModes.includes("Online")
-                        ? "onyba-prof-btn-mode--active"
-                        : "onyba-prof-btn-mode--inactive"
-                        }`}
+                      className={`onyba-prof-btn-mode ${
+                        selectedModes.includes("Online")
+                          ? "onyba-prof-btn-mode--active"
+                          : "onyba-prof-btn-mode--inactive"
+                      }`}
                       onClick={() => handleModeToggle("Online")}
                     >
                       <img src="images/online-icon.svg" alt="" />
                       Online
                     </button>
                     <button
-                      className={`onyba-prof-btn-mode ${selectedModes.includes("In-Person")
-                        ? "onyba-prof-btn-mode--active"
-                        : "onyba-prof-btn-mode--inactive"
-                        }`}
+                      className={`onyba-prof-btn-mode ${
+                        selectedModes.includes("In-Person")
+                          ? "onyba-prof-btn-mode--active"
+                          : "onyba-prof-btn-mode--inactive"
+                      }`}
                       onClick={() => handleModeToggle("In-Person")}
                     >
                       <img src="images/hugeicons_location-05.svg" alt="" />{" "}
@@ -1646,10 +1749,11 @@ const PersonalProfile = () => {
                   {[7, 10, 15].map((taxVal) => (
                     <span
                       key={taxVal}
-                      className={`onyba-prof-tax-item ${selectedTax === taxVal
-                        ? "onyba-prof-tax-item--active"
-                        : ""
-                        }`}
+                      className={`onyba-prof-tax-item ${
+                        selectedTax === taxVal
+                          ? "onyba-prof-tax-item--active"
+                          : ""
+                      }`}
                       style={{ cursor: isEditingTax ? "pointer" : "default" }}
                       onClick={() => {
                         if (isEditingTax) {
@@ -1742,9 +1846,9 @@ const PersonalProfile = () => {
                       .map((day, index) => {
                         const dateStr = day
                           ? `${year}-${String(month + 1).padStart(
-                            2,
-                            "0"
-                          )}-${String(day).padStart(2, "0")}`
+                              2,
+                              "0"
+                            )}-${String(day).padStart(2, "0")}`
                           : "";
 
                         const isHoliday = day && holidays.includes(dateStr);
@@ -1767,22 +1871,26 @@ const PersonalProfile = () => {
                           <div
                             key={index}
                             className={`onyba-avail-date-cell
-                                                            ${!day
-                                ? "onyba-avail-date-empty"
-                                : ""
-                              }
-                                                            ${isToday
-                                ? "onyba-avail-date--today"
-                                : ""
-                              }
-                                                            ${isSelected
-                                ? "onyba-avail-date--selected"
-                                : ""
-                              }
-                                                            ${isHoliday
-                                ? "onyba-avail-date--holiday"
-                                : ""
-                              }
+                                                            ${
+                                                              !day
+                                                                ? "onyba-avail-date-empty"
+                                                                : ""
+                                                            }
+                                                            ${
+                                                              isToday
+                                                                ? "onyba-avail-date--today"
+                                                                : ""
+                                                            }
+                                                            ${
+                                                              isSelected
+                                                                ? "onyba-avail-date--selected"
+                                                                : ""
+                                                            }
+                                                            ${
+                                                              isHoliday
+                                                                ? "onyba-avail-date--holiday"
+                                                                : ""
+                                                            }
                                                         `}
                             onClick={() => {
                               if (!day || isHoliday) return;
@@ -2023,9 +2131,9 @@ const PersonalProfile = () => {
         selectedIds={
           therapistProfile?.reason_of_consultation_id
             ? therapistProfile.reason_of_consultation_id
-              .split(",")
-              .map((id: string) => parseInt(id.trim(), 10))
-              .filter((n: number) => !isNaN(n))
+                .split(",")
+                .map((id: string) => parseInt(id.trim(), 10))
+                .filter((n: number) => !isNaN(n))
             : []
         }
         onApply={handleUpdateConsultationReasons}
@@ -2035,9 +2143,9 @@ const PersonalProfile = () => {
         selectedIds={
           therapistProfile?.specialization_id
             ? therapistProfile.specialization_id
-              .split(",")
-              .map((id: string) => parseInt(id.trim(), 10))
-              .filter((n: number) => !isNaN(n))
+                .split(",")
+                .map((id: string) => parseInt(id.trim(), 10))
+                .filter((n: number) => !isNaN(n))
             : []
         }
         onApply={handleUpdateSpecialization}
@@ -2072,11 +2180,20 @@ const PersonalProfile = () => {
                   marginBottom: "20px",
                 }}
               >
-                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <div
+                  style={{ display: "flex", alignItems: "center", gap: "10px" }}
+                >
                   <span className="onyba-prof-icon-badge" style={{ margin: 0 }}>
                     <img src="images/certificate-icon.svg" alt="" />
                   </span>
-                  <h3 style={{ margin: 0, fontSize: "18px", fontWeight: "600", color: "#1a1a1a" }}>
+                  <h3
+                    style={{
+                      margin: 0,
+                      fontSize: "18px",
+                      fontWeight: "600",
+                      color: "#1a1a1a",
+                    }}
+                  >
                     Upload Certificate
                   </h3>
                 </div>

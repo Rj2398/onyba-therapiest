@@ -770,183 +770,9 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
       setIsSavingTask(false);
     }
   };
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-
-    if (!file) return;
-
-    const targetSessionId =
-      session_id ||
-      sessionData?.therapy_session_id ||
-      sessionData?.id ||
-      initialSessionData?.id;
-
-    if (!targetSessionId) {
-      toast.error("Session ID is missing");
-      e.target.value = "";
-      return;
-    }
-
-    setUploadingDoc(true);
-
-    try {
-      // ==========================================
-      // Get token
-      // ==========================================
-      let token = "";
-
-      if (typeof window !== "undefined") {
-        const stored = window.localStorage.getItem("loginUser");
-
-        if (stored) {
-          try {
-            const parsed = JSON.parse(stored);
-
-            token = parsed?.token || parsed?.user_details?.token || "";
-          } catch (error) {
-            console.error("Failed to parse loginUser:", error);
-          }
-        }
-      }
-
-      // ==========================================
-      // Create FormData
-      // ==========================================
-      const formData = new FormData();
-
-      formData.append("session_id", String(targetSessionId));
-
-      formData.append(
-        "type",
-        activeDocTab === "therapist" ? "therapist" : "patient"
-      );
-
-      formData.append("document", file);
-
-      // ==========================================
-      // Debug FormData
-      // ==========================================
-      for (const [key, value] of formData.entries()) {
-        console.log("FormData:", key, value);
-      }
-
-      // ==========================================
-      // Upload API
-      // ==========================================
-      const response = await axios.post(
-        `${API_BASE_URL}upload-session-documents`,
-        formData,
-        {
-          headers: {
-            Accept: "*/*",
-            Authorization: `Bearer ${token}`,
-            // Content-Type ko undefined rakhna zaroori hai taaki axios browser se boundary auto-calculate kare jo postman me "<calculated when request is sent>" dikha raha hai
-            "Content-Type": undefined,
-          },
-        }
-      );
-
-      console.log("Upload response:", response.data);
-
-      const responseData = response.data;
-
-      // ==========================================
-      // SUCCESS
-      // ==========================================
-      if (
-        responseData?.success === true ||
-        responseData?.code === 200 ||
-        responseData?.status === true ||
-        responseData?.status === "success"
-      ) {
-        toast.success("Document uploaded successfully!");
-
-        // ========================================
-        // Get updated session details
-        // ========================================
-        const refreshResponse = await axios.post(
-          `${API_BASE_URL}/get-session-details/${targetSessionId}`,
-          null,
-          {
-            headers: {
-              Accept: "application/json",
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
-
-        console.log("Session details:", refreshResponse.data);
-
-        if (refreshResponse.data?.success && refreshResponse.data?.data) {
-          setSessionData(refreshResponse.data.data);
-        }
-      } else {
-        // ==========================================
-        // API VALIDATION ERROR
-        // ==========================================
-        let errMsg = responseData?.message || "Failed to upload document.";
-
-        if (responseData?.data && typeof responseData.data === "object") {
-          const errList: string[] = [];
-
-          Object.values(responseData.data).forEach((val: any) => {
-            if (Array.isArray(val)) {
-              errList.push(...val);
-            } else if (typeof val === "string") {
-              errList.push(val);
-            }
-          });
-
-          if (errList.length > 0) {
-            errMsg = errList.join(" ");
-          }
-        }
-
-        toast.error(errMsg);
-      }
-    } catch (err: any) {
-      console.error("Error uploading document:", err);
-
-      console.error("Status:", err?.response?.status);
-
-      console.error("Response:", err?.response?.data);
-
-      let errMsg =
-        err?.response?.data?.message ||
-        err?.message ||
-        "Error uploading document";
-
-      const errorData = err?.response?.data?.data;
-
-      if (errorData && typeof errorData === "object") {
-        const errList: string[] = [];
-
-        Object.values(errorData).forEach((val: any) => {
-          if (Array.isArray(val)) {
-            errList.push(...val);
-          } else if (typeof val === "string") {
-            errList.push(val);
-          }
-        });
-
-        if (errList.length > 0) {
-          errMsg = errList.join(" ");
-        }
-      }
-
-      toast.error(errMsg);
-    } finally {
-      setUploadingDoc(false);
-
-      // Reset file input
-      if (e.target) {
-        e.target.value = "";
-      }
-    }
-  };
   // const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
   //   const file = e.target.files?.[0];
+
   //   if (!file) return;
 
   //   const targetSessionId =
@@ -957,86 +783,258 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
 
   //   if (!targetSessionId) {
   //     toast.error("Session ID is missing");
+  //     e.target.value = "";
   //     return;
   //   }
 
   //   setUploadingDoc(true);
+
   //   try {
+  //     // ==========================================
+  //     // Get token
+  //     // ==========================================
+  //     let token = "";
+
+  //     if (typeof window !== "undefined") {
+  //       const stored = window.localStorage.getItem("loginUser");
+
+  //       if (stored) {
+  //         try {
+  //           const parsed = JSON.parse(stored);
+
+  //           token = parsed?.token || parsed?.user_details?.token || "";
+  //         } catch (error) {
+  //           console.error("Failed to parse loginUser:", error);
+  //         }
+  //       }
+  //     }
+
+  //     // ==========================================
+  //     // Create FormData
+  //     // ==========================================
   //     const formData = new FormData();
+
   //     formData.append("session_id", String(targetSessionId));
+
   //     formData.append(
   //       "type",
   //       activeDocTab === "therapist" ? "therapist" : "patient"
   //     );
+
   //     formData.append("document", file);
 
-  //     const response = await requestApi({
-  //       endpoint: "upload-session-documents",
-  //       method: "POST",
-  //       data: formData,
-  //       isFormData: true,
-  //     });
+  //     // ==========================================
+  //     // Debug FormData
+  //     // ==========================================
+  //     for (const [key, value] of formData.entries()) {
+  //       console.log("FormData:", key, value);
+  //     }
 
+  //     // ==========================================
+  //     // Upload API
+  //     // ==========================================
+  //     const response = await axios.post(
+  //       `${API_BASE_URL}/upload-session-documents`,
+  //       formData,
+  //       {
+  //         headers: {
+  //           Accept: "application/json",
+  //           Authorization: `Bearer ${token}`,
+  //         },
+  //       }
+  //     );
+
+  //     console.log("Upload response:", response.data);
+
+  //     const responseData = response.data;
+
+  //     // ==========================================
+  //     // SUCCESS
+  //     // ==========================================
   //     if (
-  //       response &&
-  //       (response.success === true ||
-  //         response.code === 200 ||
-  //         response.status === true ||
-  //         response.status === "success")
+  //       responseData?.success === true ||
+  //       responseData?.code === 200 ||
+  //       responseData?.status === true ||
+  //       responseData?.status === "success"
   //     ) {
   //       toast.success("Document uploaded successfully!");
-  //       const refreshRes = await requestApi({
-  //         endpoint: `get-session-details/${targetSessionId}`,
-  //         method: "POST",
-  //       });
-  //       if (refreshRes?.success && refreshRes?.data) {
-  //         setSessionData(refreshRes.data);
+
+  //       // ========================================
+  //       // Get updated session details
+  //       // ========================================
+  //       const refreshResponse = await axios.post(
+  //         `${API_BASE_URL}/get-session-details/${targetSessionId}`,
+  //         null,
+  //         {
+  //           headers: {
+  //             Accept: "application/json",
+  //             Authorization: `Bearer ${token}`,
+  //             "Content-Type": "application/json",
+  //           },
+  //         }
+  //       );
+
+  //       console.log("Session details:", refreshResponse.data);
+
+  //       if (refreshResponse.data?.success && refreshResponse.data?.data) {
+  //         setSessionData(refreshResponse.data.data);
   //       }
   //     } else {
-  //       let errMsg = response?.message || "Failed to upload document.";
-  //       if (response?.data && typeof response.data === "object") {
+  //       // ==========================================
+  //       // API VALIDATION ERROR
+  //       // ==========================================
+  //       let errMsg = responseData?.message || "Failed to upload document.";
+
+  //       if (responseData?.data && typeof responseData.data === "object") {
   //         const errList: string[] = [];
-  //         Object.values(response.data).forEach((val: any) => {
+
+  //         Object.values(responseData.data).forEach((val: any) => {
   //           if (Array.isArray(val)) {
   //             errList.push(...val);
   //           } else if (typeof val === "string") {
   //             errList.push(val);
   //           }
   //         });
+
   //         if (errList.length > 0) {
   //           errMsg = errList.join(" ");
   //         }
   //       }
+
   //       toast.error(errMsg);
   //     }
   //   } catch (err: any) {
   //     console.error("Error uploading document:", err);
+
+  //     console.error("Status:", err?.response?.status);
+
+  //     console.error("Response:", err?.response?.data);
+
   //     let errMsg =
   //       err?.response?.data?.message ||
   //       err?.message ||
   //       "Error uploading document";
-  //     if (
-  //       err?.response?.data?.data &&
-  //       typeof err.response.data.data === "object"
-  //     ) {
+
+  //     const errorData = err?.response?.data?.data;
+
+  //     if (errorData && typeof errorData === "object") {
   //       const errList: string[] = [];
-  //       Object.values(err.response.data.data).forEach((val: any) => {
+
+  //       Object.values(errorData).forEach((val: any) => {
   //         if (Array.isArray(val)) {
   //           errList.push(...val);
   //         } else if (typeof val === "string") {
   //           errList.push(val);
   //         }
   //       });
+
   //       if (errList.length > 0) {
   //         errMsg = errList.join(" ");
   //       }
   //     }
+
   //     toast.error(errMsg);
   //   } finally {
   //     setUploadingDoc(false);
-  //     if (e.target) e.target.value = "";
+
+  //     // Reset file input
+  //     if (e.target) {
+  //       e.target.value = "";
+  //     }
   //   }
   // };
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const targetSessionId =
+      session_id ||
+      sessionData?.therapy_session_id ||
+      sessionData?.id ||
+      initialSessionData?.id;
+
+    if (!targetSessionId) {
+      toast.error("Session ID is missing");
+      return;
+    }
+
+    setUploadingDoc(true);
+    try {
+      const formData = new FormData();
+      formData.append("session_id", String(targetSessionId));
+      formData.append(
+        "type",
+        activeDocTab === "therapist" ? "therapist" : "patient"
+      );
+      formData.append("document", file);
+
+      const response = await requestApi({
+        endpoint: "upload-session-documents",
+        method: "POST",
+        data: formData,
+        isFormData: true,
+      });
+
+      if (
+        response &&
+        (response.success === true ||
+          response.code === 200 ||
+          response.status === true ||
+          response.status === "success")
+      ) {
+        toast.success("Document uploaded successfully!");
+        const refreshRes = await requestApi({
+          endpoint: `get-session-details/${targetSessionId}`,
+          method: "POST",
+        });
+        if (refreshRes?.success && refreshRes?.data) {
+          setSessionData(refreshRes.data);
+        }
+      } else {
+        let errMsg = response?.message || "Failed to upload document.";
+        if (response?.data && typeof response.data === "object") {
+          const errList: string[] = [];
+          Object.values(response.data).forEach((val: any) => {
+            if (Array.isArray(val)) {
+              errList.push(...val);
+            } else if (typeof val === "string") {
+              errList.push(val);
+            }
+          });
+          if (errList.length > 0) {
+            errMsg = errList.join(" ");
+          }
+        }
+        toast.error(errMsg);
+      }
+    } catch (err: any) {
+      console.error("Error uploading document:", err);
+      let errMsg =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Error uploading document";
+      if (
+        err?.response?.data?.data &&
+        typeof err.response.data.data === "object"
+      ) {
+        const errList: string[] = [];
+        Object.values(err.response.data.data).forEach((val: any) => {
+          if (Array.isArray(val)) {
+            errList.push(...val);
+          } else if (typeof val === "string") {
+            errList.push(val);
+          }
+        });
+        if (errList.length > 0) {
+          errMsg = errList.join(" ");
+        }
+      }
+      toast.error(errMsg);
+    } finally {
+      setUploadingDoc(false);
+      if (e.target) e.target.value = "";
+    }
+  };
 
   const handleSubmitNotes = async (type: "private" | "public") => {
     const notesText = type === "private" ? privateNotes : publicNotes;
