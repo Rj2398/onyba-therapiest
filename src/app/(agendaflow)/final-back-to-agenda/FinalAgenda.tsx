@@ -10,6 +10,7 @@ import { Base_image_url } from "@/src/config";
 import { requestApi } from "@/src/utils/api";
 import axios from "axios";
 import { API_BASE_URL } from "@/src/config";
+import { uploadMedia } from "@/src/utils/formdataApi";
 
 export interface FinalAgendaProps {
   sessionData?: any;
@@ -960,28 +961,29 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
 
     setUploadingDoc(true);
     try {
+      // const formData = new FormData();
+      // formData.append("session_id", String(targetSessionId));
+      // formData.append(
+      //   "type",
+      //   activeDocTab === "therapist" ? "therapist" : "patient"
+      // );
+      // formData.append("document", file);
+
+      // const response = await requestApi({
+      //   endpoint: "upload-session-documents",
+      //   method: "POST",
+      //   data: formData,
+      //   isFormData: true,
+      // });
+
       const formData = new FormData();
       formData.append("session_id", String(targetSessionId));
-      formData.append(
-        "type",
-        activeDocTab === "therapist" ? "therapist" : "patient"
-      );
+      formData.append("type", "therapist");
       formData.append("document", file);
 
-      const response = await requestApi({
-        endpoint: "upload-session-documents",
-        method: "POST",
-        data: formData,
-        isFormData: true,
-      });
+      const response = await uploadMedia("upload-session-documents", formData);
 
-      if (
-        response &&
-        (response.success === true ||
-          response.code === 200 ||
-          response.status === true ||
-          response.status === "success")
-      ) {
+      if (response && response.status === "success") {
         toast.success("Document uploaded successfully!");
         const refreshRes = await requestApi({
           endpoint: `get-session-details/${targetSessionId}`,

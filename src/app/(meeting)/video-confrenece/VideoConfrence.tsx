@@ -30,6 +30,7 @@ import {
   Timestamp,
 } from "firebase/firestore";
 import { uploadMedia } from "@/src/utils/formdataApi";
+import axios from "axios";
 
 export interface FirebaseChatMessage {
   id?: string;
@@ -284,6 +285,51 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
     }
   };
 
+  const fetchSessionDetails = useCallback(async () => {
+    if (!rawSessionId) return;
+    try {
+      const response = await requestApi({
+        endpoint: `get-session-details/${rawSessionId}`,
+        method: "POST",
+        data: {
+          therapy_session_id: String(rawSessionId),
+        },
+      });
+
+      if (response && (response.success || response.status || response.data)) {
+        const data = response.data || response;
+        const notes =
+          data.therapist_private_notes ||
+          data.private_notes ||
+          data.therapist_notes ||
+          data.notes ||
+          "";
+        if (notes) {
+          setPrivateNotesText(notes);
+          if (privateNotesEditorRef.current) {
+            privateNotesEditorRef.current.innerHTML = notes;
+          }
+        }
+      }
+    } catch (err) {
+      console.error("Error fetching session details in VideoConfrence:", err);
+    }
+  }, [rawSessionId]);
+
+  useEffect(() => {
+    fetchSessionDetails();
+  }, [fetchSessionDetails]);
+
+  useEffect(() => {
+    if (
+      privateNotesEditorRef.current &&
+      privateNotesText &&
+      !privateNotesEditorRef.current.innerHTML
+    ) {
+      privateNotesEditorRef.current.innerHTML = privateNotesText;
+    }
+  }, [privateNotesText]);
+
   // Documents & Attachments States
   const [docTab, setDocTab] = useState<"therapist" | "patient">("therapist");
   const [therapistDocuments, setTherapistDocuments] = useState<any[]>([]);
@@ -340,7 +386,7 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
   useEffect(() => {
     fetchSessionDocuments();
   }, [fetchSessionDocuments]);
-
+  //
   const handleDocumentUpload = async (
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
@@ -349,49 +395,63 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
 
     setIsUploadingDoc(true);
     try {
-      // const payload = {
-      //   session_id: String(rawSessionId),
-      //   type: "therapist",
-      //   document: file,
-      // };
-
-      // const response = await requestApi({
-      //   endpoint: "upload-session-documents",
-      //   method: "POST",
-      //   data: payload,
-      //   isFormData: false,
-      // });
-
+      const parsedSessionId = parseInt(String(rawSessionId), 10);
       const formData = new FormData();
-      formData.append("session_id", String(rawSessionId));
+      formData.append("session_id", parsedSessionId.toString());
       formData.append("type", "therapist");
+
+      // Check key name: Postman screenshot shows 'documen...' (likely 'documents' or 'document')
       formData.append("document", file);
 
-      const response = await uploadMedia("upload-session-documents", formData);
+      // 1. Retrieve the bearer token from localStorage
+      let token: string | undefined;
+      try {
+        const savedDetails = localStorage.getItem("loginUser");
+        const parsed = savedDetails ? JSON.parse(savedDetails) : null;
+        token = parsed?.token;
+      } catch (err) {
+        console.error("Error reading token:", err);
+      }
 
+      // 2. Call your local Next.js proxy route directly
+      const res = await axios.post("/api/upload-session-documents", formData, {
+        headers: {
+          Accept: "*/*",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+
+      const response = res.data;
+
+      // 3. Handle success response
       if (
         response &&
         (response.success || response.code === 200 || response.status)
       ) {
         toast.success("Document uploaded successfully!");
         const extMatch = file.name.match(/\.([a-zA-Z0-9]+)$/);
+
+        // In Postman response, data is an array of strings: data: ["uploads/..."]
+        const uploadedFilePath = Array.isArray(response?.data)
+          ? response.data[0]
+          : response?.data?.file_url ||
+            response?.data?.url ||
+            response?.data?.document;
+
         const uploadedDocObj = {
           id: Date.now(),
           file_name: file.name,
           file_type: extMatch ? extMatch[1].toUpperCase() : "DOC",
-          file_url:
-            response?.data?.file_url ||
-            response?.data?.url ||
-            response?.data?.document ||
-            URL.createObjectURL(file),
+          file_url: uploadedFilePath || URL.createObjectURL(file),
         };
+
         setTherapistDocuments((prev) => [...prev, uploadedDocObj]);
         fetchSessionDocuments();
       } else {
         toast.error(response?.message || "Failed to upload document.");
       }
     } catch (err: any) {
-      console.error("Error uploading document in VideoConfrence:", err);
+      console.error("Error uploading document in VideoConference:", err);
       toast.error(
         err?.response?.data?.message ||
           err?.message ||

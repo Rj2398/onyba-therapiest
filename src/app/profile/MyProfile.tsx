@@ -12,6 +12,7 @@ import { requestApi } from "@/src/utils/api";
 import toast from "react-hot-toast";
 import Autocomplete from "react-google-autocomplete";
 import { Base_image_url } from "@/src/config";
+import { uploadMedia } from "@/src/utils/formdataApi";
 
 const documentOptions = ["DNI", "NIE", "RESIDENCE_PERMIT", "PASSPORT"];
 const cityOptions = ["New York", "Los Angeles", "Chicago"];
@@ -253,32 +254,32 @@ const MyProfile = () => {
         if (therapist) {
           const activeSpecs = therapist.specialization_id
             ? therapist.specialization_id
-              .split(",")
-              .map((idStr: string) => {
-                const id = parseInt(idStr.trim(), 10);
-                return specs.find((o: any) => Number(o.id) === id)?.name;
-              })
-              .filter(Boolean)
+                .split(",")
+                .map((idStr: string) => {
+                  const id = parseInt(idStr.trim(), 10);
+                  return specs.find((o: any) => Number(o.id) === id)?.name;
+                })
+                .filter(Boolean)
             : [];
 
           const activeReasons = therapist.reason_of_consultation_id
             ? therapist.reason_of_consultation_id
-              .split(",")
-              .map((idStr: string) => {
-                const id = parseInt(idStr.trim(), 10);
-                return reasons.find((o: any) => Number(o.id) === id)?.name;
-              })
-              .filter(Boolean)
+                .split(",")
+                .map((idStr: string) => {
+                  const id = parseInt(idStr.trim(), 10);
+                  return reasons.find((o: any) => Number(o.id) === id)?.name;
+                })
+                .filter(Boolean)
             : [];
 
           const existingCerts = therapist.professional_certificates
             ? therapist.professional_certificates
-              .split(",")
-              .map((url: string) => ({
-                name: url.substring(url.lastIndexOf("/") + 1),
-                isRemote: true,
-                url,
-              }))
+                .split(",")
+                .map((url: string) => ({
+                  name: url.substring(url.lastIndexOf("/") + 1),
+                  isRemote: true,
+                  url,
+                }))
             : [];
 
           setFormData((prev: any) => ({
@@ -314,8 +315,8 @@ const MyProfile = () => {
             // therapyTypes: therapist.type_of_service ? therapist.type_of_service.split(',').map((t: string) => t.trim().charAt(0).toUpperCase() + t.trim().slice(1)) : prev.therapyTypes,
             therapyTypes: therapist.service_id
               ? String(therapist.service_id)
-                .split(",")
-                .map((id: string) => Number(id.trim()))
+                  .split(",")
+                  .map((id: string) => Number(id.trim()))
               : [],
             consultationReasons: activeReasons,
             languages: therapist.language || "",
@@ -476,9 +477,9 @@ const MyProfile = () => {
     setFormData((prev: any) => {
       const currentLangs = prev.languages
         ? prev.languages
-          .split(",")
-          .map((l: string) => l.trim())
-          .filter(Boolean)
+            .split(",")
+            .map((l: string) => l.trim())
+            .filter(Boolean)
         : [];
       let nextLangs: string[];
       if (currentLangs.includes(lang)) {
@@ -498,9 +499,9 @@ const MyProfile = () => {
   const getSelectedLanguages = () => {
     return formData.languages
       ? formData.languages
-        .split(",")
-        .map((l: string) => l.trim())
-        .filter(Boolean)
+          .split(",")
+          .map((l: string) => l.trim())
+          .filter(Boolean)
       : [];
   };
 
@@ -881,12 +882,14 @@ const MyProfile = () => {
           JSON.stringify(debugObj, null, 2)
         );
 
-        const response = await requestApi({
-          endpoint: "update-therapist-profile",
-          method: "POST",
-          data: payload,
-          isFormData: true,
-        });
+        // const response = await requestApi({
+        //   endpoint: "update-therapist-profile",
+        //   method: "POST",
+        //   data: payload,
+        //   isFormData: true,
+        // });
+
+        const response = await uploadMedia("update-therapist-profile", payload);
 
         if (response.success || response.status) {
           toast.success("Profile submitted successfully!");
@@ -1079,8 +1082,8 @@ const MyProfile = () => {
                           initialPhoneIsNull && !isPhoneVerified
                             ? "75px"
                             : isPhoneVerified
-                              ? "85px"
-                              : "12px",
+                            ? "85px"
+                            : "12px",
                       }}
                       placeholder="+1234567890"
                       required
@@ -1157,8 +1160,8 @@ const MyProfile = () => {
                           initialEmailIsNull && !isEmailVerified
                             ? "75px"
                             : isEmailVerified
-                              ? "85px"
-                              : "12px",
+                            ? "85px"
+                            : "12px",
                       }}
                       placeholder="Enter your email"
                       required
@@ -1273,8 +1276,9 @@ const MyProfile = () => {
                       {documentOptions.map((doc) => (
                         <div
                           key={doc}
-                          className={`tp-dropdown-item ${formData.doctype === doc ? "active" : ""
-                            }`}
+                          className={`tp-dropdown-item ${
+                            formData.doctype === doc ? "active" : ""
+                          }`}
                           onClick={() => {
                             setFormData({ ...formData, doctype: doc });
                             setOpenDropdown(null);
@@ -1683,8 +1687,9 @@ const MyProfile = () => {
                 <div className="d-flex gap-2 mb-3 flex-wrap">
                   <button
                     type="button"
-                    className={`tp-toggle-pill ${formData.sessionMode.includes("online") ? "active" : ""
-                      }`}
+                    className={`tp-toggle-pill ${
+                      formData.sessionMode.includes("online") ? "active" : ""
+                    }`}
                     id="mode-online"
                     onClick={() =>
                       handleToggleArrayItem("sessionMode", "online")
@@ -1706,8 +1711,9 @@ const MyProfile = () => {
                   </button>
                   <button
                     type="button"
-                    className={`tp-toggle-pill ${formData.sessionMode.includes("in_person") ? "active" : ""
-                      }`}
+                    className={`tp-toggle-pill ${
+                      formData.sessionMode.includes("in_person") ? "active" : ""
+                    }`}
                     id="mode-inperson"
                     onClick={() =>
                       handleToggleArrayItem("sessionMode", "in_person")
@@ -2208,6 +2214,7 @@ const MyProfile = () => {
         isOpen={isSubmitModalOpen}
         onClose={() => {
           setIsSubmitModalOpen(false);
+          localStorage.clear();
           router.push("/login");
         }}
       />
@@ -2215,7 +2222,7 @@ const MyProfile = () => {
         isOpen={isUnderReviewModalOpen}
         onClose={() => {
           setIsUnderReviewModalOpen(false);
-          localStorage.clear()
+          localStorage.clear();
           router.push("/login");
         }}
       />
@@ -2278,9 +2285,20 @@ const MyProfile = () => {
                   marginBottom: "20px",
                 }}
               >
-                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                  <span className="icon" style={{ fontSize: "20px" }}>💼</span>
-                  <h3 style={{ margin: 0, fontSize: "18px", fontWeight: "600", color: "#1a1a1a" }}>
+                <div
+                  style={{ display: "flex", alignItems: "center", gap: "10px" }}
+                >
+                  <span className="icon" style={{ fontSize: "20px" }}>
+                    💼
+                  </span>
+                  <h3
+                    style={{
+                      margin: 0,
+                      fontSize: "18px",
+                      fontWeight: "600",
+                      color: "#1a1a1a",
+                    }}
+                  >
                     Upload Certificate
                   </h3>
                 </div>
@@ -2350,7 +2368,9 @@ const MyProfile = () => {
                     type="file"
                     required
                     accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                    onChange={(e) => setModalCertFile(e.target.files?.[0] || null)}
+                    onChange={(e) =>
+                      setModalCertFile(e.target.files?.[0] || null)
+                    }
                     style={{
                       width: "100%",
                       padding: "8px",
