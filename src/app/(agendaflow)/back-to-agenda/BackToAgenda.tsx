@@ -173,6 +173,10 @@ const BackToAgendaContent = () => {
   const isCancelled =
     sessionData?.session_status?.toLowerCase().trim() === "cancelled" ||
     sessionData?.session_status?.toLowerCase().trim() === "canceled";
+  const isCompleted =
+    sessionData?.session_status?.toLowerCase().trim() === "completed";
+  const isUpcoming =
+    sessionData?.session_status?.toLowerCase().trim() === "upcoming";
 
   const isEndTimePassed = useMemo(() => {
     if (!sessionData?.session_date || !sessionData?.session_end_time) {
@@ -186,7 +190,8 @@ const BackToAgendaContent = () => {
     return new Date() > sessionEnd;
   }, [sessionData?.session_date, sessionData?.session_end_time]);
 
-  const shouldHideActionButtons = isCancelled || isEndTimePassed;
+  const shouldHideActionButtons =
+    isCancelled || isCompleted || isEndTimePassed;
 
   const [isStartingSession, setIsStartingSession] = useState<boolean>(false);
 
@@ -679,18 +684,20 @@ const BackToAgendaContent = () => {
                     </button>
                   )}
 
-                  <button
-                    type="button"
-                    className="patient-link-cancel-session"
-                    data-bs-toggle="modal"
-                    data-bs-target="#cancelSessionModal"
-                    style={{ background: "none" }}
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                      <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
-                    </svg>
-                    Cancel
-                  </button>
+                  {isUpcoming && (
+                    <button
+                      type="button"
+                      className="patient-link-cancel-session"
+                      data-bs-toggle="modal"
+                      data-bs-target="#cancelSessionModal"
+                      style={{ background: "none" }}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
+                      </svg>
+                      Cancel
+                    </button>
+                  )}
                 </>
               )}
             </div>

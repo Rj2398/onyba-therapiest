@@ -114,6 +114,8 @@ const BacktoCalendarContent = () => {
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [transcriptText, setTranscriptText] = useState<string>("");
   const transcriptTextRef = useRef<string>("");
+  const finalTranscriptRef = useRef<string>("");
+  const [isPaused, setIsPaused] = useState<boolean>(false);
   const [isSavingRecording, setIsSavingRecording] = useState<boolean>(false);
 
   // Notes State
@@ -224,12 +226,24 @@ const BacktoCalendarContent = () => {
       }
     );
 
+    const textToSend = (
+      transcript ||
+      transcriptTextRef.current ||
+      transcriptText ||
+      finalTranscriptRef.current ||
+      ""
+    ).trim();
+
     const formData = new FormData();
     formData.append("therapy_session_id", String(rawSessionId));
     formData.append("session_recording_url", audioFile);
     formData.append(
       "session_recording_text",
-      transcript.trim() || "Session audio recording transcript."
+      textToSend || "Session audio recording transcript."
+    );
+    formData.append(
+      "transcript",
+      textToSend || "Session audio recording transcript."
     );
 
     let token: string | undefined;
@@ -289,6 +303,8 @@ const BacktoCalendarContent = () => {
       setAudioBlob(null);
       setTranscriptText("");
       transcriptTextRef.current = "";
+      finalTranscriptRef.current = "";
+      setIsPaused(false);
 
       const SpeechRecognition =
         (window as any).SpeechRecognition ||
@@ -298,16 +314,29 @@ const BacktoCalendarContent = () => {
           const recognition = new SpeechRecognition();
           recognition.continuous = true;
           recognition.interimResults = true;
-          recognition.lang = "en-US";
+          recognition.lang =
+            typeof navigator !== "undefined" && navigator.language
+              ? navigator.language
+              : "en-US";
 
           recognition.onresult = (event: any) => {
-            let accumulated = "";
-            for (let i = 0; i < event.results.length; ++i) {
-              accumulated += event.results[i][0].transcript + " ";
+            let interim = "";
+            for (let i = event.resultIndex; i < event.results.length; ++i) {
+              const piece = event.results[i][0].transcript;
+              if (event.results[i].isFinal) {
+                finalTranscriptRef.current +=
+                  (finalTranscriptRef.current ? " " : "") + piece.trim();
+              } else {
+                interim += (interim ? " " : "") + piece.trim();
+              }
             }
-            const cleanTranscript = accumulated.trim();
-            setTranscriptText(cleanTranscript);
-            transcriptTextRef.current = cleanTranscript;
+            const fullTranscript = [finalTranscriptRef.current, interim]
+              .filter(Boolean)
+              .join(" ")
+              .trim();
+
+            setTranscriptText(fullTranscript);
+            transcriptTextRef.current = fullTranscript;
           };
 
           recognition.onend = () => {
@@ -336,6 +365,7 @@ const BacktoCalendarContent = () => {
 
       mediaRecorder.onstart = () => {
         setIsRecording(true);
+        setIsPaused(false);
         timerIntervalRef.current = setInterval(() => {
           setRecordingTime((prev) => prev + 1);
         }, 1000);
@@ -343,6 +373,7 @@ const BacktoCalendarContent = () => {
 
       mediaRecorder.onstop = () => {
         setIsRecording(false);
+        setIsPaused(false);
         if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
         if (recognitionRef.current) {
           try {
@@ -356,11 +387,13 @@ const BacktoCalendarContent = () => {
 
         const durationFormatted = formatTime(recordingTime);
         const currentTranscript =
-          transcriptTextRef.current ||
-          transcriptText ||
+          transcriptTextRef.current.trim() ||
+          transcriptText.trim() ||
+          finalTranscriptRef.current.trim() ||
           `Session audio recording transcript (${durationFormatted}). Conversation auto-recorded.`;
 
         setTranscriptText(currentTranscript);
+        transcriptTextRef.current = currentTranscript;
         uploadRecordingData(blob, currentTranscript);
       };
 
@@ -368,6 +401,46 @@ const BacktoCalendarContent = () => {
     } catch (err) {
       console.error("Error accessing microphone:", err);
       toast.error("Microphone permission is required to record audio.");
+    }
+  };
+
+  const pauseRecording = () => {
+    if (
+      mediaRecorderRef.current &&
+      mediaRecorderRef.current.state === "recording"
+    ) {
+      try {
+        mediaRecorderRef.current.pause();
+      } catch (e) {}
+      setIsPaused(true);
+      if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop();
+        } catch (e) {}
+      }
+      toast("Recording paused");
+    }
+  };
+
+  const resumeRecording = () => {
+    if (
+      mediaRecorderRef.current &&
+      mediaRecorderRef.current.state === "paused"
+    ) {
+      try {
+        mediaRecorderRef.current.resume();
+      } catch (e) {}
+      setIsPaused(false);
+      timerIntervalRef.current = setInterval(() => {
+        setRecordingTime((prev) => prev + 1);
+      }, 1000);
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.start();
+        } catch (e) {}
+      }
+      toast("Recording resumed");
     }
   };
 
@@ -383,6 +456,7 @@ const BacktoCalendarContent = () => {
         .getTracks()
         .forEach((track) => track.stop());
     }
+    setIsPaused(false);
     if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
     if (recognitionRef.current) {
       try {
@@ -415,7 +489,8 @@ const BacktoCalendarContent = () => {
     try {
       const textToSend =
         transcriptText.trim() ||
-        noteText.trim() ||
+        transcriptTextRef.current.trim() ||
+        finalTranscriptRef.current.trim() ||
         "Session audio recording transcript.";
 
       const response = await executeRecordingUpload(audioBlob, textToSend);
@@ -424,7 +499,7 @@ const BacktoCalendarContent = () => {
         response &&
         (response.success || response.code === 200 || response.status)
       ) {
-        toast.success("Session recording stored successfully!");
+        toast.success("Session recording and transcript saved successfully!");
       } else {
         toast.error(response?.message || "Failed to store session recording.");
       }
@@ -658,8 +733,63 @@ const BacktoCalendarContent = () => {
                 style={{ opacity: isRecording ? 1 : 0.5 }}
               >
                 {isRecording && <span className="ps-dash-pulse-dot"></span>}{" "}
-                {isRecording ? "Recording..." : "Ready to record"}
+                {isRecording
+                  ? isPaused
+                    ? "Recording Paused"
+                    : "Recording..."
+                  : "Ready to record"}
               </div>
+
+              {isRecording && (
+                <div
+                  style={{
+                    display: "flex",
+                    gap: "10px",
+                    justifyContent: "center",
+                    marginTop: "12px",
+                  }}
+                >
+                  <button
+                    type="button"
+                    onClick={isPaused ? resumeRecording : pauseRecording}
+                    style={{
+                      padding: "6px 14px",
+                      borderRadius: "20px",
+                      border: "1px solid #d1d5db",
+                      backgroundColor: isPaused ? "#10b981" : "#f3f4f6",
+                      color: isPaused ? "#fff" : "#374151",
+                      fontSize: "12px",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "6px",
+                    }}
+                  >
+                    {isPaused ? "▶ Resume" : "⏸ Pause"}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={stopRecording}
+                    style={{
+                      padding: "6px 14px",
+                      borderRadius: "20px",
+                      border: "1px solid #ef4444",
+                      backgroundColor: "#ef4444",
+                      color: "#fff",
+                      fontSize: "12px",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "6px",
+                    }}
+                  >
+                    ⏹ Stop & Submit
+                  </button>
+                </div>
+              )}
 
               {isRecording && (
                 <div
@@ -755,7 +885,10 @@ const BacktoCalendarContent = () => {
                       }}
                       placeholder="Auto-generated transcript from audio..."
                       value={transcriptText}
-                      onChange={(e) => setTranscriptText(e.target.value)}
+                      onChange={(e) => {
+                        setTranscriptText(e.target.value);
+                        transcriptTextRef.current = e.target.value;
+                      }}
                     />
                     <button
                       className="ps-dash-btn-save"
@@ -768,8 +901,8 @@ const BacktoCalendarContent = () => {
                       disabled={isSavingRecording}
                     >
                       {isSavingRecording
-                        ? "Saving Recording..."
-                        : "Re-Save Recording"}
+                        ? "Submitting Recording..."
+                        : "Submit Recording & Transcript"}
                     </button>
                   </div>
                 </div>
