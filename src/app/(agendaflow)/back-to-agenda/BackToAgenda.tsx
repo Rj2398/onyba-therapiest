@@ -170,13 +170,17 @@ const BackToAgendaContent = () => {
 
   const isStartedCall = Boolean(sessionData?.is_started_call);
   const canReschedule = Boolean(sessionData?.can_reschedule);
-  const isCancelled =
-    sessionData?.session_status?.toLowerCase().trim() === "cancelled" ||
-    sessionData?.session_status?.toLowerCase().trim() === "canceled";
-  const isCompleted =
-    sessionData?.session_status?.toLowerCase().trim() === "completed";
-  const isUpcoming =
-    sessionData?.session_status?.toLowerCase().trim() === "upcoming";
+  const rawStatus = (
+    sessionData?.session_status ||
+    sessionData?.status ||
+    ""
+  )
+    .toLowerCase()
+    .trim();
+
+  const isCancelled = rawStatus === "cancelled" || rawStatus === "canceled";
+  const isCompleted = rawStatus === "completed";
+  const isUpcoming = rawStatus === "upcoming";
 
   const isEndTimePassed = useMemo(() => {
     if (!sessionData?.session_date || !sessionData?.session_end_time) {
@@ -190,8 +194,10 @@ const BackToAgendaContent = () => {
     return new Date() > sessionEnd;
   }, [sessionData?.session_date, sessionData?.session_end_time]);
 
+  const isPastUpcoming = isEndTimePassed && isUpcoming;
+
   const shouldHideActionButtons =
-    isCancelled || isCompleted || isEndTimePassed;
+    isCancelled || isCompleted || (isEndTimePassed && !isUpcoming);
 
   const [isStartingSession, setIsStartingSession] = useState<boolean>(false);
 
@@ -639,52 +645,7 @@ const BackToAgendaContent = () => {
             <div className="patient-nav-container">
               {!shouldHideActionButtons && (
                 <>
-                  <button
-                    type="button"
-                    className="patient-link-start-session"
-                    disabled={isStartedCall || isStartingSession}
-                    onClick={handleStartSession}
-                    style={
-                      isStartedCall
-                        ? { opacity: 0.6, cursor: "not-allowed" }
-                        : {
-                          backgroundColor: "#6c2b3b",
-                          borderColor: "#6c2b3b",
-                          color: "#fff",
-                        }
-                    }
-                  >
-                    {isStartingSession ? "Starting..." : "Start Session"}
-                  </button>
-
-                  {isStartedCall && (
-                    <button
-                      type="button"
-                      className="patient-link-start-session"
-                      data-bs-toggle="modal"
-                      data-bs-target="#clinicPatientEndSessionModal"
-                      style={{
-                        backgroundColor: "#6c2b3b",
-                        borderColor: "#6c2b3b",
-                        color: "#fff",
-                      }}
-                    >
-                      End Session
-                    </button>
-                  )}
-
-                  {canReschedule && (
-                    <button
-                      type="button"
-                      className="patient-link-back-to-patients"
-                      onClick={() => setShowRescheduleModal(true)}
-                    >
-                      <img src="images/reschedule.svg" alt="" />
-                      Reschedule
-                    </button>
-                  )}
-
-                  {isUpcoming && (
+                  {isPastUpcoming ? (
                     <button
                       type="button"
                       className="patient-link-cancel-session"
@@ -697,6 +658,68 @@ const BackToAgendaContent = () => {
                       </svg>
                       Cancel
                     </button>
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        className="patient-link-start-session"
+                        disabled={isStartedCall || isStartingSession}
+                        onClick={handleStartSession}
+                        style={
+                          isStartedCall
+                            ? { opacity: 0.6, cursor: "not-allowed" }
+                            : {
+                              backgroundColor: "#6c2b3b",
+                              borderColor: "#6c2b3b",
+                              color: "#fff",
+                            }
+                        }
+                      >
+                        {isStartingSession ? "Starting..." : "Start Session"}
+                      </button>
+
+                      {isStartedCall && (
+                        <button
+                          type="button"
+                          className="patient-link-start-session"
+                          data-bs-toggle="modal"
+                          data-bs-target="#clinicPatientEndSessionModal"
+                          style={{
+                            backgroundColor: "#6c2b3b",
+                            borderColor: "#6c2b3b",
+                            color: "#fff",
+                          }}
+                        >
+                          End Session
+                        </button>
+                      )}
+
+                      {canReschedule && (
+                        <button
+                          type="button"
+                          className="patient-link-back-to-patients"
+                          onClick={() => setShowRescheduleModal(true)}
+                        >
+                          <img src="images/reschedule.svg" alt="" />
+                          Reschedule
+                        </button>
+                      )}
+
+                      {isUpcoming && (
+                        <button
+                          type="button"
+                          className="patient-link-cancel-session"
+                          data-bs-toggle="modal"
+                          data-bs-target="#cancelSessionModal"
+                          style={{ background: "none" }}
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
+                          </svg>
+                          Cancel
+                        </button>
+                      )}
+                    </>
                   )}
                 </>
               )}
