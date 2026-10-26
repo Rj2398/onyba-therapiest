@@ -311,8 +311,8 @@ const Dashboard = () => {
         minutes,
         0
       ).getTime();
-      // const now = Date.now();
-      const now = 1790231400000;
+      const now = Date.now();
+      // const now = 1790231400000;
 
       const diffMinutes = (sessionDateTime - now) / (1000 * 60);
 

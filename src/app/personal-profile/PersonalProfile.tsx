@@ -47,6 +47,19 @@ const convert12To24 = (time12: string) => {
   return `${hours.padStart(2, "0")}:${minutes.padStart(2, "0")}`;
 };
 
+const addMinutesToTime = (timeStr: string, minutesToAdd: number = 60) => {
+  if (!timeStr) return "";
+  const parts = timeStr.split(":");
+  if (parts.length < 2) return "";
+  const h = parseInt(parts[0], 10);
+  const m = parseInt(parts[1], 10);
+  if (isNaN(h) || isNaN(m)) return "";
+  const total = h * 60 + m + minutesToAdd;
+  const newH = Math.floor(total / 60) % 24;
+  const newM = total % 60;
+  return `${String(newH).padStart(2, "0")}:${String(newM).padStart(2, "0")}`;
+};
+
 const groupDatesToRanges = (dates: string[]): DateRange[] => {
   if (!dates || dates.length === 0) return [];
   const sorted = [...dates].sort(
@@ -325,8 +338,8 @@ const PersonalProfile = () => {
         const rawImg = therapistProfile.profile_image;
         const imgUrl =
           rawImg.startsWith("http") ||
-          rawImg.startsWith("data:") ||
-          rawImg.startsWith("/")
+            rawImg.startsWith("data:") ||
+            rawImg.startsWith("/")
             ? rawImg
             : `${Base_image_url}${rawImg}`;
         setProfileImage(imgUrl);
@@ -357,8 +370,8 @@ const PersonalProfile = () => {
               cert.certificate_name ||
               (cert.certificate_path
                 ? cert.certificate_path.substring(
-                    cert.certificate_path.lastIndexOf("/") + 1
-                  )
+                  cert.certificate_path.lastIndexOf("/") + 1
+                )
                 : "Uploaded Document"),
             issuingOrganization: "Uploaded Document",
             verificationStatus: "Verified",
@@ -506,8 +519,8 @@ const PersonalProfile = () => {
         console.error("Failed to update profile:", err);
         toast.error(
           err.response?.data?.message ||
-            err.message ||
-            "Failed to update profile"
+          err.message ||
+          "Failed to update profile"
         );
       }
     }
@@ -613,8 +626,8 @@ const PersonalProfile = () => {
       console.error("Failed to save availability:", err);
       toast.error(
         err.response?.data?.message ||
-          err.message ||
-          "Failed to save availability"
+        err.message ||
+        "Failed to save availability"
       );
     }
   };
@@ -816,8 +829,8 @@ const PersonalProfile = () => {
       console.error("Failed to delete certificate:", err);
       toast.error(
         err.response?.data?.message ||
-          err.message ||
-          "Failed to delete certificate"
+        err.message ||
+        "Failed to delete certificate"
       );
     }
   };
@@ -984,8 +997,8 @@ const PersonalProfile = () => {
       console.error("Failed to update category and clinic address:", err);
       toast.error(
         err.response?.data?.message ||
-          err.message ||
-          "Failed to update category and clinic address"
+        err.message ||
+        "Failed to update category and clinic address"
       );
     }
   };
@@ -1019,8 +1032,8 @@ const PersonalProfile = () => {
       console.error("Failed to update specializations:", err);
       toast.error(
         err.response?.data?.message ||
-          err.message ||
-          "Failed to update specializations"
+        err.message ||
+        "Failed to update specializations"
       );
     }
   };
@@ -1066,8 +1079,8 @@ const PersonalProfile = () => {
       console.error("Failed to add specialization:", err);
       toast.error(
         err.response?.data?.message ||
-          err.message ||
-          "Failed to add specialization"
+        err.message ||
+        "Failed to add specialization"
       );
     }
   };
@@ -1106,8 +1119,8 @@ const PersonalProfile = () => {
       console.error("Failed to update reasons of consultation:", err);
       toast.error(
         err.response?.data?.message ||
-          err.message ||
-          "Failed to update reasons of consultation"
+        err.message ||
+        "Failed to update reasons of consultation"
       );
     }
   };
@@ -1142,8 +1155,8 @@ const PersonalProfile = () => {
       console.error("Failed to update tax percentage:", err);
       toast.error(
         err.response?.data?.message ||
-          err.message ||
-          "Failed to update tax percentage"
+        err.message ||
+        "Failed to update tax percentage"
       );
     }
   };
@@ -1476,8 +1489,8 @@ const PersonalProfile = () => {
                   {selectSession
                     ? "Cancel"
                     : therapistProfile?.session_mode
-                    ? "Edit"
-                    : "Add"}
+                      ? "Edit"
+                      : "Add"}
                 </button>
               </div>
 
@@ -1491,22 +1504,20 @@ const PersonalProfile = () => {
                     style={{ marginBottom: "15px" }}
                   >
                     <button
-                      className={`onyba-prof-btn-mode ${
-                        selectedModes.includes("Online")
-                          ? "onyba-prof-btn-mode--active"
-                          : "onyba-prof-btn-mode--inactive"
-                      }`}
+                      className={`onyba-prof-btn-mode ${selectedModes.includes("Online")
+                        ? "onyba-prof-btn-mode--active"
+                        : "onyba-prof-btn-mode--inactive"
+                        }`}
                       onClick={() => handleModeToggle("Online")}
                     >
                       <img src="images/online-icon.svg" alt="" />
                       Online
                     </button>
                     <button
-                      className={`onyba-prof-btn-mode ${
-                        selectedModes.includes("In-Person")
-                          ? "onyba-prof-btn-mode--active"
-                          : "onyba-prof-btn-mode--inactive"
-                      }`}
+                      className={`onyba-prof-btn-mode ${selectedModes.includes("In-Person")
+                        ? "onyba-prof-btn-mode--active"
+                        : "onyba-prof-btn-mode--inactive"
+                        }`}
                       onClick={() => handleModeToggle("In-Person")}
                     >
                       <img src="images/hugeicons_location-05.svg" alt="" />{" "}
@@ -1745,11 +1756,10 @@ const PersonalProfile = () => {
                   {[7, 10, 15].map((taxVal) => (
                     <span
                       key={taxVal}
-                      className={`onyba-prof-tax-item ${
-                        selectedTax === taxVal
-                          ? "onyba-prof-tax-item--active"
-                          : ""
-                      }`}
+                      className={`onyba-prof-tax-item ${selectedTax === taxVal
+                        ? "onyba-prof-tax-item--active"
+                        : ""
+                        }`}
                       style={{ cursor: isEditingTax ? "pointer" : "default" }}
                       onClick={() => {
                         if (isEditingTax) {
@@ -1842,9 +1852,9 @@ const PersonalProfile = () => {
                       .map((day, index) => {
                         const dateStr = day
                           ? `${year}-${String(month + 1).padStart(
-                              2,
-                              "0"
-                            )}-${String(day).padStart(2, "0")}`
+                            2,
+                            "0"
+                          )}-${String(day).padStart(2, "0")}`
                           : "";
 
                         const isHoliday = day && holidays.includes(dateStr);
@@ -1867,26 +1877,22 @@ const PersonalProfile = () => {
                           <div
                             key={index}
                             className={`onyba-avail-date-cell
-                                                            ${
-                                                              !day
-                                                                ? "onyba-avail-date-empty"
-                                                                : ""
-                                                            }
-                                                            ${
-                                                              isToday
-                                                                ? "onyba-avail-date--today"
-                                                                : ""
-                                                            }
-                                                            ${
-                                                              isSelected
-                                                                ? "onyba-avail-date--selected"
-                                                                : ""
-                                                            }
-                                                            ${
-                                                              isHoliday
-                                                                ? "onyba-avail-date--holiday"
-                                                                : ""
-                                                            }
+                                                            ${!day
+                                ? "onyba-avail-date-empty"
+                                : ""
+                              }
+                                                            ${isToday
+                                ? "onyba-avail-date--today"
+                                : ""
+                              }
+                                                            ${isSelected
+                                ? "onyba-avail-date--selected"
+                                : ""
+                              }
+                                                            ${isHoliday
+                                ? "onyba-avail-date--holiday"
+                                : ""
+                              }
                                                         `}
                             onClick={() => {
                               if (!day || isHoliday) return;
@@ -2024,8 +2030,12 @@ const PersonalProfile = () => {
                         style={{ width: "100%", padding: "12px 16px" }}
                         value={slot.start_time}
                         onChange={(e) => {
+                          const newStartTime = e.target.value;
                           const updated = [...slots];
-                          updated[index].start_time = e.target.value;
+                          updated[index].start_time = newStartTime;
+                          updated[index].end_time = newStartTime
+                            ? addMinutesToTime(newStartTime, 60)
+                            : "";
                           setSlots(updated);
                         }}
                       />
@@ -2036,20 +2046,33 @@ const PersonalProfile = () => {
                     <span style={{ color: "#666" }}>-</span>
                     <div
                       className="onyba-avail-input-time-wrap"
-                      style={{ flex: 1 }}
+                      style={{
+                        flex: 1,
+                        backgroundColor: "#f5f5f7",
+                        borderRadius: "8px",
+                        opacity: 0.85,
+                        cursor: "not-allowed",
+                      }}
+                      title="End time is automatically calculated"
                     >
                       <input
                         type="time"
                         className="onyba-avail-time-field"
-                        style={{ width: "100%", padding: "12px 16px" }}
-                        value={slot.end_time}
-                        onChange={(e) => {
-                          const updated = [...slots];
-                          updated[index].end_time = e.target.value;
-                          setSlots(updated);
+                        style={{
+                          width: "100%",
+                          padding: "12px 16px",
+                          backgroundColor: "transparent",
+                          cursor: "not-allowed",
+                          pointerEvents: "none",
                         }}
+                        value={slot.end_time}
+                        disabled
+                        readOnly
                       />
-                      <span className="onyba-avail-clock-icon">
+                      <span
+                        className="onyba-avail-clock-icon"
+                        style={{ pointerEvents: "none", cursor: "not-allowed" }}
+                      >
                         <MdOutlineWatchLater />
                       </span>
                     </div>
@@ -2127,9 +2150,9 @@ const PersonalProfile = () => {
         selectedIds={
           therapistProfile?.reason_of_consultation_id
             ? therapistProfile.reason_of_consultation_id
-                .split(",")
-                .map((id: string) => parseInt(id.trim(), 10))
-                .filter((n: number) => !isNaN(n))
+              .split(",")
+              .map((id: string) => parseInt(id.trim(), 10))
+              .filter((n: number) => !isNaN(n))
             : []
         }
         onApply={handleUpdateConsultationReasons}
@@ -2139,9 +2162,9 @@ const PersonalProfile = () => {
         selectedIds={
           therapistProfile?.specialization_id
             ? therapistProfile.specialization_id
-                .split(",")
-                .map((id: string) => parseInt(id.trim(), 10))
-                .filter((n: number) => !isNaN(n))
+              .split(",")
+              .map((id: string) => parseInt(id.trim(), 10))
+              .filter((n: number) => !isNaN(n))
             : []
         }
         onApply={handleUpdateSpecialization}

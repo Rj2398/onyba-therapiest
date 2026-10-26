@@ -1,4 +1,4 @@
-import React from 'react'
+import React from "react";
 
 const NotificationDropdown = () => {
   return (
@@ -9,7 +9,6 @@ const NotificationDropdown = () => {
         </div>
 
         <div className="gl-nt-list-body">
-
           <div className="gl-nt-item gl-nt-unread">
             <div className="gl-nt-row-top">
               <div className="gl-nt-title-group">
@@ -18,9 +17,10 @@ const NotificationDropdown = () => {
               </div>
               <span className="gl-nt-time">Just Now</span>
             </div>
-            <p className="gl-nt-desc">Springfield District requested a new SOW for Emma Wilson.</p>
+            <p className="gl-nt-desc">
+              Springfield District requested a new SOW for Emma Wilson.
+            </p>
           </div>
-
 
           <div className="gl-nt-item gl-nt-unread">
             <div className="gl-nt-row-top">
@@ -30,9 +30,10 @@ const NotificationDropdown = () => {
               </div>
               <span className="gl-nt-time">9 days ago</span>
             </div>
-            <p className="gl-nt-desc">Emma Wilson submitted an SOW for Riverside Unified.</p>
+            <p className="gl-nt-desc">
+              Emma Wilson submitted an SOW for Riverside Unified.
+            </p>
           </div>
-
 
           <div className="gl-nt-item gl-nt-unread">
             <div className="gl-nt-row-top">
@@ -42,9 +43,10 @@ const NotificationDropdown = () => {
               </div>
               <span className="gl-nt-time">9 days ago</span>
             </div>
-            <p className="gl-nt-desc">Connor Murphy has been inactive for 12 days</p>
+            <p className="gl-nt-desc">
+              Connor Murphy has been inactive for 12 days
+            </p>
           </div>
-
 
           <div className="gl-nt-item gl-nt-read-card">
             <div className="gl-nt-row-top">
@@ -53,17 +55,20 @@ const NotificationDropdown = () => {
               </div>
               <span className="gl-nt-time">9 days ago</span>
             </div>
-            <p className="gl-nt-desc">Emma Wilson received a 4.8 rating from a User.</p>
+            <p className="gl-nt-desc">
+              Emma Wilson received a 4.8 rating from a User.
+            </p>
           </div>
         </div>
 
         <div className="gl-nt-footer">
-          <a href="#" className="gl-nt-view-all-link">View All <i className="fas fa-arrow-right"></i></a>
+          <a href="#" className="gl-nt-view-all-link">
+            View All <i className="fas fa-arrow-right"></i>
+          </a>
         </div>
       </div>
-
     </>
-  )
-}
+  );
+};
 
-export default NotificationDropdown
+export default NotificationDropdown;

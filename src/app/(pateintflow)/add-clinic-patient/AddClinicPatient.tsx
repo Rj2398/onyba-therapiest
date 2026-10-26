@@ -53,6 +53,43 @@ const extractAddressComponents = (place: any) => {
   return result;
 };
 
+const getApiErrorMessage = (res: any, fallbackMessage: string = "Failed to add patient"): string => {
+  if (!res) return fallbackMessage;
+
+  const target = res.response?.data || res;
+  const validationErrors = target?.data || target?.errors;
+
+  if (validationErrors && typeof validationErrors === "object" && !Array.isArray(validationErrors)) {
+    const messages: string[] = [];
+    Object.values(validationErrors).forEach((val: any) => {
+      if (Array.isArray(val)) {
+        val.forEach((item) => {
+          if (typeof item === "string" && item.trim()) messages.push(item.trim());
+        });
+      } else if (typeof val === "string" && val.trim()) {
+        messages.push(val.trim());
+      }
+    });
+    if (messages.length > 0) {
+      return messages.join(" ");
+    }
+  }
+
+  if (typeof target?.data === "string" && target.data.trim()) {
+    return target.data;
+  }
+
+  if (typeof target?.message === "string" && target.message.trim()) {
+    return target.message;
+  }
+
+  if (typeof res?.message === "string" && res.message.trim()) {
+    return res.message;
+  }
+
+  return fallbackMessage;
+};
+
 interface AddPatientFormData {
   first_name: string;
   surname_one: string;
@@ -369,13 +406,11 @@ const AddClinicPatient = () => {
         toast.success(response.message || "Patient added successfully!");
         router.push('/clinic-patients');
       } else {
-        toast.error(response.message || "Failed to add patient");
+        toast.error(getApiErrorMessage(response, "Failed to add patient"));
       }
     } catch (err: unknown) {
       console.error("Failed to add patient:", err);
-      const error = err as { response?: { data?: { message?: string } }; message?: string };
-      const errMsg = error.response?.data?.message || error.message || "An error occurred. Please try again.";
-      toast.error(errMsg);
+      toast.error(getApiErrorMessage(err, "An error occurred. Please try again."));
     } finally {
       setIsSubmitting(false);
     }

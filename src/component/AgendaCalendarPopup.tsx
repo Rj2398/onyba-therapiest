@@ -91,9 +91,17 @@ const AgendaCalendarPopup: React.FC<AgendaCalendarPopupProps> = ({
   const firstDayIndex = new Date(year, month, 1).getDay();
   const startOffset = firstDayIndex === 0 ? 6 : firstDayIndex - 1;
 
+  const isDatePast = (y: number, m: number, d: number) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const target = new Date(y, m, d);
+    target.setHours(0, 0, 0, 0);
+    return target < today;
+  };
+
   const availableYears = useMemo(() => {
     const baseYear = new Date().getFullYear();
-    return Array.from({ length: 8 }, (_, i) => baseYear - 2 + i);
+    return Array.from({ length: 6 }, (_, i) => baseYear + i);
   }, []);
 
   const selectedDateString = useMemo(() => {
@@ -252,7 +260,16 @@ const AgendaCalendarPopup: React.FC<AgendaCalendarPopupProps> = ({
     }
   }, [currentAvailableSlots]);
 
+  const isPrevMonthDisabled = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const prevMonthEnd = new Date(year, month, 0);
+    prevMonthEnd.setHours(0, 0, 0, 0);
+    return prevMonthEnd < today;
+  }, [year, month]);
+
   const handlePrevMonth = () => {
+    if (isPrevMonthDisabled) return;
     setCurrentDate(new Date(year, month - 1, 1));
     setSelectedDay(null);
     setSelectedSlotId("");
@@ -320,6 +337,10 @@ const AgendaCalendarPopup: React.FC<AgendaCalendarPopupProps> = ({
     }
     if (!selectedDay) {
       toast.error("Please select a date from the calendar.");
+      return;
+    }
+    if (isDatePast(year, month, selectedDay)) {
+      toast.error("Cannot book appointments for past dates.");
       return;
     }
     if (!selectedSlot) {
@@ -528,11 +549,22 @@ const AgendaCalendarPopup: React.FC<AgendaCalendarPopupProps> = ({
                               width: "auto",
                             }}
                           >
-                            {MONTH_NAMES.map((name, idx) => (
-                              <option key={name} value={idx}>
-                                {name}
-                              </option>
-                            ))}
+                            {MONTH_NAMES.map((name, idx) => {
+                              const today = new Date();
+                              const isPastMonth =
+                                year < today.getFullYear() ||
+                                (year === today.getFullYear() &&
+                                  idx < today.getMonth());
+                              return (
+                                <option
+                                  key={name}
+                                  value={idx}
+                                  disabled={isPastMonth}
+                                >
+                                  {name}
+                                </option>
+                              );
+                            })}
                           </select>
 
                           <select
@@ -564,9 +596,10 @@ const AgendaCalendarPopup: React.FC<AgendaCalendarPopupProps> = ({
                           <img
                             src="/images/left-icon-agenda.svg"
                             alt="Previous Month"
-                            onClick={handlePrevMonth}
+                            onClick={isPrevMonthDisabled ? undefined : handlePrevMonth}
                             style={{
-                              cursor: "pointer",
+                              cursor: isPrevMonthDisabled ? "not-allowed" : "pointer",
+                              opacity: isPrevMonthDisabled ? 0.3 : 1,
                               width: "14px",
                               height: "14px",
                             }}
@@ -621,24 +654,42 @@ const AgendaCalendarPopup: React.FC<AgendaCalendarPopupProps> = ({
                           const dd = String(day).padStart(2, "0");
                           const dateKey = `${year}-${mm}-${dd}`;
 
+                          const isPast = isDatePast(year, month, day);
                           const isHoliday = holidays.includes(dateKey);
-                          const isSelected = selectedDay === day;
+                          const isSelected = !isPast && selectedDay === day;
 
-                          const className = `agd-popup-day-cell agd-popup-day-clickable ${isSelected ? "agd-popup-day-active" : ""
-                            }`;
+                          let className = "agd-popup-day-cell";
+                          if (isPast) {
+                            className += " agd-popup-day-disabled";
+                          } else {
+                            className += " agd-popup-day-clickable";
+                            if (isSelected) {
+                              className += " agd-popup-day-active";
+                            }
+                          }
 
                           return (
                             <div
                               key={day}
                               className={className}
                               style={{
-                                cursor: "pointer",
+                                cursor: isPast ? "not-allowed" : "pointer",
+                                opacity: isPast ? 0.35 : 1,
                                 textDecoration: isHoliday
                                   ? "line-through"
                                   : "none",
                               }}
-                              onClick={() => setSelectedDay(day)}
-                              title={isHoliday ? "Holiday" : ""}
+                              onClick={() => {
+                                if (isPast) return;
+                                setSelectedDay(day);
+                              }}
+                              title={
+                                isPast
+                                  ? "Past dates cannot be selected"
+                                  : isHoliday
+                                  ? "Holiday"
+                                  : ""
+                              }
                             >
                               {day}
                             </div>

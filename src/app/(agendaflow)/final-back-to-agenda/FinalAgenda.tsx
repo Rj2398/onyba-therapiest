@@ -57,6 +57,32 @@ const formatTimeRange = (start?: string, end?: string) => {
   return `${formatTime(start)} - ${formatTime(end)}`;
 };
 
+const getSessionDateTime = (
+  dateStr?: string,
+  timeStr?: string
+): Date | null => {
+  if (!dateStr || !timeStr) return null;
+  try {
+    const datePart = dateStr.includes("T") ? dateStr.split("T")[0] : dateStr;
+    const [year, month, day] = datePart.split("-").map(Number);
+    const [hours, minutes, seconds] = timeStr.split(":").map(Number);
+
+    if (
+      isNaN(year) ||
+      isNaN(month) ||
+      isNaN(day) ||
+      isNaN(hours) ||
+      isNaN(minutes)
+    ) {
+      return null;
+    }
+
+    return new Date(year, month - 1, day, hours, minutes, seconds || 0);
+  } catch {
+    return null;
+  }
+};
+
 const formatCurrencyValue = (val: any) => {
   if (val === undefined || val === null || val === "") return "";
   const str = String(val).trim();
@@ -181,7 +207,6 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
     sessionData?.therapy_session_id ||
     sessionData?.id ||
     initialSessionData?.id;
-  const hide_button: boolean = searchParams.get("hide") === "true";
 
   const startSessionUrl =
     searchParams && searchParams.toString()
@@ -226,6 +251,23 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
   const isOnline = sessionData?.session_mode?.toLowerCase() === "online";
   const isStartedCall = Boolean(sessionData?.is_started_call);
   const canReschedule = Boolean(sessionData?.can_reschedule);
+  const isCancelled =
+    sessionData?.session_status?.toLowerCase().trim() === "cancelled" ||
+    sessionData?.session_status?.toLowerCase().trim() === "canceled";
+
+  const isEndTimePassed = useMemo(() => {
+    if (!sessionData?.session_date || !sessionData?.session_end_time) {
+      return false;
+    }
+    const sessionEnd = getSessionDateTime(
+      sessionData.session_date,
+      sessionData.session_end_time
+    );
+    if (!sessionEnd) return false;
+    return new Date() > sessionEnd;
+  }, [sessionData?.session_date, sessionData?.session_end_time]);
+
+  const shouldHideActionButtons = isCancelled || isEndTimePassed;
 
   const [serviceList, setServiceList] = useState<{ id: any; name: string }[]>(
     []
@@ -539,6 +581,27 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
       toast.error("Please enter a 5-digit verification code.");
       return;
     }
+
+    if (sessionData?.session_date && sessionData?.session_start_time) {
+      const sessionStart = getSessionDateTime(
+        sessionData.session_date,
+        sessionData.session_start_time
+      );
+      if (sessionStart) {
+        const now = new Date();
+        const allowedStart = new Date(sessionStart.getTime() - 5 * 60 * 1000);
+        if (now < allowedStart) {
+          const formattedStartTime =
+            formatTime(sessionData.session_start_time) ||
+            sessionData.session_start_time;
+          toast.error(
+            `You can only start the session 5 minutes before the start time (${formattedStartTime}).`
+          );
+          return;
+        }
+      }
+    }
+
     setVerifyingOtp(true);
     try {
       const formData = new FormData();
@@ -578,6 +641,27 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
       toast.error("Session ID not found.");
       return;
     }
+
+    if (sessionData?.session_date && sessionData?.session_start_time) {
+      const sessionStart = getSessionDateTime(
+        sessionData.session_date,
+        sessionData.session_start_time
+      );
+      if (sessionStart) {
+        const now = new Date();
+        const allowedStart = new Date(sessionStart.getTime() - 5 * 60 * 1000);
+        if (now < allowedStart) {
+          const formattedStartTime =
+            formatTime(sessionData.session_start_time) ||
+            sessionData.session_start_time;
+          toast.error(
+            `You can only start the session 5 minutes before the start time (${formattedStartTime}).`
+          );
+          return;
+        }
+      }
+    }
+
     const otpCode = otp.join("");
     setVerifyingOtp(true);
     try {
@@ -1108,7 +1192,7 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
               Back to Agendas
             </Link>
             <div className="patient-nav-container">
-              {!hide_button && (
+              {!shouldHideActionButtons && (
                 <>
                   {isOnline ? (
                     <>
@@ -1143,6 +1227,38 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
                         <Link
                           href={startSessionUrl}
                           className="patient-link-start-session"
+                          onClick={(e) => {
+                            if (
+                              sessionData?.session_date &&
+                              sessionData?.session_start_time
+                            ) {
+                              const sessionStart = getSessionDateTime(
+                                sessionData.session_date,
+                                sessionData.session_start_time
+                              );
+                              if (sessionStart) {
+                                const now = new Date();
+                                const allowedStart = new Date(
+                                  sessionStart.getTime() - 5 * 60 * 1000
+                                );
+                                if (now < allowedStart) {
+                                  e.preventDefault();
+                                  const formattedStartTime =
+                                    formatTime(
+                                      sessionData.session_start_time
+                                    ) || sessionData.session_start_time;
+                                  toast.error(
+                                    `You can only start the session 5 minutes before the start time (${formattedStartTime}).`
+                                  );
+                                }
+                              }
+                            }
+                          }}
+                          style={{
+                            backgroundColor: "#6c2b3b",
+                            borderColor: "#6c2b3b",
+                            color: "#fff",
+                          }}
                         >
                           Start Session
                         </Link>
@@ -1341,7 +1457,7 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
               </div>
             </div>
           </div>
-          {!hide_button && sessionData?.session_mode !== "online" && (
+          {!shouldHideActionButtons && sessionData?.session_mode !== "online" && (
             <div className="session-verify-card">
               <div className="session-verify-left">
                 <div className="session-verify-icon-wrapper">

@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, useCallback, Suspense } from "react";
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+  Suspense,
+} from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import toast from "react-hot-toast";
@@ -50,6 +56,32 @@ const formatTimeRange = (start?: string, end?: string) => {
   return `${formatTime(start)} - ${formatTime(end)}`;
 };
 
+const getSessionDateTime = (
+  dateStr?: string,
+  timeStr?: string
+): Date | null => {
+  if (!dateStr || !timeStr) return null;
+  try {
+    const datePart = dateStr.includes("T") ? dateStr.split("T")[0] : dateStr;
+    const [year, month, day] = datePart.split("-").map(Number);
+    const [hours, minutes, seconds] = timeStr.split(":").map(Number);
+
+    if (
+      isNaN(year) ||
+      isNaN(month) ||
+      isNaN(day) ||
+      isNaN(hours) ||
+      isNaN(minutes)
+    ) {
+      return null;
+    }
+
+    return new Date(year, month - 1, day, hours, minutes, seconds || 0);
+  } catch {
+    return null;
+  }
+};
+
 const formatCurrencyValue = (val: any) => {
   if (val === undefined || val === null || val === "") return "$0.00";
   const str = String(val).trim();
@@ -68,11 +100,18 @@ const formatStatus = (status?: string) => {
     .replace(/\b\w/g, (char) => char.toUpperCase());
 };
 
-const getFullImgUrl = (imgRelPath?: string, fallback: string = "/images/header-user-right-profile.svg") => {
+const getFullImgUrl = (
+  imgRelPath?: string,
+  fallback: string = "/images/header-user-right-profile.svg"
+) => {
   if (!imgRelPath) return fallback;
   const trimmed = String(imgRelPath).trim();
   if (!trimmed) return fallback;
-  if (trimmed.startsWith("http://") || trimmed.startsWith("https://") || trimmed.startsWith("data:")) {
+  if (
+    trimmed.startsWith("http://") ||
+    trimmed.startsWith("https://") ||
+    trimmed.startsWith("data:")
+  ) {
     return trimmed;
   }
   return `${Base_image_url.replace(/\/+$/, "")}/${trimmed.replace(/^\/+/, "")}`;
@@ -103,8 +142,12 @@ const BackToAgendaContent = () => {
   const [sessionData, setSessionData] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(false);
 
-  const [serviceList, setServiceList] = useState<{ id: any; name: string }[]>([]);
-  const [selectedServiceId, setSelectedServiceId] = useState<string | number>("");
+  const [serviceList, setServiceList] = useState<{ id: any; name: string }[]>(
+    []
+  );
+  const [selectedServiceId, setSelectedServiceId] = useState<string | number>(
+    ""
+  );
   const [isServiceDropdownOpen, setIsServiceDropdownOpen] = useState(false);
   const [prevSessionSearch, setPrevSessionSearch] = useState<string>("");
 
@@ -112,20 +155,38 @@ const BackToAgendaContent = () => {
     searchParams.get("therapy_session_id") ||
     searchParams.get("session_id") ||
     searchParams.get("id");
-  const hide_button: boolean = searchParams.get("hide") === "true";
 
   // Payment form states
   const [paymentMode, setPaymentMode] = useState<string>("cash");
   const [paymentType, setPaymentType] = useState<string>("full_payment");
   const [amount, setAmount] = useState<string>("");
   const [isBonusApplied, setIsBonusApplied] = useState<boolean>(false);
-  const [isCollectingPayment, setIsCollectingPayment] = useState<boolean>(false);
+  const [isCollectingPayment, setIsCollectingPayment] =
+    useState<boolean>(false);
   const [showAmountError, setShowAmountError] = useState<boolean>(false);
   const [isConsentChecked, setIsConsentChecked] = useState<boolean>(false);
-  const [isRequestingInvoice, setIsRequestingInvoice] = useState<boolean>(false);
+  const [isRequestingInvoice, setIsRequestingInvoice] =
+    useState<boolean>(false);
 
   const isStartedCall = Boolean(sessionData?.is_started_call);
   const canReschedule = Boolean(sessionData?.can_reschedule);
+  const isCancelled =
+    sessionData?.session_status?.toLowerCase().trim() === "cancelled" ||
+    sessionData?.session_status?.toLowerCase().trim() === "canceled";
+
+  const isEndTimePassed = useMemo(() => {
+    if (!sessionData?.session_date || !sessionData?.session_end_time) {
+      return false;
+    }
+    const sessionEnd = getSessionDateTime(
+      sessionData.session_date,
+      sessionData.session_end_time
+    );
+    if (!sessionEnd) return false;
+    return new Date() > sessionEnd;
+  }, [sessionData?.session_date, sessionData?.session_end_time]);
+
+  const shouldHideActionButtons = isCancelled || isEndTimePassed;
 
   const [isStartingSession, setIsStartingSession] = useState<boolean>(false);
 
@@ -134,13 +195,34 @@ const BackToAgendaContent = () => {
       toast.error("Session ID not found.");
       return;
     }
+
+    if (sessionData?.session_date && sessionData?.session_start_time) {
+      const sessionStart = getSessionDateTime(
+        sessionData.session_date,
+        sessionData.session_start_time
+      );
+      if (sessionStart) {
+        const now = new Date();
+        const allowedStart = new Date(sessionStart.getTime() - 5 * 60 * 1000);
+        if (now < allowedStart) {
+          const formattedStartTime =
+            formatTime(sessionData.session_start_time) ||
+            sessionData.session_start_time;
+          toast.error(
+            `You can only start the session 5 minutes before the start time (${formattedStartTime}).`
+          );
+          return;
+        }
+      }
+    }
+
     setIsStartingSession(true);
     try {
       const response = await requestApi({
         endpoint: `start-session/${session_id}`,
         method: "POST",
       });
-      if (response && (response.success === true)) {
+      if (response && response.success === true) {
         toast.success(response.message || "Session started successfully.");
         await fetchSessionDetails();
       } else {
@@ -149,7 +231,11 @@ const BackToAgendaContent = () => {
     } catch (err: any) {
       console.error("Error starting session:", err);
       toast.error(
-        err?.response?.data?.message || (err?.message === "Network Error" ? "Network error: Unable to reach API server." : err?.message) || "Error starting session"
+        err?.response?.data?.message ||
+        (err?.message === "Network Error"
+          ? "Network error: Unable to reach API server."
+          : err?.message) ||
+        "Error starting session"
       );
     } finally {
       setIsStartingSession(false);
@@ -165,9 +251,12 @@ const BackToAgendaContent = () => {
     const set = new Set<string>();
     if (Array.isArray(sessionData?.additional_services)) {
       sessionData.additional_services.forEach((item: any) => {
-        if (item.id !== undefined && item.id !== null) set.add(String(item.id).toLowerCase());
-        if (item.service_id !== undefined && item.service_id !== null) set.add(String(item.service_id).toLowerCase());
-        if (item.service_name) set.add(String(item.service_name).toLowerCase().trim());
+        if (item.id !== undefined && item.id !== null)
+          set.add(String(item.id).toLowerCase());
+        if (item.service_id !== undefined && item.service_id !== null)
+          set.add(String(item.service_id).toLowerCase());
+        if (item.service_name)
+          set.add(String(item.service_name).toLowerCase().trim());
         if (item.name) set.add(String(item.name).toLowerCase().trim());
       });
     }
@@ -178,8 +267,13 @@ const BackToAgendaContent = () => {
   const availableDropdownServices = useMemo(() => {
     return serviceList.filter((item) => {
       const itemId = String(item.id).toLowerCase();
-      const itemName = String(item.name || "").toLowerCase().trim();
-      return !addedServiceIdentifiers.has(itemId) && !addedServiceIdentifiers.has(itemName);
+      const itemName = String(item.name || "")
+        .toLowerCase()
+        .trim();
+      return (
+        !addedServiceIdentifiers.has(itemId) &&
+        !addedServiceIdentifiers.has(itemName)
+      );
     });
   }, [serviceList, addedServiceIdentifiers]);
 
@@ -262,7 +356,7 @@ const BackToAgendaContent = () => {
       });
 
       toast.dismiss("add-service");
-      if (response && (response.success === true)) {
+      if (response && response.success === true) {
         toast.success(response.message || "Service added successfully.");
         await fetchSessionDetails();
       } else {
@@ -278,15 +372,19 @@ const BackToAgendaContent = () => {
   };
 
   // Calculate totals
-  const baseSessionPriceNum = parseFloat(sessionData?.session_price || "0") || 0;
+  const baseSessionPriceNum =
+    parseFloat(sessionData?.session_price || "0") || 0;
   const additionalServicesList = Array.isArray(sessionData?.additional_services)
     ? sessionData.additional_services
     : [];
 
-  const additionalServicesTotal = additionalServicesList.reduce((acc: number, srv: any) => {
-    const p = parseFloat(srv.service_price || srv.price || "0") || 0;
-    return acc + p;
-  }, 0);
+  const additionalServicesTotal = additionalServicesList.reduce(
+    (acc: number, srv: any) => {
+      const p = parseFloat(srv.service_price || srv.price || "0") || 0;
+      return acc + p;
+    },
+    0
+  );
 
   const totalSessionAmountNum = baseSessionPriceNum + additionalServicesTotal;
   const formattedTotalAmount = `$${totalSessionAmountNum.toFixed(2)}`;
@@ -301,7 +399,10 @@ const BackToAgendaContent = () => {
   }, 0);
 
   const isFirstTimePayment = totalPaidSoFar === 0;
-  const remainingAmountNum = Math.max(0, totalSessionAmountNum - totalPaidSoFar);
+  const remainingAmountNum = Math.max(
+    0,
+    totalSessionAmountNum - totalPaidSoFar
+  );
   const formattedRemainingAmount = `$${remainingAmountNum.toFixed(2)}`;
 
   // Automatically sync amount based on payment type, bonus, and remaining amount
@@ -392,7 +493,8 @@ const BackToAgendaContent = () => {
   const handleCollectPayment = async (e?: React.MouseEvent) => {
     if (e) e.preventDefault();
 
-    const effectiveSessionId = session_id || sessionData?.id || sessionData?.therapy_session_id;
+    const effectiveSessionId =
+      session_id || sessionData?.id || sessionData?.therapy_session_id;
 
     if (!effectiveSessionId) {
       toast.error("Session ID not found.");
@@ -410,7 +512,10 @@ const BackToAgendaContent = () => {
 
     setShowAmountError(false);
 
-    if (paymentType === "full_payment" && (!amount || parseFloat(amount) <= 0)) {
+    if (
+      paymentType === "full_payment" &&
+      (!amount || parseFloat(amount) <= 0)
+    ) {
       toast.error("Please enter a valid payment amount.");
       return;
     }
@@ -429,7 +534,7 @@ const BackToAgendaContent = () => {
         },
       });
 
-      if (response && (response.success === true)) {
+      if (response && response.success === true) {
         toast.success(response.message || "Payment collected successfully.");
         await fetchSessionDetails();
       } else {
@@ -438,7 +543,11 @@ const BackToAgendaContent = () => {
     } catch (err: any) {
       console.error("Error collecting payment:", err);
       toast.error(
-        err?.response?.data?.message || (err?.message === "Network Error" ? "Network error: Unable to reach API server." : err?.message) || "Error collecting payment"
+        err?.response?.data?.message ||
+        (err?.message === "Network Error"
+          ? "Network error: Unable to reach API server."
+          : err?.message) ||
+        "Error collecting payment"
       );
     } finally {
       setIsCollectingPayment(false);
@@ -446,7 +555,8 @@ const BackToAgendaContent = () => {
   };
 
   const handleRequestInvoice = async () => {
-    const effectiveSessionId = session_id || sessionData?.id || sessionData?.therapy_session_id;
+    const effectiveSessionId =
+      session_id || sessionData?.id || sessionData?.therapy_session_id;
     if (!effectiveSessionId) {
       toast.error("Session ID not found.");
       return;
@@ -522,7 +632,7 @@ const BackToAgendaContent = () => {
               Back to Agendas
             </Link>
             <div className="patient-nav-container">
-              {!hide_button && (
+              {!shouldHideActionButtons && (
                 <>
                   <button
                     type="button"
@@ -533,28 +643,30 @@ const BackToAgendaContent = () => {
                       isStartedCall
                         ? { opacity: 0.6, cursor: "not-allowed" }
                         : {
-                            backgroundColor: "#6c2b3b",
-                            borderColor: "#6c2b3b",
-                            color: "#fff",
-                          }
+                          backgroundColor: "#6c2b3b",
+                          borderColor: "#6c2b3b",
+                          color: "#fff",
+                        }
                     }
                   >
                     {isStartingSession ? "Starting..." : "Start Session"}
                   </button>
 
-                  <button
-                    type="button"
-                    className="patient-link-start-session"
-                    data-bs-toggle="modal"
-                    data-bs-target="#clinicPatientEndSessionModal"
-                    style={{
-                      backgroundColor: "#6c2b3b",
-                      borderColor: "#6c2b3b",
-                      color: "#fff",
-                    }}
-                  >
-                    End Session
-                  </button>
+                  {isStartedCall && (
+                    <button
+                      type="button"
+                      className="patient-link-start-session"
+                      data-bs-toggle="modal"
+                      data-bs-target="#clinicPatientEndSessionModal"
+                      style={{
+                        backgroundColor: "#6c2b3b",
+                        borderColor: "#6c2b3b",
+                        color: "#fff",
+                      }}
+                    >
+                      End Session
+                    </button>
+                  )}
 
                   {canReschedule && (
                     <button
@@ -604,13 +716,17 @@ const BackToAgendaContent = () => {
                 <p className="dbt-pcard-age-gender">
                   Age {sessionData?.age || "N/A"}{" "}
                   <span className="dbt-pcard-bullet">•</span>{" "}
-                  {sessionData?.gender ? formatStatus(sessionData.gender) : "N/A"}
+                  {sessionData?.gender
+                    ? formatStatus(sessionData.gender)
+                    : "N/A"}
                 </p>
                 <div className="dbt-pcard-ids">
                   <p>
                     Patient ID:{" "}
                     <span>
-                      {sessionData?.patient_code || sessionData?.patient_id || "N/A"}
+                      {sessionData?.patient_code ||
+                        sessionData?.patient_id ||
+                        "N/A"}
                     </span>
                   </p>
                 </div>
@@ -623,7 +739,8 @@ const BackToAgendaContent = () => {
                 History No. -: {sessionData?.history_number || "N/A"}
               </div>
               <div className="dbt-pcard-info-row">
-                Session Type -: <span>{sessionData?.service_name || "N/A"}</span>
+                Session Type -:{" "}
+                <span>{sessionData?.service_name || "N/A"}</span>
               </div>
               <div className="dbt-pcard-info-row">
                 Session Price -:{" "}
@@ -682,7 +799,10 @@ const BackToAgendaContent = () => {
           </div>
 
           {/* Choose Applicable Service Card */}
-          <div className="service-selection-card" style={{ overflow: "visible" }}>
+          <div
+            className="service-selection-card"
+            style={{ overflow: "visible" }}
+          >
             <div className="service-card-header">
               <div className="service-header-icon-wrapper">
                 <img src="images/payment-profile-icon.svg" alt="" />
@@ -694,15 +814,23 @@ const BackToAgendaContent = () => {
 
             <hr className="service-card-divider" />
 
-            <div className="service-card-content" style={{ overflow: "visible" }}>
+            <div
+              className="service-card-content"
+              style={{ overflow: "visible" }}
+            >
               <label className="service-input-label">Service Name*</label>
 
               {/* Service Selection Dropdown */}
-              <div className="position-relative mb-3" style={{ maxWidth: "400px", zIndex: 100 }}>
+              <div
+                className="position-relative mb-3"
+                style={{ maxWidth: "400px", zIndex: 100 }}
+              >
                 <div
                   className="form-select d-flex align-items-center justify-content-between"
                   style={{ cursor: "pointer", backgroundColor: "#fff" }}
-                  onClick={() => setIsServiceDropdownOpen(!isServiceDropdownOpen)}
+                  onClick={() =>
+                    setIsServiceDropdownOpen(!isServiceDropdownOpen)
+                  }
                 >
                   <span>
                     {availableDropdownServices.length === 0
@@ -711,35 +839,36 @@ const BackToAgendaContent = () => {
                   </span>
                 </div>
 
-                {isServiceDropdownOpen && availableDropdownServices.length > 0 && (
-                  <div
-                    style={{
-                      position: "absolute",
-                      top: "100%",
-                      left: 0,
-                      right: 0,
-                      backgroundColor: "#fff",
-                      border: "1px solid #ddd",
-                      borderRadius: "8px",
-                      boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-                      zIndex: 9999,
-                      maxHeight: "180px",
-                      overflowY: "auto",
-                      marginTop: "4px",
-                    }}
-                  >
-                    {availableDropdownServices.map((item) => (
-                      <div
-                        key={item.id}
-                        className="px-3 py-2 border-bottom hover-bg-light"
-                        style={{ cursor: "pointer", fontSize: "14px" }}
-                        onClick={() => handleSelectService(item)}
-                      >
-                        {item.name}
-                      </div>
-                    ))}
-                  </div>
-                )}
+                {isServiceDropdownOpen &&
+                  availableDropdownServices.length > 0 && (
+                    <div
+                      style={{
+                        position: "absolute",
+                        top: "100%",
+                        left: 0,
+                        right: 0,
+                        backgroundColor: "#fff",
+                        border: "1px solid #ddd",
+                        borderRadius: "8px",
+                        boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+                        zIndex: 9999,
+                        maxHeight: "180px",
+                        overflowY: "auto",
+                        marginTop: "4px",
+                      }}
+                    >
+                      {availableDropdownServices.map((item) => (
+                        <div
+                          key={item.id}
+                          className="px-3 py-2 border-bottom hover-bg-light"
+                          style={{ cursor: "pointer", fontSize: "14px" }}
+                          onClick={() => handleSelectService(item)}
+                        >
+                          {item.name}
+                        </div>
+                      ))}
+                    </div>
+                  )}
               </div>
 
               {/* Added Service Tags */}
@@ -842,40 +971,46 @@ const BackToAgendaContent = () => {
                             No previous sessions found.
                           </div>
                         ) : (
-                          filteredPreviousSessions.map((session: any, idx: number) => (
-                            <div
-                              className="ps-sessions-list-item"
-                              key={session.id || idx}
-                            >
-                              <div className="ps-sessions-col-name">
-                                <span className="ps-sessions-dot"></span>{" "}
-                                {session.name || session.title || `Session ${idx + 1}`}
+                          filteredPreviousSessions.map(
+                            (session: any, idx: number) => (
+                              <div
+                                className="ps-sessions-list-item"
+                                key={session.id || idx}
+                              >
+                                <div className="ps-sessions-col-name">
+                                  <span className="ps-sessions-dot"></span>{" "}
+                                  {session.name ||
+                                    session.title ||
+                                    `Session ${idx + 1}`}
+                                </div>
+                                <div className="ps-sessions-col-date">
+                                  <svg
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 002-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                                    ></path>
+                                  </svg>
+                                  {formatDate(
+                                    session.session_date || session.date
+                                  )}
+                                </div>
+                                <div className="ps-sessions-col-details">
+                                  <span className="ps-sessions-muted-prefix">
+                                    Session Details -:
+                                  </span>{" "}
+                                  {session.session_details ||
+                                    session.details ||
+                                    "No details available"}
+                                </div>
                               </div>
-                              <div className="ps-sessions-col-date">
-                                <svg
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="2"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 002-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                                  ></path>
-                                </svg>
-                                {formatDate(session.session_date || session.date)}
-                              </div>
-                              <div className="ps-sessions-col-details">
-                                <span className="ps-sessions-muted-prefix">
-                                  Session Details -:
-                                </span>{" "}
-                                {session.session_details ||
-                                  session.details ||
-                                  "No details available"}
-                              </div>
-                            </div>
-                          ))
+                            )
+                          )
                         )}
                       </div>
                     </div>
@@ -907,7 +1042,9 @@ const BackToAgendaContent = () => {
                 <span className="financial-row-label">Payment Method</span>
                 <span className="financial-row-value">
                   {sessionData?.payment_details?.session_payment_status
-                    ? formatStatus(sessionData.payment_details.session_payment_status)
+                    ? formatStatus(
+                      sessionData.payment_details.session_payment_status
+                    )
                     : "Pending"}
                 </span>
               </div>
@@ -919,9 +1056,15 @@ const BackToAgendaContent = () => {
                     additionalServicesList.map((srv: any, idx: number) => (
                       <div key={srv.id || srv.service_id || idx}>
                         <span className="financial-row-value">
-                          +${parseFloat(srv.service_price || srv.price || "0").toFixed(2)}
+                          +$
+                          {parseFloat(
+                            srv.service_price || srv.price || "0"
+                          ).toFixed(2)}
                         </span>
-                        <span className="financial-row-subtext" style={{ display: "block" }}>
+                        <span
+                          className="financial-row-subtext"
+                          style={{ display: "block" }}
+                        >
                           - {srv.service_name || srv.name}
                         </span>
                       </div>
@@ -990,23 +1133,42 @@ const BackToAgendaContent = () => {
 
                 <div className="cp-form-group">
                   <label>
-                    {paymentType === "partial_payment" ? "Partial Payment Amount ($) *" : "Collected Amount"}
+                    {paymentType === "partial_payment"
+                      ? "Partial Payment Amount ($) *"
+                      : "Collected Amount"}
                   </label>
                   <input
                     type="number"
                     step="0.01"
-                    placeholder={paymentType === "partial_payment" ? "Enter partial amount" : "Enter amount"}
+                    placeholder={
+                      paymentType === "partial_payment"
+                        ? "Enter partial amount"
+                        : "Enter amount"
+                    }
                     value={amount}
                     onChange={(e) => handleAmountChange(e.target.value)}
                     disabled={paymentType === "pay_later"}
                     style={
                       paymentType === "partial_payment"
-                        ? { borderColor: showAmountError ? "#dc3545" : "#ffc107", backgroundColor: "#fffdf5" }
+                        ? {
+                          borderColor: showAmountError
+                            ? "#dc3545"
+                            : "#ffc107",
+                          backgroundColor: "#fffdf5",
+                        }
                         : {}
                     }
                   />
                   {paymentType === "partial_payment" && showAmountError && (
-                    <small style={{ color: "#d97706", display: "block", marginTop: "4px", fontSize: "12px", fontWeight: 500 }}>
+                    <small
+                      style={{
+                        color: "#d97706",
+                        display: "block",
+                        marginTop: "4px",
+                        fontSize: "12px",
+                        fontWeight: 500,
+                      }}
+                    >
                       * Enter partial payment amount to collect now
                     </small>
                   )}
@@ -1043,7 +1205,9 @@ const BackToAgendaContent = () => {
                       );
                     }}
                   />
-                  <label htmlFor="bonus-discount">Add Bonus up to 10% OFF.</label>
+                  <label htmlFor="bonus-discount">
+                    Add Bonus up to 10% OFF.
+                  </label>
                 </div>
               )}
 
@@ -1056,7 +1220,7 @@ const BackToAgendaContent = () => {
                   style={{
                     opacity: isCollectingPayment ? 0.7 : 1,
                     cursor: isCollectingPayment ? "not-allowed" : "pointer",
-                    border: "none"
+                    border: "none",
                   }}
                 >
                   {isCollectingPayment ? "Processing..." : "Collect Payment"}
@@ -1090,16 +1254,23 @@ const BackToAgendaContent = () => {
                           className="cp-status-card cp-card-green"
                           style={{
                             cursor: "pointer",
-                            border: paymentType === "full_payment" ? "2px solid #28a745" : "none"
+                            border:
+                              paymentType === "full_payment"
+                                ? "2px solid #28a745"
+                                : "none",
                           }}
-                          onClick={() => handlePaymentTypeChange("full_payment")}
+                          onClick={() =>
+                            handlePaymentTypeChange("full_payment")
+                          }
                         >
                           <div className="cp-status-card-header">
                             <h4>Full Payment</h4>
                             <span className="cp-dot"></span>
                           </div>
                           <p>Patient pays the complete session amount now.</p>
-                          <div className="cp-card-amount">{formattedItemAmount} Paid</div>
+                          <div className="cp-card-amount">
+                            {formattedItemAmount} Paid
+                          </div>
                         </div>
                       );
                     } else if (pType === "partial_payment") {
@@ -1109,18 +1280,26 @@ const BackToAgendaContent = () => {
                           className="cp-status-card cp-card-yellow"
                           style={{
                             cursor: "pointer",
-                            border: paymentType === "partial_payment" ? "2px solid #ffc107" : "none"
+                            border:
+                              paymentType === "partial_payment"
+                                ? "2px solid #ffc107"
+                                : "none",
                           }}
-                          onClick={() => handlePaymentTypeChange("partial_payment")}
+                          onClick={() =>
+                            handlePaymentTypeChange("partial_payment")
+                          }
                         >
                           <div className="cp-status-card-header">
                             <h4>Partial Payment</h4>
                             <span className="cp-dot"></span>
                           </div>
                           <p>
-                            Collect a partial amount and carry forward remaining balance.
+                            Collect a partial amount and carry forward remaining
+                            balance.
                           </p>
-                          <div className="cp-card-amount">{formattedItemAmount} Paid</div>
+                          <div className="cp-card-amount">
+                            {formattedItemAmount} Paid
+                          </div>
                         </div>
                       );
                     } else {
@@ -1130,7 +1309,10 @@ const BackToAgendaContent = () => {
                           className="cp-status-card cp-card-red"
                           style={{
                             cursor: "pointer",
-                            border: paymentType === "pay_later" ? "2px solid #dc3545" : "none"
+                            border:
+                              paymentType === "pay_later"
+                                ? "2px solid #dc3545"
+                                : "none",
                           }}
                           onClick={() => handlePaymentTypeChange("pay_later")}
                         >
@@ -1138,7 +1320,10 @@ const BackToAgendaContent = () => {
                             <h4>Pay Later</h4>
                             <span className="cp-dot"></span>
                           </div>
-                          <p>Entire payment will be collected in the next session.</p>
+                          <p>
+                            Entire payment will be collected in the next
+                            session.
+                          </p>
                           <div className="cp-card-amount">
                             {formattedTotalAmount} Pending
                           </div>
