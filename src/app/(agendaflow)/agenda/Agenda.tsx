@@ -224,6 +224,7 @@ const AgendaContent = () => {
                                 patient_type: rawPatientType,
                                 sessionType: typeLabel,
                                 sessionStatus: statusLabel,
+                                session_status: rawStatus,
                                 hasComment: Boolean(item.comment || item.hasComment || item.has_comment),
                                 colorClass: modeLabel === 'In_person' ? 'agd-card-purple' : 'agd-card-green',
                                 session_mode: rawMode,
@@ -257,6 +258,19 @@ const AgendaContent = () => {
     const handleEventClick = (event: any, e?: React.MouseEvent) => {
         if (e) e.stopPropagation();
         const sessionId = event.appId || event.id;
+        const rawStatus = (
+            event?.session_status ||
+            event?.sessionStatus ||
+            event?.rawItem?.session_status ||
+            event?.rawItem?.status ||
+            ''
+        ).toLowerCase().trim();
+
+        if (rawStatus === "completed") {
+            router.push(`/final-back-to-agenda${sessionId ? `?therapy_session_id=${sessionId}` : ""}`);
+            return;
+        }
+
         const rawMode = (
             event?.session_mode ||
             event?.mode ||

@@ -350,6 +350,21 @@ const Dashboard = () => {
       session?.patient_name ||
       getPatientDisplayName(session?.patient_name, session?.patient_id);
 
+    const rawStatus = (
+      (session as any)?.session_status ||
+      (session as any)?.status ||
+      ""
+    ).toLowerCase().trim();
+
+    if (rawStatus === "completed") {
+      router.push(
+        `/final-back-to-agenda${
+          sessionId ? `?therapy_session_id=${sessionId}` : ""
+        }`
+      );
+      return;
+    }
+
     if (isInPerson && isSessionVerified) {
       router.push(
         `/back-to-calendar${

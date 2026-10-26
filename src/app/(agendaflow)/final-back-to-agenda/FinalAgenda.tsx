@@ -279,6 +279,17 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
 
   const isPastUpcoming = isEndTimePassed && isUpcoming;
 
+  const isSessionVerified = Boolean(
+    sessionData?.is_session_verified === true ||
+    sessionData?.is_session_verified === 1 ||
+    sessionData?.is_session_verified === "1" ||
+    sessionData?.is_session_verified === "true" ||
+    sessionData?.otp_verify === true ||
+    sessionData?.otp_verify === 1 ||
+    initialSessionData?.is_session_verified === true ||
+    initialSessionData?.is_session_verified === 1
+  );
+
   const shouldHideActionButtons =
     isCancelled || isCompleted || (isEndTimePassed && !isUpcoming);
 
@@ -1490,7 +1501,7 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
               </div>
             </div>
           </div>
-          {!shouldHideActionButtons && sessionData?.session_mode !== "online" && (
+          {!shouldHideActionButtons && sessionData?.session_mode !== "online" && !isSessionVerified && (
             <div className="session-verify-card">
               <div className="session-verify-left">
                 <div className="session-verify-icon-wrapper">
