@@ -22,6 +22,8 @@ interface UpcomingSessionItem {
   session_start_time?: string | null;
   session_mode?: string | null;
   patient_type?: string | null;
+  is_session_verified?: boolean | number | string | null;
+  otp_verify?: boolean | number | string | null;
   subtext?: string | null;
   avatar?: string | null;
 }
@@ -323,7 +325,20 @@ const Dashboard = () => {
   };
 
   const handleClickSubmit = (session: UpcomingSessionItem) => {
-    const isOnline = session?.session_mode?.toLowerCase() === "online";
+    const rawMode = session?.session_mode?.toLowerCase() || "";
+    const isOnline = rawMode === "online";
+    const isInPerson = rawMode === "in_person" || rawMode === "in person";
+    const isSessionVerified = Boolean(
+      session?.is_session_verified === true ||
+      session?.is_session_verified === 1 ||
+      session?.is_session_verified === "1" ||
+      session?.is_session_verified === "true" ||
+      session?.otp_verify === true ||
+      session?.otp_verify === 1 ||
+      session?.otp_verify === "1" ||
+      session?.otp_verify === "true"
+    );
+
     const canStartSession = isStartSessionAvailable(
       session?.session_date,
       session?.session_start_time
@@ -334,6 +349,15 @@ const Dashboard = () => {
     const patientName =
       session?.patient_name ||
       getPatientDisplayName(session?.patient_name, session?.patient_id);
+
+    if (isInPerson && isSessionVerified) {
+      router.push(
+        `/back-to-calendar${
+          sessionId ? `?therapy_session_id=${sessionId}` : ""
+        }`
+      );
+      return;
+    }
 
     if (canStartSession) {
       if (isOnline) {

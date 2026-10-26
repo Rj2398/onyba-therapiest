@@ -225,7 +225,21 @@ const AgendaContent = () => {
                                 sessionType: typeLabel,
                                 sessionStatus: statusLabel,
                                 hasComment: Boolean(item.comment || item.hasComment || item.has_comment),
-                                colorClass: modeLabel === 'In_person' ? 'agd-card-purple' : 'agd-card-green'
+                                colorClass: modeLabel === 'In_person' ? 'agd-card-purple' : 'agd-card-green',
+                                session_mode: rawMode,
+                                is_session_verified: Boolean(
+                                    item.is_session_verified === true ||
+                                    item.is_session_verified === 1 ||
+                                    item.is_session_verified === "1" ||
+                                    item.is_session_verified === "true" ||
+                                    item.otp_verify === true ||
+                                    item.otp_verify === 1 ||
+                                    item.otp_verify === "1" ||
+                                    item.otp_verify === "true" ||
+                                    item.is_otp_verified === true ||
+                                    item.is_otp_verified === 1
+                                ),
+                                rawItem: item
                             };
                         }).filter((item: any) => item.dayIndex >= 0);
 
@@ -239,6 +253,51 @@ const AgendaContent = () => {
 
         fetchAppointments();
     }, [activeDate, paymentFilter, patientTypeFilter, sessionTypeFilter, sessionStatusFilter]);
+
+    const handleEventClick = (event: any, e?: React.MouseEvent) => {
+        if (e) e.stopPropagation();
+        const sessionId = event.appId || event.id;
+        const rawMode = (
+            event?.session_mode ||
+            event?.mode ||
+            event?.rawItem?.session_mode ||
+            event?.rawItem?.mode ||
+            ''
+        ).toLowerCase();
+        const isInPerson = rawMode === 'in_person' || rawMode === 'in person';
+
+        const isSessionVerified = Boolean(
+            event?.is_session_verified === true ||
+            event?.is_session_verified === 1 ||
+            event?.is_session_verified === "1" ||
+            event?.is_session_verified === "true" ||
+            event?.rawItem?.is_session_verified === true ||
+            event?.rawItem?.is_session_verified === 1 ||
+            event?.rawItem?.is_session_verified === "1" ||
+            event?.rawItem?.is_session_verified === "true" ||
+            event?.otp_verify === true ||
+            event?.rawItem?.otp_verify === true ||
+            event?.rawItem?.otp_verify === 1 ||
+            event?.rawItem?.is_otp_verified === true ||
+            event?.rawItem?.is_otp_verified === 1
+        );
+
+        if (isInPerson) {
+            if (isSessionVerified) {
+                router.push(`/back-to-calendar${sessionId ? `?therapy_session_id=${sessionId}` : ""}`);
+            } else {
+                router.push(`/final-back-to-agenda${sessionId ? `?therapy_session_id=${sessionId}` : ""}`);
+            }
+            return;
+        }
+
+        const rawType = event?.patient_type || event?.rawPatientType || event?.rawItem?.patient_type || '';
+        if (rawType === "clinic_patient") {
+            router.push(`/back-to-agenda${sessionId ? `?therapy_session_id=${sessionId}` : ""}`);
+        } else {
+            router.push(`/final-back-to-agenda${sessionId ? `?therapy_session_id=${sessionId}` : ""}`);
+        }
+    };
 
     const formattedActiveDate = activeDate.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' });
 
@@ -698,16 +757,7 @@ const AgendaContent = () => {
                                                             flexDirection: 'column',
                                                             justifyContent: 'space-between',
                                                         }}
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            const sessionId = event.appId || event.id;
-                                                            const rawType = event?.patient_type || event?.rawPatientType || '';
-                                                            if (rawType === "clinic_patient") {
-                                                                router.push(`/back-to-agenda${sessionId ? `?therapy_session_id=${sessionId}` : ""}`);
-                                                            } else {
-                                                                router.push(`/final-back-to-agenda${sessionId ? `?therapy_session_id=${sessionId}` : ""}`);
-                                                            }
-                                                        }}
+                                                        onClick={(e) => handleEventClick(event, e)}
                                                     >
                                                         {/* Header: Time & Navigation Arrow */}
                                                         <div className="agd-ev-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
@@ -733,16 +783,7 @@ const AgendaContent = () => {
                                                                     flexShrink: 0,
                                                                     padding: 0
                                                                 }}
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    const sessionId = event.appId || event.id;
-                                                                    const rawType = event?.patient_type || event?.rawPatientType || '';
-                                                                    if (rawType === "clinic_patient") {
-                                                                        router.push(`/back-to-agenda${sessionId ? `?therapy_session_id=${sessionId}` : ""}`);
-                                                                    } else {
-                                                                        router.push(`/final-back-to-agenda${sessionId ? `?therapy_session_id=${sessionId}` : ""}`);
-                                                                    }
-                                                                }}
+                                                                onClick={(e) => handleEventClick(event, e)}
                                                             >
                                                                 <img src="/images/right-agenda-icon.svg" alt="" style={{ width: '12px', height: '12px' }} />
                                                             </button>

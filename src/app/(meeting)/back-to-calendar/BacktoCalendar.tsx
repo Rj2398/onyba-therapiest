@@ -500,6 +500,9 @@ const BacktoCalendarContent = () => {
         (response.success || response.code === 200 || response.status)
       ) {
         toast.success("Session recording and transcript saved successfully!");
+        setTranscriptText("");
+        transcriptTextRef.current = "";
+        finalTranscriptRef.current = "";
       } else {
         toast.error(response?.message || "Failed to store session recording.");
       }
