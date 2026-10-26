@@ -258,6 +258,18 @@ const AgendaContent = () => {
     const handleEventClick = (event: any, e?: React.MouseEvent) => {
         if (e) e.stopPropagation();
         const sessionId = event.appId || event.id;
+        const rawType = (
+            event?.patient_type ||
+            event?.rawPatientType ||
+            event?.rawItem?.patient_type ||
+            ''
+        ).toLowerCase().trim();
+
+        if (rawType === "clinic_patient") {
+            router.push(`/back-to-agenda${sessionId ? `?therapy_session_id=${sessionId}` : ""}`);
+            return;
+        }
+
         const rawStatus = (
             event?.session_status ||
             event?.sessionStatus ||
@@ -305,12 +317,7 @@ const AgendaContent = () => {
             return;
         }
 
-        const rawType = event?.patient_type || event?.rawPatientType || event?.rawItem?.patient_type || '';
-        if (rawType === "clinic_patient") {
-            router.push(`/back-to-agenda${sessionId ? `?therapy_session_id=${sessionId}` : ""}`);
-        } else {
-            router.push(`/final-back-to-agenda${sessionId ? `?therapy_session_id=${sessionId}` : ""}`);
-        }
+        router.push(`/final-back-to-agenda${sessionId ? `?therapy_session_id=${sessionId}` : ""}`);
     };
 
     const formattedActiveDate = activeDate.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' });

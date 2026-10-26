@@ -345,10 +345,19 @@ const Dashboard = () => {
     );
     const patientId = session?.patient_id || session?.id;
     const sessionId = session?.id || (session as any)?.therapy_session_id;
-    const patientType = session?.patient_type?.toLowerCase();
+    const patientType = session?.patient_type?.toLowerCase().trim() || "";
     const patientName =
       session?.patient_name ||
       getPatientDisplayName(session?.patient_name, session?.patient_id);
+
+    if (patientType === "clinic_patient") {
+      router.push(
+        `/back-to-agenda${
+          sessionId ? `?therapy_session_id=${sessionId}` : ""
+        }`
+      );
+      return;
+    }
 
     const rawStatus = (
       (session as any)?.session_status ||
