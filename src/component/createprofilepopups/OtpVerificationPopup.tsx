@@ -24,7 +24,7 @@ const OtpVerificationPopup: React.FC<OtpVerificationPopupProps> = ({
   const [isResending, setIsResending] = useState(false);
   const [timer, setTimer] = useState(30);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
-
+  const [displayOtp, setDisplayOtp] = useState("")
   useEffect(() => {
     if (!isOpen) return;
     setOtp(Array(OTP_LENGTH).fill(''));
@@ -125,6 +125,7 @@ const OtpVerificationPopup: React.FC<OtpVerificationPopupProps> = ({
 
       if (res.success || res.status) {
         toast.success('OTP sent successfully!');
+        setDisplayOtp(res.data.otp);
         setTimer(30);
         setOtp(Array(OTP_LENGTH).fill(''));
         setTimeout(() => {
@@ -166,7 +167,7 @@ const OtpVerificationPopup: React.FC<OtpVerificationPopupProps> = ({
 
               <p className="modal-custom-text" style={{ fontSize: '14px', color: '#6c757d', marginBottom: '24px', lineHeight: '1.5' }}>
                 We've sent a 5-digit verification code to:<br />
-                <strong style={{ color: '#74505C' }}>{emailPhone}</strong>
+                <strong style={{ color: '#74505C' }}>{emailPhone} otp is {displayOtp}</strong>
               </p>
 
               <form onSubmit={handleVerify}>

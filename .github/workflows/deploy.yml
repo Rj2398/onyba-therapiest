@@ -1,0 +1,51 @@
+name: Deploy React App to AWS EC2
+
+on:
+  push:
+    branches:
+      - main # main branch par push ya merge hone par chalega
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: GitHub repository se code pull karna
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      # Step 2: Node.js 18 setup karna aur npm cache enable karna
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: "npm"
+
+      # Step 3: Dependencies install karke production build generate karna
+      - name: Install Dependencies & Build
+        run: |
+          npm ci
+          npm run build
+
+      # Step 4: Build output (dist) ko SCP ke through EC2 par transfer karna
+      - name: Deploy to EC2 via SCP
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: ${{ secrets.EC2_PORT }}
+          source: "dist/*" # Vite ke liye dist/* (agar CRA use kar rahe ho to build/* kar dena)
+          target: "/var/www/my-react-app"
+          strip_components: 1
+
+      # Step 5: EC2 par SSH login karke Nginx reload karna (Zero downtime)
+      - name: Reload Nginx on EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: ${{ secrets.EC2_PORT }}
+          script: |
+            sudo systemctl reload nginx

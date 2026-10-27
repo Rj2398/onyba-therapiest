@@ -123,7 +123,24 @@ const formatDateLabel = (dateStr?: string | null) => {
 const formatTimeLabel = (timeStr?: string | null) => {
   if (!timeStr) return "—";
   try {
-    const [hourStr, minuteStr] = timeStr.split(":");
+    let cleanTime = timeStr;
+    if (cleanTime.includes("T")) {
+      try {
+        const d = new Date(cleanTime);
+        if (!isNaN(d.getTime())) {
+          let h = d.getHours();
+          const m = String(d.getMinutes()).padStart(2, "0");
+          const ap = h >= 12 ? "PM" : "AM";
+          h = h % 12 || 12;
+          return `${String(h).padStart(2, "0")}:${m} ${ap}`;
+        }
+      } catch {}
+      const timePart = cleanTime.split("T")[1];
+      if (timePart) {
+        cleanTime = timePart.split(".")[0].split("Z")[0];
+      }
+    }
+    const [hourStr, minuteStr] = cleanTime.split(":");
     let hour = parseInt(hourStr, 10);
     if (isNaN(hour)) return timeStr;
     const ampm = hour >= 12 ? "PM" : "AM";
@@ -711,12 +728,14 @@ const Dashboard = () => {
                         payment.patient_id
                       );
                       const displayDate = formatDateLabel(
-                        payment.session_date ||
-                          payment.date ||
-                          payment.created_at
+                        payment.created_at ||
+                          payment.session_date ||
+                          payment.date
                       );
                       const displayTime = formatTimeLabel(
-                        payment.session_start_time || payment.time
+                        payment.created_at ||
+                          payment.time ||
+                          payment.session_start_time
                       );
                       const amountText = formatCurrency(
                         payment.amount ??
