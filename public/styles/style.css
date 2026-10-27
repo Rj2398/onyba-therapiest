@@ -375,11 +375,12 @@ input[type="email"] {
   border-radius: var(--tp-radius-md);
 }
 
-.therapist-profile-container .tp-toggle-pill {
+.therapist-profile-container .tp-toggle-pill,
+.tp-toggle-pill {
   background-color: #ffffff;
-  color: var(--tp-text-dark);
-  border: 1px solid var(--tp-border-color);
-  border-radius: var(--tp-radius-lg);
+  color: var(--tp-text-dark, #3f3f3f);
+  border: 1px solid var(--tp-border-color, #eaeaea);
+  border-radius: var(--tp-radius-lg, 30px);
   padding: 8px 22px;
   font-size: 0.85rem;
   font-weight: 600;
@@ -389,31 +390,35 @@ input[type="email"] {
   transition: all 0.2s;
 }
 
-.therapist-profile-container .tp-toggle-pill:hover {
+.therapist-profile-container .tp-toggle-pill:hover,
+.tp-toggle-pill:hover {
   opacity: 0.9;
 }
 
-.therapist-profile-container .tp-toggle-pill.active {
-  background: var(--tp-olive-green);
-  border-color: var(--tp-olive-green);
+.therapist-profile-container .tp-toggle-pill.active,
+.tp-toggle-pill.active {
+  background: var(--tp-olive-green, linear-gradient(180deg, #93996d 0%, #52553e 100%));
+  border-color: var(--tp-olive-green, #52553e);
   color: #ffffff;
 }
 
-.therapist-profile-container .tp-pill-outline {
+.therapist-profile-container .tp-pill-outline,
+.tp-pill-outline {
   background: #ffffff;
-  border: 1px solid var(--tp-border-color);
-  border-radius: var(--tp-radius-lg);
+  border: 1px solid var(--tp-border-color, #eaeaea);
+  border-radius: var(--tp-radius-lg, 30px);
   padding: 8px 22px;
   font-size: 0.85rem;
-  color: var(--tp-text-dark);
+  color: var(--tp-text-dark, #3f3f3f);
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
 }
 
-.therapist-profile-container .tp-pill-outline:hover {
-  border-color: var(--tp-olive-green);
-  color: var(--tp-olive-green);
+.therapist-profile-container .tp-pill-outline:hover,
+.tp-pill-outline:hover {
+  border-color: var(--tp-olive-green, #93996d);
+  color: var(--tp-olive-green, #93996d);
 }
 
 /* Multi-Select Tags System */
@@ -2018,6 +2023,7 @@ span.dbt-subtext.session {
   display: flex;
   align-items: flex-start;
   justify-content: flex-end;
+  transform: translateY(-6px);
 }
 
 /* Current Active Time Text (09:00 AM) */
