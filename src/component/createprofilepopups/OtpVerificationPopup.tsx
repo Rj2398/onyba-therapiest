@@ -137,7 +137,7 @@ const OtpVerificationPopup: React.FC<OtpVerificationPopupProps> = ({
 
       if (res.success || res.status) {
         toast.success("OTP sent successfully!");
-        setDisplayOtp(res.otp);
+        setDisplayOtp(res?.data?.otp);
         setTimer(30);
         setOtp(Array(OTP_LENGTH).fill(""));
         setTimeout(() => {
