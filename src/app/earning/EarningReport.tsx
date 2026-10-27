@@ -1,7 +1,10 @@
 "use client"
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import earningData from '@/src/data/earningData.json'
 import Pagination from '@/src/component/common/Pagintion'
+import { requestApi } from '@/src/utils/api'
+import { formatCurrency } from '@/src/config'
+import toast from 'react-hot-toast'
 
 import DateRangePicker from '@/src/component/DateRangePicker'
 import jsPDF from "jspdf";
@@ -12,6 +15,7 @@ import { saveAs } from "file-saver";
 
 const EarningReport = () => {
     const [searchQuery, setSearchQuery] = useState("");
+    const [debouncedSearch, setDebouncedSearch] = useState("");
     const [paymentTypeFilter, setPaymentTypeFilter] = useState("All");
     const [statusFilter, setStatusFilter] = useState("All");
     const [sessionModeFilter, setSessionModeFilter] = useState("All");
@@ -27,13 +31,94 @@ const EarningReport = () => {
     const [remunPage, setRemunPage] = useState(1);
     const ITEMS_PER_PAGE = 5;
 
+    // get-earning API states
+    const [ledgerList, setLedgerList] = useState<any[]>([]);
+    const [ledgerTotalPages, setLedgerTotalPages] = useState<number>(1);
+    const [isLedgerLoading, setIsLedgerLoading] = useState<boolean>(true);
+    const [isLedgerLoaded, setIsLedgerLoaded] = useState<boolean>(false);
+
+    // Debounce search input
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedSearch(searchQuery);
+        }, 500);
+        return () => clearTimeout(handler);
+    }, [searchQuery]);
+
+    // Format Date helper for API (YYYY-MM-DD)
+    const formatApiDate = (date: Date | null) => {
+        if (!date) return "";
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
+        return `${year}-${month}-${day}`;
+    };
+
+    // Reset ledger page on filter change
+    useEffect(() => {
+        setLedgerPage(1);
+    }, [debouncedSearch, paymentTypeFilter, statusFilter, sessionModeFilter, sessionTypeFilter, dateRange]);
+
+    // Fetch ledger from get-earning API
+    const fetchEarnings = async () => {
+        try {
+            setIsLedgerLoading(true);
+            const payload = new FormData();
+            payload.append("page", String(ledgerPage));
+            payload.append("limit", String(ITEMS_PER_PAGE));
+            payload.append("search", debouncedSearch || "");
+            payload.append("payment_type", paymentTypeFilter !== "All" ? paymentTypeFilter : "");
+            payload.append("status", statusFilter !== "All" ? statusFilter : "");
+            payload.append("session_mode", sessionModeFilter !== "All" ? sessionModeFilter : "");
+            payload.append("session_type", sessionTypeFilter !== "All" ? sessionTypeFilter : "");
+            payload.append("start_date", formatApiDate(dateRange.startDate));
+            payload.append("end_date", formatApiDate(dateRange.endDate));
+
+            const response = await requestApi({
+                endpoint: "get-earning",
+                method: "POST",
+                data: payload,
+                isFormData: true,
+            });
+
+            console.log("get-earning response:", response);
+
+            if (response && (response.success || response.code === 200 || response.status)) {
+                const resData = response.data;
+                const items = Array.isArray(resData?.data)
+                    ? resData.data
+                    : Array.isArray(resData)
+                        ? resData
+                        : [];
+                setLedgerList(items);
+                setIsLedgerLoaded(true);
+
+                const pages =
+                    resData?.last_page ||
+                    resData?.pagination?.last_page ||
+                    Math.max(1, Math.ceil((resData?.total || items.length) / ITEMS_PER_PAGE));
+                setLedgerTotalPages(pages || 1);
+            }
+        } catch (error) {
+            console.error("Error fetching earnings ledger:", error);
+        } finally {
+            setIsLedgerLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchEarnings();
+    }, [ledgerPage, debouncedSearch, paymentTypeFilter, statusFilter, sessionModeFilter, sessionTypeFilter, dateRange]);
+
     const handleReset = (e: React.MouseEvent) => {
         e.preventDefault();
         setSearchQuery("");
+        setDebouncedSearch("");
         setPaymentTypeFilter("All");
         setStatusFilter("All");
         setSessionModeFilter("All");
         setSessionTypeFilter("All");
+        setDateRange({ startDate: null, endDate: null });
         setLedgerPage(1);
     };
 
@@ -60,9 +145,12 @@ const EarningReport = () => {
         return true;
     });
 
-    const ledgerTotalPages = Math.max(1, Math.ceil(filteredLedger.length / ITEMS_PER_PAGE));
-    const validLedgerPage = Math.min(ledgerPage, ledgerTotalPages);
+    const ledgerMockTotalPages = Math.max(1, Math.ceil(filteredLedger.length / ITEMS_PER_PAGE));
+    const validLedgerPage = Math.min(ledgerPage, ledgerMockTotalPages);
     const paginatedLedger = filteredLedger.slice((validLedgerPage - 1) * ITEMS_PER_PAGE, validLedgerPage * ITEMS_PER_PAGE);
+
+    const displayLedger = isLedgerLoaded ? ledgerList : paginatedLedger;
+    const displayLedgerTotalPages = isLedgerLoaded ? ledgerTotalPages : ledgerMockTotalPages;
 
     const remunTotalPages = Math.max(1, Math.ceil(earningData.previousRemuneration.length / ITEMS_PER_PAGE));
     const validRemunPage = Math.min(remunPage, remunTotalPages);
@@ -114,20 +202,47 @@ const EarningReport = () => {
     // };
 
     const handleExport = () => {
-
-        const dataToExport =
+        const rowsToExport =
             selectedPatients.length > 0
-                ? filteredLedger.filter(patient =>
-                    selectedPatients.includes(patient.id)
+                ? displayLedger.filter((session: any) =>
+                    selectedPatients.includes(session.id)
                 )
-                : filteredLedger;
+                : displayLedger;
+
+        if (!rowsToExport || rowsToExport.length === 0) {
+            toast.error("No ledger data to export.");
+            return;
+        }
+
+        const dataToExport = rowsToExport.map((session: any) => {
+            const historyNo = session.history_no || session.historyNo || session.patient_id || session.id || "";
+            const patientName = session.patient_name || session.patientName || session.patient?.name || session.name || "N/A";
+            const sessionType = session.session_type || session.sessionType || session.type || "Adult";
+            const sessionTime = session.time || session.session_time || (session.start_time && session.end_time ? `${session.start_time} - ${session.end_time}` : session.start_time) || "";
+            const sessionDate = session.date || session.session_date || (session.created_at ? new Date(session.created_at).toLocaleDateString('en-US') : "");
+            const mode = session.session_mode || session.sessionMode || session.mode || "Online";
+            const paymentType = session.payment_type || session.paymentType || "—";
+            const rawStatus = session.patient_paid ?? session.patientPaid ?? session.amount ?? session.paid_amount ?? session.status ?? "—";
+            const paymentStatus = typeof rawStatus === 'number' || (!isNaN(Number(rawStatus)) && !String(rawStatus).includes('$'))
+                ? formatCurrency(rawStatus, "$0")
+                : rawStatus;
+
+            return {
+                "History No.": historyNo,
+                "Patient Name": patientName,
+                "Appointment Type": sessionType,
+                "Appointment Time": sessionTime,
+                "Appointment Date": sessionDate,
+                "Session Mode": mode,
+                "Payment Type": paymentType,
+                "Payment Status / Amount": paymentStatus,
+            };
+        });
 
         // Create Excel
         const worksheet = XLSX.utils.json_to_sheet(dataToExport);
-
         const workbook = XLSX.utils.book_new();
-
-        XLSX.utils.book_append_sheet(workbook, worksheet, "Patients");
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Session Payment Ledger");
 
         const excelBuffer = XLSX.write(workbook, {
             bookType: "xlsx",
@@ -135,11 +250,11 @@ const EarningReport = () => {
         });
 
         const file = new Blob([excelBuffer], {
-            type:
-                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8",
+            type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8",
         });
 
-        saveAs(file, "Patients.xlsx");
+        saveAs(file, `session-payment-ledger-${new Date().toISOString().slice(0, 10)}.xlsx`);
+        toast.success(`Exported ${dataToExport.length} record(s) successfully!`);
     };
 
     const handleCheckboxChange = (id: number) => {
@@ -149,6 +264,103 @@ const EarningReport = () => {
                 : [...prev, id]
         );
     };
+
+    const [earningCards, setEarningCards] = useState<any>(null);
+    const [isLoadingCards, setIsLoadingCards] = useState<boolean>(true);
+
+    useEffect(() => {
+        const fetchEarningCards = async () => {
+            try {
+                setIsLoadingCards(true);
+                const response = await requestApi({
+                    endpoint: "get-earning-cards",
+                    method: "POST",
+                });
+                console.log("get-earning-cards response:", response);
+                if (response && (response.success || response.code === 200 || response.status)) {
+                    const data = response.data || response;
+                    setEarningCards(data);
+                } else if (response?.data) {
+                    setEarningCards(response.data);
+                }
+            } catch (error) {
+                console.error("Error fetching earning cards:", error);
+            } finally {
+                setIsLoadingCards(false);
+            }
+        };
+
+        fetchEarningCards();
+    }, []);
+
+    const renderTrend = (percentage: any, fallback: string) => {
+        if (percentage === undefined || percentage === null) return fallback;
+        const num = Number(percentage);
+        if (isNaN(num)) return `${percentage}`;
+        if (num > 0) return `↑ ${num}% vs last month`;
+        if (num < 0) return `↓ ${Math.abs(num)}% vs last month`;
+        return `${num}% vs last month`;
+    };
+
+    const isCardsLoading = isLoadingCards;
+
+    const totalEarningsVal = isCardsLoading
+        ? "..."
+        : formatCurrency(earningCards?.total_earnings, "$0");
+
+    const totalEarningsTrend = isCardsLoading
+        ? "..."
+        : renderTrend(earningCards?.total_earnings_percentage, "0% vs last month");
+
+    const netEarningVal = isCardsLoading
+        ? "..."
+        : formatCurrency(earningCards?.net_earnings, "$0");
+
+    const netEarningTrend = isCardsLoading
+        ? "..."
+        : renderTrend(earningCards?.net_earnings_percentage, "0% vs last month");
+
+    const sessionThisMonthData =
+        earningCards?.session_this_month ??
+        earningCards?.sessions_this_month;
+
+    const sessionsThisMonthVal = isCardsLoading
+        ? "..."
+        : (sessionThisMonthData?.count ?? 0);
+
+    const sessionsThisMonthSubtext = isCardsLoading
+        ? "..."
+        : `Avg ${formatCurrency(sessionThisMonthData?.average ?? 0, "$0")}/session`;
+
+    const pendingPaymentsData =
+        earningCards?.pending_payments ??
+        earningCards?.pednding_payments ??
+        earningCards?.pending_payment ??
+        earningCards?.pednding_payment;
+
+    const pendingPaymentsVal = isCardsLoading
+        ? "..."
+        : formatCurrency(pendingPaymentsData?.amount, "$0");
+
+    const pendingDayCycle = pendingPaymentsData?.day_cycle ?? 15;
+    const pendingCount = pendingPaymentsData?.count ?? 0;
+    const pendingPaymentsSubtext = isCardsLoading
+        ? "..."
+        : `${pendingCount} ${pendingCount === 1 ? 'session' : 'sessions'} · ${pendingDayCycle}-day cycle`;
+
+    const reservedSessionsData =
+        earningCards?.reserved_sessions ??
+        earningCards?.reserved_session ??
+        earningCards?.reserved_revenue;
+
+    const reservedRevenueVal = isCardsLoading
+        ? "..."
+        : formatCurrency(reservedSessionsData?.amount, "$0");
+
+    const reservedRevenueCount = reservedSessionsData?.count ?? 0;
+    const reservedRevenueSubtext = isCardsLoading
+        ? "..."
+        : `${reservedRevenueCount} upcoming ${reservedRevenueCount === 1 ? 'session' : 'sessions'}`;
 
     return (
         <>
@@ -160,11 +372,11 @@ const EarningReport = () => {
                             <div className="db-card-top-row">
                                 <div className="db-card-info-block">
                                     <span className="db-card-label-text">Total Earnings</span>
-                                    <span className="db-card-main-value db-color-olive-dark">{earningData.metrics.totalEarnings.value}</span>
+                                    <span className="db-card-main-value db-color-olive-dark">{totalEarningsVal}</span>
                                 </div>
                                 <div className="db-card-icon-badge db-bg-olive-light"><img src="images/earning-icon.svg" alt="" /></div>
                             </div>
-                            <a href="#" className="db-card-action-link">{earningData.metrics.totalEarnings.trend}</a>
+                            <a href="#" className="db-card-action-link">{totalEarningsTrend}</a>
                         </div>
 
 
@@ -172,33 +384,33 @@ const EarningReport = () => {
                             <div className="db-card-top-row">
                                 <div className="db-card-info-block">
                                     <span className="db-card-label-text">Net Earning</span>
-                                    <span className="db-card-main-value db-color-olive-dark">{earningData.metrics.netEarning.value}</span>
+                                    <span className="db-card-main-value db-color-olive-dark">{netEarningVal}</span>
                                 </div>
                                 <div className="db-card-icon-badge db-bg-olive-net"><img src="images/dashg-net-earning.svg" alt="" /></div>
                             </div>
-                            <a href="#" className="db-card-action-link">{earningData.metrics.netEarning.trend}</a>
+                            <a href="#" className="db-card-action-link">{netEarningTrend}</a>
                         </div>
 
                         <div className="db-card-item-box">
                             <div className="db-card-top-row">
                                 <div className="db-card-info-block">
                                     <span className="db-card-label-text">Sessions This Month</span>
-                                    <span className="db-card-main-value db-color-olive-dark">{earningData.metrics.sessionsThisMonth.value}</span>
+                                    <span className="db-card-main-value db-color-olive-dark">{sessionsThisMonthVal}</span>
                                 </div>
                                 <div className="db-card-icon-badge db-bg-olive-net"><img src="images/fluent-class--regular.svg" alt="" /></div>
                             </div>
-                            <a href="#" className="db-card-action-link">{earningData.metrics.sessionsThisMonth.subtext}</a>
+                            <a href="#" className="db-card-action-link">{sessionsThisMonthSubtext}</a>
                         </div>
 
                         <div className="db-card-item-box">
                             <div className="db-card-top-row">
                                 <div className="db-card-info-block">
                                     <span className="db-card-label-text">Pending Payments</span>
-                                    <span className="db-card-main-value db-color-alert-red">{earningData.metrics.pendingPayments.value}</span>
+                                    <span className="db-card-main-value db-color-alert-red">{pendingPaymentsVal}</span>
                                 </div>
                                 <div className="db-card-icon-badge db-bg-alert-red-light db-text-alert-red-bold"><img src="images/dash-pending-notes.svg" alt="" /></div>
                             </div>
-                            <a href="#" className="db-card-action-link">{earningData.metrics.pendingPayments.subtext}</a>
+                            <a href="#" className="db-card-action-link">{pendingPaymentsSubtext}</a>
                         </div>
 
                     </div>
@@ -207,8 +419,8 @@ const EarningReport = () => {
 
                         <div className="db-reserved-revenue-main-data">
                             <div className="db-reserved-revenue-title">Reserved revenue</div>
-                            <div className="db-reserved-revenue-amount">{earningData.metrics.reservedRevenue.value}</div>
-                            <div className="db-reserved-revenue-subtext">{earningData.metrics.reservedRevenue.subtext}</div>
+                            <div className="db-reserved-revenue-amount">{reservedRevenueVal}</div>
+                            <div className="db-reserved-revenue-subtext">{reservedRevenueSubtext}</div>
                         </div>
 
                         <div className="db-reserved-revenue-icon-button">
@@ -316,15 +528,29 @@ const EarningReport = () => {
                             <table className="dbt-data-table dbt4-full-patients-table">
                                 <thead>
                                     <tr className="dbt3-th-row">
-                                        <th className="dbt3-th-cell dbt4-pad-left dbt4-th-sno">Select</th>
+                                        <th className="dbt3-th-cell dbt4-pad-left dbt4-th-sno">
+                                            <div className="custom-payment-checkbox-wrapper">
+                                                <label className="custom-payment-checkbox-label">
+                                                    <input
+                                                        type="checkbox"
+                                                        className="custom-payment-checkbox-input"
+                                                        checked={displayLedger.length > 0 && displayLedger.every((s: any) => selectedPatients.includes(s.id))}
+                                                        onChange={(e) => {
+                                                            if (e.target.checked) {
+                                                                setSelectedPatients(displayLedger.map((s: any) => s.id));
+                                                            } else {
+                                                                setSelectedPatients([]);
+                                                            }
+                                                        }}
+                                                    />
+                                                    <span className="custom-payment-checkbox-box"></span>
+                                                </label>
+                                            </div>
+                                        </th>
                                         <th className="dbt3-th-cell dbt4-th-name">History No.</th>
                                         <th className="dbt3-th-cell dbt4-th-dni">Patient Name</th>
-                                        {/* <th className="dbt3-th-cell dbt4-th-email">Session Type</th> */}
-                                        {/* <th className="dbt3-th-cell dbt4-th-phone">Date & Time</th> */}
                                         <th className="dbt3-th-cell dbt4-th-phone">Appointment</th>
                                         <th className="dbt3-th-cell dbt4-th-last-session">Session Mode</th>
-                                        {/* <th className="dbt3-th-cell dbt4-th-next-session">Amount</th> */}
-                                        {/* <th className="dbt3-th-cell dbt4-th-total">Patient Paid</th> */}
                                         <th className="dbt3-th-cell dbt4-th-status">Payment Type</th>
                                         <th className="dbt3-th-cell dbt4-pad-right dbt4-th-action">Payment Status</th>
                                         <th className="dbt3-th-cell">Action</th>
@@ -332,52 +558,98 @@ const EarningReport = () => {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {paginatedLedger.map((session) => (
-                                        <tr className="dbt-table-row" key={session.id}>
-                                            <td className="dbt4-pad-left dbt4-sno-text"><div className="custom-payment-checkbox-wrapper">
-                                                <label className="custom-payment-checkbox-label">
-                                                    <input type="checkbox" className="custom-payment-checkbox-input" checked={selectedPatients.includes(session.id)} onChange={() => handleCheckboxChange(session.id)} />
-                                                    <span className="custom-payment-checkbox-box"></span>
-                                                </label>
-                                            </div></td>
-                                            <td>{session.historyNo}</td>
-                                            <td>
-                                                <img src="images/dash-user-icon.svg" alt="User" className="dbt-avatar" />
-                                                <div className="dbt-profile-info">
-                                                    <span className="dbt-name">{session.patientName}</span>
-                                                    {session.age && <span className="dbt-subtext">{session.age}</span>}
-                                                </div>
-                                            </td>
-                                            {/* <td className="dbt4-regular-cell"><span className={`status ${session.sessionType.toLowerCase()}-text`}>{session.sessionType}</span></td> */}
-                                            <td>
-                                                <span className="dbt-day">{session.sessionType}</span>
-                                                <span className="dbt-subtext">{session.time}</span>
-                                                <span className="dbt-subtext">{session.date}</span>
-                                            </td>
-                                            <td><span className={`status ${session.mode.toLowerCase()}`}><span></span>{session.mode}</span></td>
-                                            {/* <td>{session.amount}</td> */}
-                                            {/* <td>{session.patientPaid}</td> */}
-                                            <td className="dbt4-regular-cell">{session.paymentType}</td>
-                                            <td>{session.patientPaid}</td>
-                                            {/* <td><span className={`status ${session.status.toLowerCase().replace(' ', '-')}`}>{session.status}</span></td> */}
-                                            <td><Link href="/patient-profile" className="earnig-view-btn">View Details</Link></td>
-                                            <td>
-                                                <a href="/invoices/dummy-invoice.pdf"
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="earnig-view-btn">View</a>
+                                    {isLedgerLoading ? (
+                                        <tr>
+                                            <td colSpan={9} style={{ textAlign: "center", padding: "30px", color: "#6c757d" }}>
+                                                Loading ledger...
                                             </td>
                                         </tr>
-                                    ))}
+                                    ) : displayLedger.length === 0 ? (
+                                        <tr>
+                                            <td colSpan={9} style={{ textAlign: "center", padding: "30px", color: "#6c757d" }}>
+                                                No sessions found in ledger.
+                                            </td>
+                                        </tr>
+                                    ) : (
+                                        displayLedger.map((session: any, idx: number) => {
+                                            const sessionId = session.id ?? idx;
+                                            const historyNo = session.history_no || session.historyNo || session.patient_id || session.id || "—";
+                                            const patientName = session.patient_name || session.patientName || session.patient?.name || session.patient?.full_name || session.name || "N/A";
+                                            const patientAvatar = session.patient_avatar || session.avatar || session.patient?.profile_image || session.patient?.avatar || "images/dash-user-icon.svg";
+                                            const patientAge = session.age || session.patient_age || session.patient?.age;
+                                            const sessionType = session.session_type || session.sessionType || session.type || "Adult";
+                                            const sessionTime = session.time || session.session_time || (session.start_time && session.end_time ? `${session.start_time} - ${session.end_time}` : session.start_time) || "";
+                                            const sessionDate = session.date || session.session_date || (session.created_at ? new Date(session.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : "");
+                                            const mode = session.session_mode || session.sessionMode || session.mode || "Online";
+                                            const paymentType = session.payment_type || session.paymentType || "—";
+                                            const rawStatus = session.patient_paid ?? session.patientPaid ?? session.amount ?? session.paid_amount ?? session.status ?? "—";
+                                            const paymentStatus = typeof rawStatus === 'number' || (!isNaN(Number(rawStatus)) && !String(rawStatus).includes('$'))
+                                                ? formatCurrency(rawStatus, "$0")
+                                                : rawStatus;
+                                            const patientId = session.patient_id || session.id;
+                                            const invoiceUrl = session.invoice_url || session.invoice_pdf || session.invoice || "/invoices/dummy-invoice.pdf";
 
+                                            return (
+                                                <tr className="dbt-table-row" key={sessionId}>
+                                                    <td className="dbt4-pad-left dbt4-sno-text">
+                                                        <div className="custom-payment-checkbox-wrapper">
+                                                            <label className="custom-payment-checkbox-label">
+                                                                <input
+                                                                    type="checkbox"
+                                                                    className="custom-payment-checkbox-input"
+                                                                    checked={selectedPatients.includes(sessionId)}
+                                                                    onChange={() => handleCheckboxChange(sessionId)}
+                                                                />
+                                                                <span className="custom-payment-checkbox-box"></span>
+                                                            </label>
+                                                        </div>
+                                                    </td>
+                                                    <td>{historyNo}</td>
+                                                    <td>
+                                                        <img src={patientAvatar} alt="User" className="dbt-avatar" />
+                                                        <div className="dbt-profile-info">
+                                                            <span className="dbt-name">{patientName}</span>
+                                                            {patientAge && <span className="dbt-subtext">{patientAge}</span>}
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        <span className="dbt-day">{sessionType}</span>
+                                                        {sessionTime && <span className="dbt-subtext">{sessionTime}</span>}
+                                                        {sessionDate && <span className="dbt-subtext">{sessionDate}</span>}
+                                                    </td>
+                                                    <td>
+                                                        <span className={`status ${String(mode).toLowerCase().replace(/\s+/g, '-')}`}>
+                                                            <span></span>{mode}
+                                                        </span>
+                                                    </td>
+                                                    <td className="dbt4-regular-cell">{paymentType}</td>
+                                                    <td>{paymentStatus}</td>
+                                                    <td>
+                                                        <Link href={`/patient-profile${patientId ? `?id=${patientId}` : ''}`} className="earnig-view-btn">
+                                                            View Details
+                                                        </Link>
+                                                    </td>
+                                                    <td>
+                                                        <a
+                                                            href={invoiceUrl}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="earnig-view-btn"
+                                                        >
+                                                            View
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })
+                                    )}
                                 </tbody>
                             </table>
                         </div>
 
-
                         <Pagination
-                            currentPage={validLedgerPage}
-                            totalPages={ledgerTotalPages}
+                            currentPage={ledgerPage}
+                            totalPages={displayLedgerTotalPages}
                             onPageChange={(p) => setLedgerPage(p)}
                         />
 
@@ -393,8 +665,8 @@ const EarningReport = () => {
                                     <img src="images/remuneration.svg" alt="" />
                                 </div>
                                 <h2 className="mbs-main-heading">Monthly Bill Summary</h2>
-                                <div style={{padding: "6px 12px 6px 15px", backgroundColor: "#DEDFD2", borderRadius: "25px"}}>
-                                <img src="/images/upload-excel.png" alt="" />
+                                <div style={{ padding: "6px 12px 6px 15px", backgroundColor: "#DEDFD2", borderRadius: "25px" }}>
+                                    <img src="/images/upload-excel.png" alt="" />
                                 </div>
                             </div>
                             <button type="button" className="mbs-action-btn">Submit Current Month Invoice to Admin</button>
@@ -446,18 +718,18 @@ const EarningReport = () => {
                                 <h2 className="pmr-main-heading">Previous Month’s Remuneration</h2>
                             </div>
 
-                            <div style={{display: "flex", gap: "15px"}}>
-                            <DateRangePicker
+                            <div style={{ display: "flex", gap: "15px" }}>
+                                <DateRangePicker
                                 // value={dateRange}
                                 // onChange={(range) => {
                                 //     setDateRange(range);
                                 // }}
-                            >
-                                <button className="dbt4-filter-dropdown" type="button">
-                                    Date Range <span className="dbt4-cal-icon"><img src="/images/date-icon.svg" alt="" /></span>
-                                </button>
-                            </DateRangePicker>
-                            <button type="button" className='mbs-action-btn'>Export</button>
+                                >
+                                    <button className="dbt4-filter-dropdown" type="button">
+                                        Date Range <span className="dbt4-cal-icon"><img src="/images/date-icon.svg" alt="" /></span>
+                                    </button>
+                                </DateRangePicker>
+                                <button type="button" className='mbs-action-btn'>Export</button>
                             </div>
                         </div>
 

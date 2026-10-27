@@ -34,17 +34,27 @@ const convert24To12 = (timeStr: string) => {
   return `${strHours}:${minutes} ${ampm}`;
 };
 
-const convert12To24 = (time12: string) => {
-  if (!time12) return "";
-  const [time, modifier] = time12.split(" ");
-  let [hours, minutes] = time.split(":");
-  if (hours === "12") {
-    hours = "00";
+const TIME_OPTIONS_24H = Array.from({ length: 48 }, (_, i) => {
+  const h = String(Math.floor(i / 2)).padStart(2, "0");
+  const m = i % 2 === 0 ? "00" : "30";
+  return `${h}:${m}`;
+});
+
+const convert12To24 = (timeStr: string) => {
+  if (!timeStr) return "";
+  const trimmed = timeStr.trim();
+  const match = trimmed.match(/^(\d{1,2}):(\d{2})(?::\d{2})?\s*(AM|PM)?$/i);
+  if (!match) return trimmed.substring(0, 5);
+  let hours = parseInt(match[1], 10);
+  const minutes = match[2];
+  const modifier = (match[3] || "").toUpperCase();
+
+  if (modifier === "PM" && hours < 12) {
+    hours += 12;
+  } else if (modifier === "AM" && hours === 12) {
+    hours = 0;
   }
-  if (modifier === "PM") {
-    hours = String(parseInt(hours, 10) + 12);
-  }
-  return `${hours.padStart(2, "0")}:${minutes.padStart(2, "0")}`;
+  return `${String(hours).padStart(2, "0")}:${minutes}`;
 };
 
 const addMinutesToTime = (timeStr: string, minutesToAdd: number = 60) => {
@@ -171,6 +181,34 @@ const PersonalProfile = () => {
   const [consultationOptions, setConsultationOptions] = useState<
     { id: any; name: string }[]
   >([]);
+  const [therapyOptions, setTherapyOptions] = useState<
+    { id: number; name: string }[]
+  >([]);
+  const [formData, setFormData] = useState({
+    therapyTypes: therapistProfile?.service_id
+      ? String(therapistProfile.service_id)
+          .split(",")
+          .map((id: string) => Number(id.trim()))
+          .filter(Boolean)
+      : ([] as number[]),
+  });
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const handleToggleArrayItem = (field: string, item: string | number) => {
+    setFormData((prev: any) => {
+      const currentArray = prev[field] || [];
+      if (currentArray.includes(item)) {
+        return {
+          ...prev,
+          [field]: currentArray.filter((i: any) => i !== item),
+        };
+      } else {
+        return { ...prev, [field]: [...currentArray, item] };
+      }
+    });
+    if (errors[field]) setErrors((prev: any) => ({ ...prev, [field]: "" }));
+  };
+
   const [isEditing, setIsEditing] = useState(false);
 
   const [holidayRange, setHolidayRange] = useState<DateRange>({
@@ -266,11 +304,16 @@ const PersonalProfile = () => {
   useEffect(() => {
     const fetchMeta = async () => {
       try {
-        const [specsRes, reasonsRes, profileRes] = await Promise.all([
-          requestApi({ endpoint: "get-all-specialization", method: "POST" }),
-          requestApi({ endpoint: "get-consultation-reasons", method: "POST" }),
-          requestApi({ endpoint: "get-therapist-profile", method: "POST" }),
-        ]);
+        const [specsRes, reasonsRes, profileRes, sessionTypeRes] =
+          await Promise.all([
+            requestApi({ endpoint: "get-all-specialization", method: "POST" }),
+            requestApi({
+              endpoint: "get-consultation-reasons",
+              method: "POST",
+            }),
+            requestApi({ endpoint: "get-therapist-profile", method: "POST" }),
+            requestApi({ endpoint: "get-session-type", method: "POST" }),
+          ]);
 
         let specs: any[] = [];
         if (specsRes) {
@@ -300,6 +343,13 @@ const PersonalProfile = () => {
         }
         setConsultationOptions(reasons);
 
+        const sessionTypes =
+          sessionTypeRes?.data?.session_types ||
+          sessionTypeRes?.session_types ||
+          (Array.isArray(sessionTypeRes?.data) ? sessionTypeRes.data : []) ||
+          [];
+        setTherapyOptions(sessionTypes);
+
         if (
           profileRes &&
           profileRes.success &&
@@ -307,6 +357,13 @@ const PersonalProfile = () => {
           profileRes.data.therapist
         ) {
           saveTherapistProfile(profileRes.data.therapist);
+          if (profileRes.data.therapist.service_id) {
+            const serviceIds = String(profileRes.data.therapist.service_id)
+              .split(",")
+              .map((id: string) => Number(id.trim()))
+              .filter(Boolean);
+            setFormData((prev) => ({ ...prev, therapyTypes: serviceIds }));
+          }
         }
       } catch (e) {
         console.error("Failed to fetch meta in PersonalProfile:", e);
@@ -392,6 +449,13 @@ const PersonalProfile = () => {
           ? Number(therapistProfile.tax_percentage)
           : 7
       );
+      if (therapistProfile.service_id) {
+        const serviceIds = String(therapistProfile.service_id)
+          .split(",")
+          .map((id: string) => Number(id.trim()))
+          .filter(Boolean);
+        setFormData((prev) => ({ ...prev, therapyTypes: serviceIds }));
+      }
     }
   }, [therapistProfile]);
 
@@ -435,8 +499,8 @@ const PersonalProfile = () => {
       dayAvailability.slots.length > 0
     ) {
       const formattedSlots = dayAvailability.slots.map((s: any) => {
-        const start = s.start_time.substring(0, 5);
-        const end = s.end_time.substring(0, 5);
+        const start = convert12To24(s.start_time);
+        const end = convert12To24(s.end_time);
         return { start_time: start, end_time: end };
       });
       setSlots(formattedSlots);
@@ -477,29 +541,34 @@ const PersonalProfile = () => {
     if (isEditing) {
       try {
         toast.loading("Saving changes...", { toastId: "update-personal" });
-        const formData = new FormData();
-        formData.append("full_name", profileData.fullName);
-        formData.append("surname_one", profileData.surname1);
-        formData.append("surname_two", profileData.surname2);
-        formData.append("phone", profileData.contactNumber);
-        formData.append("email", profileData.email);
-        formData.append("vat_number", profileData.vatNumber);
-        formData.append("street_number_floor", profileData.streetAddress);
-        formData.append("city", profileData.city);
-        formData.append("province", profileData.province);
-        formData.append("country", profileData.country);
-        formData.append("postal_code", profileData.postalCode);
-        formData.append("years_of_experience", profileData.experience);
-        formData.append("proffessional_bio", profileData.bio);
+        const payload = new FormData();
+        payload.append("full_name", profileData.fullName);
+        payload.append("surname_one", profileData.surname1);
+        payload.append("surname_two", profileData.surname2);
+        payload.append("phone", profileData.contactNumber);
+        payload.append("email", profileData.email);
+        payload.append("vat_number", profileData.vatNumber);
+        payload.append("street_number_floor", profileData.streetAddress);
+        payload.append("city", profileData.city);
+        payload.append("province", profileData.province);
+        payload.append("country", profileData.country);
+        payload.append("postal_code", profileData.postalCode);
+        payload.append("years_of_experience", profileData.experience);
+        payload.append("proffessional_bio", profileData.bio);
+
+        if (formData.therapyTypes && formData.therapyTypes.length > 0) {
+          payload.append("service_id", formData.therapyTypes.join(","));
+          payload.append("service_id[]", formData.therapyTypes.join(","));
+        }
 
         if (selectedAvatarFile) {
-          formData.append("profile_image", selectedAvatarFile);
+          payload.append("profile_image", selectedAvatarFile);
         }
 
         const response = await requestApi({
           endpoint: "update-personal-info",
           method: "POST",
-          data: formData,
+          data: payload,
           isFormData: true,
         });
 
@@ -573,8 +642,8 @@ const PersonalProfile = () => {
     }
 
     const formattedSlots = validSlots.map((s) => ({
-      start_time: convert24To12(s.start_time),
-      end_time: convert24To12(s.end_time),
+      start_time: convert12To24(s.start_time),
+      end_time: convert12To24(s.end_time),
     }));
 
     let targetDates: Date[] = [selectedDate];
@@ -959,21 +1028,32 @@ const PersonalProfile = () => {
 
   const handleSaveCategoryAndClinic = async () => {
     try {
+      if (formData.therapyTypes.length === 0) {
+        setErrors((prev) => ({
+          ...prev,
+          therapyTypes: "Please select at least one type of therapy",
+        }));
+        toast.error("Please select at least one type of therapy");
+        return;
+      }
+
       toast.loading("Saving category and clinic address...", {
         toastId: "save-category-clinic",
       });
-      const formData = new FormData();
+      const formDataPayload = new FormData();
       const mode = getSessionModeParam(selectedModes);
-      formData.append("session_mode", mode);
-      formData.append("clinic_name", clinicNameInput);
-      formData.append("clinic_address", clinicAddressInput);
-      formData.append("clinic_latitude", String(clinicLatitude));
-      formData.append("clinic_longitude", String(clinicLongitude));
+      formDataPayload.append("session_mode", mode);
+      formDataPayload.append("clinic_name", clinicNameInput);
+      formDataPayload.append("clinic_address", clinicAddressInput);
+      formDataPayload.append("clinic_latitude", String(clinicLatitude));
+      formDataPayload.append("clinic_longitude", String(clinicLongitude));
+      formDataPayload.append("service_id", formData.therapyTypes.join(","));
+      formDataPayload.append("service_id[]", formData.therapyTypes.join(","));
 
       const response = await requestApi({
         endpoint: "update-category-and-clinic-address",
         method: "POST",
-        data: formData,
+        data: formDataPayload,
         isFormData: true,
       });
 
@@ -1411,6 +1491,51 @@ const PersonalProfile = () => {
                   disabled={!isEditing}
                 />
               </div>
+
+              <div className="mb-3 mt-3" style={{ width: "100%" }}>
+                <label className="tp-label mb-2" style={{ fontWeight: 600, color: "#333", fontSize: "14px" }}>
+                  Select the types of therapy you provide
+                </label>
+                <div
+                  className="d-flex gap-2 flex-wrap"
+                  id="therapy-types-container"
+                >
+                  {therapyOptions.map((therapy) => (
+                    <button
+                      key={therapy?.id}
+                      type="button"
+                      disabled={!isEditing}
+                      style={{
+                        cursor: !isEditing ? "default" : "pointer",
+                        pointerEvents: !isEditing ? "none" : "auto",
+                        opacity: !isEditing && !formData.therapyTypes.includes(therapy?.id) ? 0.6 : 1,
+                      }}
+                      className={
+                        formData.therapyTypes.includes(therapy?.id)
+                          ? "tp-toggle-pill active"
+                          : "tp-pill-outline"
+                      }
+                      onClick={() => {
+                        if (!isEditing) return;
+                        handleToggleArrayItem("therapyTypes", therapy?.id);
+                      }}
+                    >
+                      {therapy?.name}
+                    </button>
+                  ))}
+                </div>
+                {errors.therapyTypes && (
+                  <div
+                    style={{
+                      color: "red",
+                      fontSize: "12px",
+                      marginTop: "5px",
+                    }}
+                  >
+                    {errors.therapyTypes}
+                  </div>
+                )}
+              </div>
             </div>{" "}
             <hr className="onyba-prof-separator" />
             <div className="onyba-prof-section-container">
@@ -1525,6 +1650,44 @@ const PersonalProfile = () => {
                     </button>
                   </div>
 
+                  <div className="mb-3">
+                    <label className="tp-label mb-2">
+                      Select the types of therapy you provide
+                    </label>
+                    <div
+                      className="d-flex gap-2 flex-wrap"
+                      id="therapy-types-container"
+                    >
+                      {therapyOptions.map((therapy) => (
+                        <button
+                          key={therapy?.id}
+                          type="button"
+                          className={
+                            formData.therapyTypes.includes(therapy?.id)
+                              ? "tp-toggle-pill active"
+                              : "tp-pill-outline"
+                          }
+                          onClick={() =>
+                            handleToggleArrayItem("therapyTypes", therapy?.id)
+                          }
+                        >
+                          {therapy?.name}
+                        </button>
+                      ))}
+                    </div>
+                    {errors.therapyTypes && (
+                      <div
+                        style={{
+                          color: "red",
+                          fontSize: "12px",
+                          marginTop: "5px",
+                        }}
+                      >
+                        {errors.therapyTypes}
+                      </div>
+                    )}
+                  </div>
+
                   <p className="onyba-prof-sub-title-text">Clinic name</p>
                   <div style={{ position: "relative", marginBottom: "15px" }}>
                     <input
@@ -1602,6 +1765,39 @@ const PersonalProfile = () => {
                       </span>
                     ))}
                   </div>
+
+                  {formData.therapyTypes.length > 0 && (
+                    <>
+                      <p
+                        className="onyba-prof-sub-title-text"
+                        style={{ marginTop: "15px", marginBottom: "8px" }}
+                      >
+                        Types of therapy provided
+                      </p>
+                      <div className="d-flex gap-2 flex-wrap">
+                        {formData.therapyTypes.map((typeId) => {
+                          const option = therapyOptions.find(
+                            (o) => Number(o.id) === Number(typeId)
+                          );
+                          return option ? (
+                            <span
+                              key={typeId}
+                              className="onyba-prof-chip"
+                              style={{
+                                background: "#f5f5f5",
+                                color: "#333",
+                                padding: "6px 12px",
+                                borderRadius: "16px",
+                                fontSize: "13px",
+                              }}
+                            >
+                              {option.name}
+                            </span>
+                          ) : null;
+                        })}
+                      </div>
+                    </>
+                  )}
 
                   {(therapistProfile?.clinic_name || clinicNameInput) && (
                     <>
@@ -2024,11 +2220,15 @@ const PersonalProfile = () => {
                       className="onyba-avail-input-time-wrap"
                       style={{ flex: 1 }}
                     >
-                      <input
-                        type="time"
+                      <select
                         className="onyba-avail-time-field"
-                        style={{ width: "100%", padding: "12px 16px" }}
-                        value={slot.start_time}
+                        style={{
+                          width: "100%",
+                          padding: "12px 16px",
+                          cursor: "pointer",
+                          backgroundColor: "#ffffff",
+                        }}
+                        value={slot.start_time || ""}
                         onChange={(e) => {
                           const newStartTime = e.target.value;
                           const updated = [...slots];
@@ -2038,7 +2238,22 @@ const PersonalProfile = () => {
                             : "";
                           setSlots(updated);
                         }}
-                      />
+                      >
+                        <option value="" disabled>
+                          Select start time
+                        </option>
+                        {slot.start_time &&
+                          !TIME_OPTIONS_24H.includes(slot.start_time) && (
+                            <option value={slot.start_time}>
+                              {slot.start_time}
+                            </option>
+                          )}
+                        {TIME_OPTIONS_24H.map((timeOption) => (
+                          <option key={timeOption} value={timeOption}>
+                            {timeOption}
+                          </option>
+                        ))}
+                      </select>
                       <span className="onyba-avail-clock-icon">
                         <MdOutlineWatchLater />
                       </span>
@@ -2053,10 +2268,10 @@ const PersonalProfile = () => {
                         opacity: 0.85,
                         cursor: "not-allowed",
                       }}
-                      title="End time is automatically calculated"
+                      title="End time is automatically calculated (24-hour)"
                     >
                       <input
-                        type="time"
+                        type="text"
                         className="onyba-avail-time-field"
                         style={{
                           width: "100%",
@@ -2065,7 +2280,8 @@ const PersonalProfile = () => {
                           cursor: "not-allowed",
                           pointerEvents: "none",
                         }}
-                        value={slot.end_time}
+                        value={slot.end_time || ""}
+                        placeholder="End time"
                         disabled
                         readOnly
                       />
