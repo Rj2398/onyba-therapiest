@@ -132,6 +132,7 @@ const MyProfile = () => {
     "email"
   );
   const [otpVerifyVal, setOtpVerifyVal] = useState("");
+  const [otpVerifyCode, setOtpVerifyCode] = useState<string | number | null>(null);
 
   const [formData, setFormData] = useState<any>({
     userImage: null,
@@ -673,6 +674,8 @@ const MyProfile = () => {
 
       if (res.success || res.status) {
         toast.success("OTP sent successfully!");
+        const receivedOtp = res?.data?.otp ?? res?.otp ?? res?.data;
+        setOtpVerifyCode(receivedOtp || null);
         setOtpVerifyType(type);
         setOtpVerifyVal(value);
         setOtpVerifyOpen(true);
@@ -2244,6 +2247,7 @@ const MyProfile = () => {
         onClose={() => setOtpVerifyOpen(false)}
         emailPhone={otpVerifyVal}
         type={otpVerifyType}
+        initialOtp={otpVerifyCode}
         onSuccess={() => {
           if (otpVerifyType === "email") {
             setIsEmailVerified(true);
