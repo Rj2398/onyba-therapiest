@@ -115,13 +115,13 @@ const getDocList = (docData: any) => {
       const ext = extMatch ? extMatch[1].toUpperCase() : "DOC";
       const fullUrl =
         trimmed.startsWith("http://") ||
-        trimmed.startsWith("https://") ||
-        trimmed.startsWith("data:")
+          trimmed.startsWith("https://") ||
+          trimmed.startsWith("data:")
           ? trimmed
           : `${Base_image_url.replace(/\/+$/, "")}/${trimmed.replace(
-              /^\/+/,
-              ""
-            )}`;
+            /^\/+/,
+            ""
+          )}`;
       return {
         id: idx,
         file_name: fileName,
@@ -138,9 +138,9 @@ const getDocList = (docData: any) => {
           rawUrl.startsWith("data:")
           ? rawUrl
           : `${Base_image_url.replace(/\/+$/, "")}/${rawUrl.replace(
-              /^\/+/,
-              ""
-            )}`
+            /^\/+/,
+            ""
+          )}`
         : "";
       const fileName =
         item.file_name ||
@@ -479,13 +479,13 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
 
     const addServices =
       pDetails?.additional_services &&
-      Array.isArray(pDetails.additional_services) &&
-      pDetails.additional_services.length > 0
+        Array.isArray(pDetails.additional_services) &&
+        pDetails.additional_services.length > 0
         ? pDetails.additional_services
         : Array.isArray(sessionData?.additional_services) &&
           sessionData.additional_services.length > 0
-        ? sessionData.additional_services
-        : [];
+          ? sessionData.additional_services
+          : [];
 
     let serviceIds: any[] = addServices
       .map((srv: any) => srv.service_id ?? srv.id)
@@ -557,8 +557,8 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
       console.error("Error requesting additional payment:", err);
       toast.error(
         err?.response?.data?.message ||
-          err?.message ||
-          "Error requesting additional payment."
+        err?.message ||
+        "Error requesting additional payment."
       );
     } finally {
       setIsRequestingPayment(false);
@@ -775,8 +775,8 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
       console.error("Error resending verification code:", err);
       toast.error(
         err?.response?.data?.message ||
-          err?.message ||
-          "Error resending verification code"
+        err?.message ||
+        "Error resending verification code"
       );
     } finally {
       setIsResendingCode(false);
@@ -817,8 +817,8 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
       console.error("Error updating AI summary:", err);
       toast.error(
         err?.response?.data?.message ||
-          err?.message ||
-          "Error updating AI summary"
+        err?.message ||
+        "Error updating AI summary"
       );
     } finally {
       setIsSavingAiSummary(false);
@@ -1166,8 +1166,7 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
 
       if (response && response.success === true) {
         toast.success(
-          `${
-            type === "private" ? "Private" : "Public"
+          `${type === "private" ? "Private" : "Public"
           } notes submitted successfully!`
         );
       } else {
@@ -1177,8 +1176,8 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
       console.error(`Error submitting ${type} notes:`, err);
       toast.error(
         err?.response?.data?.message ||
-          err?.message ||
-          `Error submitting ${type} notes`
+        err?.message ||
+        `Error submitting ${type} notes`
       );
     } finally {
       if (type === "private") setSavingPrivateNotes(false);
@@ -1343,10 +1342,10 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
                           isStartedCall
                             ? { opacity: 0.6, cursor: "not-allowed" }
                             : {
-                                backgroundColor: "#6c2b3b",
-                                borderColor: "#6c2b3b",
-                                color: "#fff",
-                              }
+                              backgroundColor: "#6c2b3b",
+                              borderColor: "#6c2b3b",
+                              color: "#fff",
+                            }
                         }
                       >
                         Start Session
@@ -1428,7 +1427,7 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
                   <span className="dbt-pcard-bullet">•</span>{" "}
                   {sessionData?.gender
                     ? sessionData.gender.charAt(0).toUpperCase() +
-                      sessionData.gender.slice(1)
+                    sessionData.gender.slice(1)
                     : "Male"}
                 </p>
                 <div className="dbt-pcard-ids">
@@ -1501,76 +1500,78 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
               </div>
             </div>
           </div>
-          {!shouldHideActionButtons && sessionData?.session_mode !== "online" && !isSessionVerified && (
-            <div className="session-verify-card">
-              <div className="session-verify-left">
-                <div className="session-verify-icon-wrapper">
-                  <img src="images/otp-login-icon.svg" alt="" />
+          {!shouldHideActionButtons &&
+            sessionData?.session_mode !== "online" &&
+            !isSessionVerified && (
+              <div className="session-verify-card">
+                <div className="session-verify-left">
+                  <div className="session-verify-icon-wrapper">
+                    <img src="images/otp-login-icon.svg" alt="" />
+                  </div>
+                  <div className="session-verify-text-content">
+                    <h2 className="session-verify-title">
+                      Verify Patient to Start Session
+                    </h2>
+                    <p className="session-verify-subtitle">
+                      Ask the patient for the verification code at the clinic.
+                    </p>
+                  </div>
                 </div>
-                <div className="session-verify-text-content">
-                  <h2 className="session-verify-title">
-                    Verify Patient to Start Session
-                  </h2>
-                  <p className="session-verify-subtitle">
-                    Ask the patient for the verification code at the clinic.
+
+                <div className="session-verify-right">
+                  <div className="session-code-inputs-container">
+                    {otp.map((digit, index) => (
+                      <input
+                        key={index}
+                        ref={(el) => {
+                          inputRefs.current[index] = el;
+                        }}
+                        type="text"
+                        inputMode="numeric"
+                        className="session-code-field"
+                        maxLength={1}
+                        placeholder={(index + 1).toString()}
+                        value={digit}
+                        onChange={(e) => handleOtpChange(index, e.target.value)}
+                        onKeyDown={(e) => handleKeyDown(index, e)}
+                        required
+                      />
+                    ))}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleVerify}
+                    className="session-submit-btn"
+                    id="btnVerifySession"
+                    disabled={verifyingOtp}
+                  >
+                    {verifyingOtp ? "Verifying..." : "Verify & Start Session"}
+                  </button>
+
+                  <p className="session-resend-text">
+                    Didn’t receive code?{" "}
+                    {resendTimer > 0 ? (
+                      <span style={{ color: "#8c8c8c", fontWeight: 500 }}>
+                        Resend in {resendTimer}s
+                      </span>
+                    ) : (
+                      <span
+                        className="session-resend-link"
+                        id="lnkResendSessionCode"
+                        onClick={handleResendVerificationCode}
+                        style={{
+                          cursor: isResendingCode ? "not-allowed" : "pointer",
+                          opacity: isResendingCode ? 0.6 : 1,
+                        }}
+                      >
+                        {isResendingCode ? "Resending..." : "Resend"}
+                      </span>
+                    )}
                   </p>
                 </div>
               </div>
-
-              <div className="session-verify-right">
-                <div className="session-code-inputs-container">
-                  {otp.map((digit, index) => (
-                    <input
-                      key={index}
-                      ref={(el) => {
-                        inputRefs.current[index] = el;
-                      }}
-                      type="text"
-                      inputMode="numeric"
-                      className="session-code-field"
-                      maxLength={1}
-                      placeholder={(index + 1).toString()}
-                      value={digit}
-                      onChange={(e) => handleOtpChange(index, e.target.value)}
-                      onKeyDown={(e) => handleKeyDown(index, e)}
-                      required
-                    />
-                  ))}
-                </div>
-
-                <button
-                  type="button"
-                  onClick={handleVerify}
-                  className="session-submit-btn"
-                  id="btnVerifySession"
-                  disabled={verifyingOtp}
-                >
-                  {verifyingOtp ? "Verifying..." : "Verify & Start Session"}
-                </button>
-
-                <p className="session-resend-text">
-                  Didn’t receive code?{" "}
-                  {resendTimer > 0 ? (
-                    <span style={{ color: "#8c8c8c", fontWeight: 500 }}>
-                      Resend in {resendTimer}s
-                    </span>
-                  ) : (
-                    <span
-                      className="session-resend-link"
-                      id="lnkResendSessionCode"
-                      onClick={handleResendVerificationCode}
-                      style={{
-                        cursor: isResendingCode ? "not-allowed" : "pointer",
-                        opacity: isResendingCode ? 0.6 : 1,
-                      }}
-                    >
-                      {isResendingCode ? "Resending..." : "Resend"}
-                    </span>
-                  )}
-                </p>
-              </div>
-            </div>
-          )}
+            )}
 
           <div className="service-selection-card">
             <div className="container ps-sessions-page-container">
@@ -1644,40 +1645,40 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
                         {(() => {
                           const listToRender =
                             Array.isArray(sessionData?.previous_sessions) &&
-                            sessionData.previous_sessions.length > 0
+                              sessionData.previous_sessions.length > 0
                               ? sessionData.previous_sessions
                               : [
-                                  {
-                                    id: 1,
-                                    name: "Session 1",
-                                    date: "May 20, 2026",
-                                    details: "Anxiety & work stress",
-                                  },
-                                  {
-                                    id: 2,
-                                    name: "Session 2",
-                                    date: "May 22, 2026",
-                                    details: "Anxiety & work stress",
-                                  },
-                                  {
-                                    id: 3,
-                                    name: "Session 3",
-                                    date: "May 24, 2026",
-                                    details: "Anxiety & work stress",
-                                  },
-                                  {
-                                    id: 4,
-                                    name: "Session 4",
-                                    date: "May 26, 2026",
-                                    details: "Anxiety & work stress",
-                                  },
-                                  {
-                                    id: 5,
-                                    name: "Session 5",
-                                    date: "May 30, 2026",
-                                    details: "Depression",
-                                  },
-                                ];
+                                {
+                                  id: 1,
+                                  name: "Session 1",
+                                  date: "May 20, 2026",
+                                  details: "Anxiety & work stress",
+                                },
+                                {
+                                  id: 2,
+                                  name: "Session 2",
+                                  date: "May 22, 2026",
+                                  details: "Anxiety & work stress",
+                                },
+                                {
+                                  id: 3,
+                                  name: "Session 3",
+                                  date: "May 24, 2026",
+                                  details: "Anxiety & work stress",
+                                },
+                                {
+                                  id: 4,
+                                  name: "Session 4",
+                                  date: "May 26, 2026",
+                                  details: "Anxiety & work stress",
+                                },
+                                {
+                                  id: 5,
+                                  name: "Session 5",
+                                  date: "May 30, 2026",
+                                  details: "Depression",
+                                },
+                              ];
 
                           const filtered = listToRender.filter((item: any) => {
                             if (!prevSessionSearch.trim()) return true;
@@ -1771,7 +1772,7 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
               id="patientFaqsAccordionContainer"
             >
               {Array.isArray(sessionData?.patient_intake_details) &&
-              sessionData.patient_intake_details.length > 0 ? (
+                sessionData.patient_intake_details.length > 0 ? (
                 sessionData.patient_intake_details.map(
                   (item: any, idx: number) => (
                     <div className="patient-faqs-item" key={idx}>
@@ -1804,8 +1805,8 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
                           {typeof item.answer === "string"
                             ? item.answer
                             : item.response ||
-                              item.value ||
-                              JSON.stringify(item)}
+                            item.value ||
+                            JSON.stringify(item)}
                         </div>
                       </div>
                     </div>
@@ -1939,7 +1940,7 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
                   Added Services:
                 </span>
                 {Array.isArray(sessionData?.additional_services) &&
-                sessionData.additional_services.length > 0 ? (
+                  sessionData.additional_services.length > 0 ? (
                   sessionData.additional_services.map(
                     (srv: any, idx: number) => (
                       <div
@@ -2101,13 +2102,13 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
                       if (!isEditingAiSummary) {
                         const currentVal =
                           typeof sessionData?.post_session_ai_summary ===
-                          "string"
+                            "string"
                             ? sessionData.post_session_ai_summary
                             : sessionData?.post_session_ai_summary
-                            ? JSON.stringify(
+                              ? JSON.stringify(
                                 sessionData.post_session_ai_summary
                               )
-                            : "";
+                              : "";
                         setAiSummaryText(currentVal);
                       }
                       setIsEditingAiSummary(!isEditingAiSummary);
@@ -2176,7 +2177,7 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
                         </div>
                       ) : sessionData?.post_session_ai_summary ? (
                         typeof sessionData.post_session_ai_summary ===
-                        "string" ? (
+                          "string" ? (
                           <>
                             <h3 className="ps-part1-section-title">
                               Session Overview
@@ -2223,9 +2224,8 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
                 <div className="ps-part2-tabs-row">
                   <button
                     type="button"
-                    className={`ps-part2-tab ${
-                      activeDocTab === "therapist" ? "ps-part2-tab-active" : ""
-                    }`}
+                    className={`ps-part2-tab ${activeDocTab === "therapist" ? "ps-part2-tab-active" : ""
+                      }`}
                     onClick={() => setActiveDocTab("therapist")}
                   >
                     Shared by you{" "}
@@ -2235,9 +2235,8 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
                   </button>
                   <button
                     type="button"
-                    className={`ps-part2-tab ${
-                      activeDocTab === "patient" ? "ps-part2-tab-active" : ""
-                    }`}
+                    className={`ps-part2-tab ${activeDocTab === "patient" ? "ps-part2-tab-active" : ""
+                      }`}
                     onClick={() => setActiveDocTab("patient")}
                   >
                     Shared by Patient{" "}
@@ -2680,10 +2679,10 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
                     {typeof sessionData?.feedback === "string"
                       ? sessionData.feedback
                       : sessionData?.patient_feedback?.text ||
-                        sessionData?.patient_feedback?.comment ||
-                        sessionData?.feedback?.comment ||
-                        sessionData?.feedback?.text ||
-                        "The session was really helpful. I liked how the therapist guided me through techniques. I'd like to explore more coping strategies next time."}
+                      sessionData?.patient_feedback?.comment ||
+                      sessionData?.feedback?.comment ||
+                      sessionData?.feedback?.text ||
+                      "The session was really helpful. I liked how the therapist guided me through techniques. I'd like to explore more coping strategies next time."}
                   </p>
                 </div>
               </div>
@@ -2723,16 +2722,16 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
                         (Array.isArray(sessionData?.payment_details)
                           ? sessionData.payment_details[0]?.session_amount
                           : sessionData?.payment_details?.session_amount) ||
-                          sessionData?.session_price
+                        sessionData?.session_price
                       )}{" "}
                       (
                       {formatStatus(
                         (Array.isArray(sessionData?.payment_details)
                           ? sessionData.payment_details[0]
-                              ?.session_payment_status
+                            ?.session_payment_status
                           : sessionData?.payment_details
-                              ?.session_payment_status) ||
-                          sessionData?.session_status
+                            ?.session_payment_status) ||
+                        sessionData?.session_status
                       )}
                       )
                     </span>
@@ -2760,13 +2759,13 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
                           : sessionData?.payment_details;
                         const addServices =
                           pDetails?.additional_services &&
-                          Array.isArray(pDetails.additional_services) &&
-                          pDetails.additional_services.length > 0
+                            Array.isArray(pDetails.additional_services) &&
+                            pDetails.additional_services.length > 0
                             ? pDetails.additional_services
                             : Array.isArray(sessionData?.additional_services) &&
                               sessionData.additional_services.length > 0
-                            ? sessionData.additional_services
-                            : [];
+                              ? sessionData.additional_services
+                              : [];
 
                         if (addServices.length > 0) {
                           return addServices.map((srv: any, idx: number) => (
@@ -2799,13 +2798,13 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
                           : sessionData?.payment_details;
                         const addServices =
                           pDetails?.additional_services &&
-                          Array.isArray(pDetails.additional_services) &&
-                          pDetails.additional_services.length > 0
+                            Array.isArray(pDetails.additional_services) &&
+                            pDetails.additional_services.length > 0
                             ? pDetails.additional_services
                             : Array.isArray(sessionData?.additional_services) &&
                               sessionData.additional_services.length > 0
-                            ? sessionData.additional_services
-                            : [];
+                              ? sessionData.additional_services
+                              : [];
 
                         if (addServices.length > 0) {
                           return addServices.map((srv: any, idx: number) => (
@@ -2836,7 +2835,7 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
 
                 const isAdditionalPaymentRequested = Boolean(
                   pDetails?.additional_payment_requested ??
-                    sessionData?.additional_payment_requested
+                  sessionData?.additional_payment_requested
                 );
 
                 const isDisabled =
@@ -2852,18 +2851,18 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
                       style={
                         isDisabled
                           ? {
-                              opacity: 0.6,
-                              cursor: "not-allowed",
-                              backgroundColor: "#8c7b83",
-                            }
+                            opacity: 0.6,
+                            cursor: "not-allowed",
+                            backgroundColor: "#8c7b83",
+                          }
                           : undefined
                       }
                     >
                       {isRequestingPayment
                         ? "Sending Request..."
                         : isAdditionalPaymentRequested
-                        ? "Payment Requested"
-                        : "Request Additional Payment"}
+                          ? "Payment Requested"
+                          : "Request Additional Payment"}
                     </button>
                   </div>
                 );

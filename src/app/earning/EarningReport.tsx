@@ -31,6 +31,48 @@ const EarningReport = () => {
     const [remunPage, setRemunPage] = useState(1);
     const ITEMS_PER_PAGE = 5;
 
+    // previous-month-invoices states
+    const [remunInvoices, setRemunInvoices] = useState<any[]>([]);
+    const [remunTotalPages, setRemunTotalPages] = useState<number>(1);
+    const [isRemunLoading, setIsRemunLoading] = useState<boolean>(true);
+    const [isRemunLoaded, setIsRemunLoaded] = useState<boolean>(false);
+    const [remunDateRange, setRemunDateRange] = useState({
+        startDate: null as Date | null,
+        endDate: null as Date | null,
+    });
+
+    // submit-monthly-bill state
+    const [isSubmittingBill, setIsSubmittingBill] = useState<boolean>(false);
+
+    // get-earning-cards API states
+    const [earningCards, setEarningCards] = useState<any>(null);
+    const [isLoadingCards, setIsLoadingCards] = useState<boolean>(true);
+
+    useEffect(() => {
+        const fetchEarningCards = async () => {
+            try {
+                setIsLoadingCards(true);
+                const response = await requestApi({
+                    endpoint: "get-earning-cards",
+                    method: "POST",
+                });
+                console.log("get-earning-cards response:", response);
+                if (response && (response.success || response.code === 200 || response.status)) {
+                    const data = response.data || response;
+                    setEarningCards(data);
+                } else if (response?.data) {
+                    setEarningCards(response.data);
+                }
+            } catch (error) {
+                console.error("Error fetching earning cards:", error);
+            } finally {
+                setIsLoadingCards(false);
+            }
+        };
+
+        fetchEarningCards();
+    }, []);
+
     // get-earning API states
     const [ledgerList, setLedgerList] = useState<any[]>([]);
     const [ledgerTotalPages, setLedgerTotalPages] = useState<number>(1);
@@ -152,9 +194,212 @@ const EarningReport = () => {
     const displayLedger = isLedgerLoaded ? ledgerList : paginatedLedger;
     const displayLedgerTotalPages = isLedgerLoaded ? ledgerTotalPages : ledgerMockTotalPages;
 
-    const remunTotalPages = Math.max(1, Math.ceil(earningData.previousRemuneration.length / ITEMS_PER_PAGE));
-    const validRemunPage = Math.min(remunPage, remunTotalPages);
-    const paginatedRemun = earningData.previousRemuneration.slice((validRemunPage - 1) * ITEMS_PER_PAGE, validRemunPage * ITEMS_PER_PAGE);
+    // Fetch previous month invoices from /previous-month-invoices API
+    const fetchPreviousMonthInvoices = async () => {
+        try {
+            setIsRemunLoading(true);
+            const payload = new FormData();
+            payload.append("page", String(remunPage));
+            payload.append("limit", String(ITEMS_PER_PAGE));
+            if (remunDateRange.startDate) {
+                payload.append("start_date", formatApiDate(remunDateRange.startDate));
+            }
+            if (remunDateRange.endDate) {
+                payload.append("end_date", formatApiDate(remunDateRange.endDate));
+            }
+
+            const response = await requestApi({
+                endpoint: "previous-month-invoices",
+                method: "POST",
+                data: payload,
+                isFormData: true,
+            });
+
+            console.log("previous-month-invoices response:", response);
+
+            if (response && (response.success || response.code === 200 || response.status)) {
+                const resData = response.data;
+                const items = Array.isArray(resData?.data)
+                    ? resData.data
+                    : Array.isArray(resData)
+                        ? resData
+                        : [];
+                setRemunInvoices(items);
+                setIsRemunLoaded(true);
+
+                const pages =
+                    resData?.last_page ||
+                    resData?.pagination?.last_page ||
+                    Math.max(1, Math.ceil((resData?.total || items.length) / ITEMS_PER_PAGE));
+                setRemunTotalPages(pages || 1);
+            }
+        } catch (error) {
+            console.error("Error fetching previous month invoices:", error);
+        } finally {
+            setIsRemunLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchPreviousMonthInvoices();
+    }, [remunPage, remunDateRange]);
+
+    // get-monthly-bill-summary API states
+    const [monthlyBillSummaryData, setMonthlyBillSummaryData] = useState<any>(null);
+    const [isLoadingMonthlyBill, setIsLoadingMonthlyBill] = useState<boolean>(true);
+
+    const fetchMonthlyBillSummary = async () => {
+        try {
+            setIsLoadingMonthlyBill(true);
+            const response = await requestApi({
+                endpoint: "get-monthly-bill-summary",
+                method: "POST",
+            });
+            console.log("get-monthly-bill-summary response:", response);
+            if (response && (response.success || response.code === 200 || response.status)) {
+                const data = response.data || response;
+                setMonthlyBillSummaryData(data);
+            }
+        } catch (error) {
+            console.error("Error fetching monthly bill summary:", error);
+        } finally {
+            setIsLoadingMonthlyBill(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchMonthlyBillSummary();
+    }, []);
+
+    // Summary calculation based on get-monthly-bill-summary API
+    const mbTotalSessions =
+        monthlyBillSummaryData?.total_sessions ??
+        earningData.metrics.monthlyBillSummary.totalSessions ??
+        0;
+
+    const mbSubtotal =
+        monthlyBillSummaryData?.total_session_amount ??
+        monthlyBillSummaryData?.subtotal ??
+        2240;
+
+    const mbPatientPaid =
+        monthlyBillSummaryData?.total_paid_amount ??
+        monthlyBillSummaryData?.patient_paid ??
+        320;
+
+    const mbBonus =
+        monthlyBillSummaryData?.bonus ??
+        200;
+
+    const mbTaxRate =
+        monthlyBillSummaryData?.tax_percentage ??
+        monthlyBillSummaryData?.tax_rate ??
+        0;
+
+    const mbTaxDeductions =
+        monthlyBillSummaryData?.tax_deduction ??
+        monthlyBillSummaryData?.tax_deductions ??
+        0;
+
+    const mbTotalAmount =
+        monthlyBillSummaryData?.total_amount ??
+        (Number(mbSubtotal || 0) + Number(mbBonus || 0) - Number(mbTaxDeductions || 0));
+
+    const handleSubmitMonthlyBill = async () => {
+        try {
+            setIsSubmittingBill(true);
+            const payload = new FormData();
+            payload.append("total_amount", String(mbTotalAmount));
+            payload.append("tax_rate", String(mbTaxRate));
+            payload.append("tax_deductions", String(mbTaxDeductions));
+            payload.append("patient_paid", String(mbPatientPaid));
+            payload.append("bonus", String(mbBonus));
+
+            // Extract session_ids from get-monthly-bill-summary and format as comma-separated string (e.g. "52,55,56")
+            const sessionIdsArray =
+                monthlyBillSummaryData?.session_ids ||
+                monthlyBillSummaryData?.therapy_session_ids ||
+                [];
+
+            const sessionIdsStr = Array.isArray(sessionIdsArray)
+                ? sessionIdsArray.join(",")
+                : String(sessionIdsArray || "");
+
+            payload.append("therapy_session_ids", sessionIdsStr);
+            payload.append("session_ids", sessionIdsStr);
+
+            const response = await requestApi({
+                endpoint: "submit-monthly-bill",
+                method: "POST",
+                data: payload,
+                isFormData: true,
+            });
+
+            console.log("submit-monthly-bill response:", response);
+
+            if (response && (response.success || response.code === 200 || response.status)) {
+                toast.success(response.message || "Invoice submitted successfully.");
+                fetchMonthlyBillSummary();
+                fetchPreviousMonthInvoices();
+            } else {
+                toast.error(response?.message || "Failed to submit invoice.");
+            }
+        } catch (error: any) {
+            console.error("Error submitting monthly bill:", error);
+            toast.error(
+                error?.response?.data?.message ||
+                error?.message ||
+                "Failed to submit current month invoice."
+            );
+        } finally {
+            setIsSubmittingBill(false);
+        }
+    };
+
+    // Export Previous Month Remuneration to Excel
+    const handleExportRemuneration = () => {
+        const rowsToExport = isRemunLoaded ? remunInvoices : earningData.previousRemuneration;
+        if (!rowsToExport || rowsToExport.length === 0) {
+            toast.error("No remuneration data to export.");
+            return;
+        }
+
+        const dataToExport = rowsToExport.map((item: any) => ({
+            "Invoice No.": item.invoice_no || item.invoiceNo || "",
+            "Date & Time": item.date_time || item.dateRange || "",
+            "Sessions": item.sessions ?? 0,
+            "Total Amount": item.total_amount ?? item.totalAmount ?? 0,
+            "Gross Earnings": item.gross_earnings ?? item.grossEarning ?? 0,
+            "Tax Deductions": item.tax_deductions ?? item.taxDeduction ?? 0,
+            "Net Earnings": item.net_earnings ?? item.netEarnings ?? 0,
+            "Bonus": item.bonus ?? 0,
+            "Date": item.paid_at || item.date_time || item.date || "",
+            "Status": item.status || "Pending",
+        }));
+
+        const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Previous Invoices");
+
+        const excelBuffer = XLSX.write(workbook, {
+            bookType: "xlsx",
+            type: "array",
+        });
+
+        const fileData = new Blob([excelBuffer], {
+            type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8",
+        });
+
+        saveAs(fileData, `Previous_Month_Invoices_${Date.now()}.xlsx`);
+        toast.success(`Exported ${dataToExport.length} record(s) successfully!`);
+    };
+
+    const displayRemun = isRemunLoaded
+        ? remunInvoices
+        : earningData.previousRemuneration.slice((remunPage - 1) * ITEMS_PER_PAGE, remunPage * ITEMS_PER_PAGE);
+    const displayRemunTotalPages = isRemunLoaded
+        ? remunTotalPages
+        : Math.max(1, Math.ceil(earningData.previousRemuneration.length / ITEMS_PER_PAGE));
 
     // const handleExportPDF = () => {
     //     const doc = new jsPDF();
@@ -265,33 +510,6 @@ const EarningReport = () => {
         );
     };
 
-    const [earningCards, setEarningCards] = useState<any>(null);
-    const [isLoadingCards, setIsLoadingCards] = useState<boolean>(true);
-
-    useEffect(() => {
-        const fetchEarningCards = async () => {
-            try {
-                setIsLoadingCards(true);
-                const response = await requestApi({
-                    endpoint: "get-earning-cards",
-                    method: "POST",
-                });
-                console.log("get-earning-cards response:", response);
-                if (response && (response.success || response.code === 200 || response.status)) {
-                    const data = response.data || response;
-                    setEarningCards(data);
-                } else if (response?.data) {
-                    setEarningCards(response.data);
-                }
-            } catch (error) {
-                console.error("Error fetching earning cards:", error);
-            } finally {
-                setIsLoadingCards(false);
-            }
-        };
-
-        fetchEarningCards();
-    }, []);
 
     const renderTrend = (percentage: any, fallback: string) => {
         if (percentage === undefined || percentage === null) return fallback;
@@ -669,41 +887,52 @@ const EarningReport = () => {
                                     <img src="/images/upload-excel.png" alt="" />
                                 </div>
                             </div>
-                            <button type="button" className="mbs-action-btn">Submit Current Month Invoice to Admin</button>
+                            <button
+                                type="button"
+                                className="mbs-action-btn"
+                                onClick={handleSubmitMonthlyBill}
+                                disabled={isSubmittingBill || Boolean(monthlyBillSummaryData?.is_invoice_submitted)}
+                            >
+                                {isSubmittingBill
+                                    ? "Submitting..."
+                                    : monthlyBillSummaryData?.is_invoice_submitted
+                                        ? "Invoice Submitted"
+                                        : "Submit Current Month Invoice to Admin"}
+                            </button>
                         </div>
 
                         <div className="mbs-details-body">
 
                             <div className="mbs-statement-line">
                                 <span className="mbs-label-col">Total Sessions</span>
-                                <span className="mbs-value-col">{earningData.metrics.monthlyBillSummary.totalSessions}</span>
+                                <span className="mbs-value-col">{isLoadingMonthlyBill ? "..." : mbTotalSessions}</span>
                             </div>
 
                             <div className="mbs-statement-line">
                                 <span className="mbs-label-col">Subtotal (Session Fees)</span>
-                                <span className="mbs-value-col">{earningData.metrics.monthlyBillSummary.subtotal}</span>
+                                <span className="mbs-value-col">{isLoadingMonthlyBill ? "..." : formatCurrency(mbSubtotal, "$0.00")}</span>
                             </div>
 
                             <div className="mbs-statement-line">
                                 <span className="mbs-label-col">Total Patient Paid</span>
-                                <span className="mbs-value-col">{earningData.metrics.monthlyBillSummary.totalPatientPaid}</span>
+                                <span className="mbs-value-col">{isLoadingMonthlyBill ? "..." : formatCurrency(mbPatientPaid, "$0.00")}</span>
                             </div>
 
                             <div className="mbs-statement-line">
                                 <span className="mbs-label-col">Bonus</span>
-                                <span className="mbs-value-col">{earningData.metrics.monthlyBillSummary.totalPatientPaid}</span>
+                                <span className="mbs-value-col">{isLoadingMonthlyBill ? "..." : formatCurrency(mbBonus, "$0.00")}</span>
                             </div>
 
                             <div className="mbs-statement-line">
                                 <span className="mbs-label-col">Tax Deduction</span>
-                                <span className="mbs-value-col">{earningData.metrics.monthlyBillSummary.totalPatientPaid}</span>
+                                <span className="mbs-value-col">{isLoadingMonthlyBill ? "..." : formatCurrency(mbTaxDeductions, "$0.00")}</span>
                             </div>
 
                         </div>
 
                         <div className="mbs-total-highlight-strip">
                             <span className="mbs-total-label">Total Amount</span>
-                            <span className="mbs-total-value">{earningData.metrics.monthlyBillSummary.totalAmount}</span>
+                            <span className="mbs-total-value">{isLoadingMonthlyBill ? "..." : formatCurrency(mbTotalAmount, "$0.00")}</span>
                         </div>
 
                     </div>
@@ -720,16 +949,28 @@ const EarningReport = () => {
 
                             <div style={{ display: "flex", gap: "15px" }}>
                                 <DateRangePicker
-                                // value={dateRange}
-                                // onChange={(range) => {
-                                //     setDateRange(range);
-                                // }}
+                                    value={remunDateRange}
+                                    onChange={(range) => {
+                                        setRemunDateRange(range);
+                                        setRemunPage(1);
+                                    }}
                                 >
                                     <button className="dbt4-filter-dropdown" type="button">
-                                        Date Range <span className="dbt4-cal-icon"><img src="/images/date-icon.svg" alt="" /></span>
+                                        {remunDateRange.startDate && remunDateRange.endDate
+                                            ? `${formatApiDate(remunDateRange.startDate)} - ${formatApiDate(remunDateRange.endDate)}`
+                                            : "Date Range"}{" "}
+                                        <span className="dbt4-cal-icon">
+                                            <img src="/images/date-icon.svg" alt="" />
+                                        </span>
                                     </button>
                                 </DateRangePicker>
-                                <button type="button" className='mbs-action-btn'>Export</button>
+                                <button
+                                    type="button"
+                                    className='mbs-action-btn'
+                                    onClick={handleExportRemuneration}
+                                >
+                                    Export
+                                </button>
                             </div>
                         </div>
 
@@ -752,34 +993,71 @@ const EarningReport = () => {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {paginatedRemun.map(remun => (
-                                        <tr className="dbt-table-row" key={remun.id}>
-                                            <td className="dbt4-pad-left dbt4-sno-text">{remun.invoiceNo}</td>
-                                            <td>{remun.dateRange}</td>
-                                            <td>{remun.sessions}</td>
-                                            <td>{remun.totalAmount}</td>
-                                            <td>{remun.grossEarning}</td>
-                                            <td>{remun.taxDeduction}</td>
-                                            <td>{remun.netEarnings}</td>
-                                            <td>{remun.bonus}</td>
-                                            <td>{remun.date}</td>
-                                            <td><span className={`status ${remun.status.toLowerCase().replace(' ', '-')}`}>{remun.status}</span></td>
-                                            <td>
-                                                <a href="/invoices/dummy-invoice.pdf"
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="earnig-view-btn">View</a>
+                                    {isRemunLoading && !isRemunLoaded ? (
+                                        <tr>
+                                            <td colSpan={11} style={{ textAlign: "center", padding: "30px", color: "#888" }}>
+                                                Loading previous month invoices...
                                             </td>
-                                            {/* <td><a href="#" className="earnig-view-btn">View</a></td> */}
                                         </tr>
-                                    ))}
+                                    ) : displayRemun.length === 0 ? (
+                                        <tr>
+                                            <td colSpan={11} style={{ textAlign: "center", padding: "30px", color: "#888" }}>
+                                                No previous month invoices found.
+                                            </td>
+                                        </tr>
+                                    ) : (
+                                        displayRemun.map((remun: any, idx: number) => {
+                                            const invoiceNo = remun.invoice_no || remun.invoiceNo || `INV-${idx + 1}`;
+                                            const dateTime = remun.date_time || remun.dateRange || remun.date || "-";
+                                            const sessions = remun.sessions ?? 0;
+                                            const totalAmount = formatCurrency(remun.total_amount ?? remun.totalAmount, "$0");
+                                            const grossEarnings = formatCurrency(remun.gross_earnings ?? remun.grossEarning, "$0");
+                                            const taxDeductions = remun.tax_deductions !== undefined && remun.tax_deductions !== null
+                                                ? formatCurrency(remun.tax_deductions, "$0")
+                                                : (remun.taxDeduction || "$0");
+                                            const netEarnings = formatCurrency(remun.net_earnings ?? remun.netEarnings, "$0");
+                                            const bonus = formatCurrency(remun.bonus, "$0");
+                                            const paidAtOrDate = remun.paid_at || remun.date_time || remun.date || "-";
+                                            const status = remun.status || "Pending";
+                                            const invoiceUrl = remun.invoice_url || remun.file_url || remun.invoice || "/invoices/dummy-invoice.pdf";
+
+                                            return (
+                                                <tr className="dbt-table-row" key={remun.id || idx}>
+                                                    <td className="dbt4-pad-left dbt4-sno-text">{invoiceNo}</td>
+                                                    <td>{dateTime}</td>
+                                                    <td>{sessions}</td>
+                                                    <td>{totalAmount}</td>
+                                                    <td>{grossEarnings}</td>
+                                                    <td>{taxDeductions}</td>
+                                                    <td>{netEarnings}</td>
+                                                    <td>{bonus}</td>
+                                                    <td>{paidAtOrDate}</td>
+                                                    <td>
+                                                        <span className={`status ${String(status).toLowerCase().replace(/\s+/g, '-')}`}>
+                                                            {status}
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <a
+                                                            href={invoiceUrl}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="earnig-view-btn"
+                                                        >
+                                                            View
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })
+                                    )}
                                 </tbody>
                             </table>
                         </div>
 
                         <Pagination
-                            currentPage={validRemunPage}
-                            totalPages={remunTotalPages}
+                            currentPage={remunPage}
+                            totalPages={displayRemunTotalPages}
                             onPageChange={(p) => setRemunPage(p)}
                         />
                     </div>

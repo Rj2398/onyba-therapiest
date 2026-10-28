@@ -223,7 +223,154 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
     searchParams.get("session_id") ||
     searchParams.get("id");
 
-  // console.log(rawSessionId, "Raw session id **_");
+  // Audio recording & Speech recognition for ongoing video call transcript
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const audioStreamRef = useRef<MediaStream | null>(null);
+  const recognitionRef = useRef<any>(null);
+  const transcriptTextRef = useRef<string>("");
+  const finalTranscriptRef = useRef<string>("");
+  const [transcriptText, setTranscriptText] = useState<string>("");
+  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+
+  const startAudioAndTranscriptCapture = useCallback(async () => {
+    try {
+      if (typeof window === "undefined" || !navigator.mediaDevices?.getUserMedia) return;
+
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      audioStreamRef.current = stream;
+
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+
+      const SpeechRecognition =
+        (window as any).SpeechRecognition ||
+        (window as any).webkitSpeechRecognition;
+
+      if (SpeechRecognition) {
+        try {
+          const recognition = new SpeechRecognition();
+          recognition.continuous = true;
+          recognition.interimResults = true;
+          recognition.lang =
+            typeof navigator !== "undefined" && navigator.language
+              ? navigator.language
+              : "en-US";
+
+          recognition.onresult = (event: any) => {
+            let interim = "";
+            for (let i = event.resultIndex; i < event.results.length; ++i) {
+              const piece = event.results[i][0].transcript;
+              if (event.results[i].isFinal) {
+                finalTranscriptRef.current +=
+                  (finalTranscriptRef.current ? " " : "") + piece.trim();
+              } else {
+                interim += (interim ? " " : "") + piece.trim();
+              }
+            }
+            const fullTranscript = [finalTranscriptRef.current, interim]
+              .filter(Boolean)
+              .join(" ")
+              .trim();
+
+            setTranscriptText(fullTranscript);
+            transcriptTextRef.current = fullTranscript;
+          };
+
+          recognition.onend = () => {
+            if (
+              mediaRecorderRef.current &&
+              mediaRecorderRef.current.state === "recording"
+            ) {
+              try {
+                recognition.start();
+              } catch (e) {}
+            }
+          };
+
+          recognition.start();
+          recognitionRef.current = recognition;
+        } catch (e) {
+          console.error("Speech recognition error:", e);
+        }
+      }
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data && event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = () => {
+        if (recognitionRef.current) {
+          try {
+            recognitionRef.current.stop();
+          } catch (e) {}
+        }
+        if (audioChunksRef.current.length > 0) {
+          const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+          setAudioBlob(blob);
+        }
+      };
+
+      mediaRecorder.start(1000);
+    } catch (err) {
+      console.warn("Could not start background audio recording/transcript:", err);
+    }
+  }, []);
+
+  useEffect(() => {
+    startAudioAndTranscriptCapture();
+
+    return () => {
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop();
+        } catch (e) {}
+      }
+      if (
+        mediaRecorderRef.current &&
+        mediaRecorderRef.current.state !== "inactive"
+      ) {
+        try {
+          mediaRecorderRef.current.stop();
+        } catch (e) {}
+      }
+      if (audioStreamRef.current) {
+        audioStreamRef.current.getTracks().forEach((track) => track.stop());
+      }
+    };
+  }, [startAudioAndTranscriptCapture]);
+
+  const getRecordingData = useCallback(async (): Promise<{ blob: Blob; transcript: string }> => {
+    return new Promise((resolve) => {
+      const currentTranscript =
+        transcriptTextRef.current ||
+        finalTranscriptRef.current ||
+        transcriptText ||
+        "Session audio recording transcript.";
+
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
+        mediaRecorderRef.current.onstop = () => {
+          const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+          setAudioBlob(blob);
+          resolve({ blob, transcript: currentTranscript });
+        };
+        try {
+          mediaRecorderRef.current.stop();
+        } catch (e) {
+          const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+          resolve({ blob, transcript: currentTranscript });
+        }
+      } else {
+        const blob =
+          audioBlob || new Blob(audioChunksRef.current, { type: "audio/webm" });
+        resolve({ blob, transcript: currentTranscript });
+      }
+    });
+  }, [audioBlob, transcriptText]);
+
 
   // Private Notes State & Rich Text Editor Handlers
   const [privateNotesText, setPrivateNotesText] = useState<string>("");
@@ -794,8 +941,6 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
     if (onEndCall) {
       onEndCall();
     }
-
-    router.push("/dashboard");
   };
 
   // Toggle Controls
@@ -1204,9 +1349,15 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
 
             <button
               className="ps-session-dock-btn ps-session-dock-btn-end"
-              // data-bs-toggle="modal"
-              // data-bs-target="#endSessionModal"
-              onClick={handleEndCall}
+              data-bs-toggle="modal"
+              data-bs-target="#endSessionModal"
+              onClick={() => {
+                if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
+                  try {
+                    mediaRecorderRef.current.stop();
+                  } catch (e) {}
+                }
+              }}
             >
               <div className="ps-session-dock-icon-circle">
                 <img src="/images/endCallicon.png" alt="endCallicon" />
@@ -1953,7 +2104,13 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
           })()}
         </div>
       </div>
-      <EndSession sessionId={rawSessionId || undefined} />
+      <EndSession
+        sessionId={rawSessionId || undefined}
+        audioBlob={audioBlob}
+        transcript={transcriptText || transcriptTextRef.current}
+        getRecordingData={getRecordingData}
+        onConfirmEnd={handleEndCall}
+      />
     </main>
   );
 };
