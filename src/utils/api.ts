@@ -8,9 +8,19 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     try {
-      // Always send JSON Content-Type
       config.headers = config.headers || {};
-      config.headers["Content-Type"] = "application/json";
+      const isFormData =
+        typeof FormData !== "undefined" && config.data instanceof FormData;
+
+      if (isFormData) {
+        if (config.headers.delete) {
+          config.headers.delete("Content-Type");
+        } else {
+          delete config.headers["Content-Type"];
+        }
+      } else if (!config.headers["Content-Type"]) {
+        config.headers["Content-Type"] = "application/json";
+      }
 
       if (typeof window !== "undefined") {
         const stored = window.localStorage.getItem("loginUser");
@@ -78,9 +88,11 @@ export const requestApi = async ({
   const config: any = {
     url: endpoint,
     method: upperMethod as Method,
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: isForm
+      ? {}
+      : {
+          "Content-Type": "application/json",
+        },
   };
 
   if (upperMethod === "GET" && data) {

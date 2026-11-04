@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { requestApi } from "@/src/utils/api";
 import { formatCount, formatCurrency } from "@/src/config";
+import toast from "react-hot-toast";
 
 interface DashboardCardsData {
   today_appointments?: number | string;
@@ -198,6 +199,8 @@ const getExpiresIn = (slot: ReservedSlotItem) => {
 
 const Dashboard = () => {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   const [cardData, setCardData] = useState<DashboardCardsData | null>(null);
   const [tablesData, setTablesData] = useState<DashboardTablesData | null>(
@@ -206,6 +209,40 @@ const Dashboard = () => {
   console.log(tablesData, "table data ***");
 
   const [isTablesLoading, setIsTablesLoading] = useState<boolean>(true);
+
+  // Unread notification count on location changes
+  useEffect(() => {
+    const fetchUnreadNotificationCount = async () => {
+      try {
+        const response = await requestApi({
+          endpoint: "unread-notification-count",
+          method: "POST",
+        });
+
+        if (response && response.success && response.data) {
+          const count = Number(response.data.unread_count) || 0;
+          if (count > 0) {
+            toast(`You have ${count} unread notification${count === 1 ? "" : "s"}`, {
+              icon: "🔔",
+              id: "unread-notification-count",
+            });
+          }
+
+          if (typeof window !== "undefined") {
+            window.dispatchEvent(
+              new CustomEvent("unreadNotificationCountUpdated", {
+                detail: count,
+              })
+            );
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching unread notification count:", error);
+      }
+    };
+
+    fetchUnreadNotificationCount();
+  }, [pathname, searchParams]);
 
   useEffect(() => {
     const fetchDashboardCards = async () => {
