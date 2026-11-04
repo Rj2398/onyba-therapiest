@@ -1,27 +1,3 @@
-// Notification Toggle
-document.addEventListener("DOMContentLoaded", function () {
-  const trigger = document.getElementById("notiTrigger");
-  const panel = document.getElementById("notiPanel");
-
-  if (trigger && panel) {
-    // Toggle Functionality
-    trigger.addEventListener("click", function (event) {
-      event.stopPropagation(); // Event bubbling ko rokne ke liye
-      panel.classList.toggle("show");
-    });
-
-    // Panel ke andar click hone par band na ho
-    panel.addEventListener("click", function (event) {
-      event.stopPropagation();
-    });
-
-    // Kisi bhi bahar ki jagah par click karne par panel auto-hide ho jaye
-    document.addEventListener("click", function () {
-      panel.classList.remove("show");
-    });
-  }
-});
-
 // Date Picker Available Slots Selection
 document.addEventListener("DOMContentLoaded", function () {
   const dateCells = document.querySelectorAll('.onyba-avail-date-cell:not(.onyba-avail-date-empty)');

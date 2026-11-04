@@ -1,44 +1,12 @@
 "use client"
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import React, { useState, useEffect, useRef, Suspense } from 'react'
+import React, { useState, useEffect, Suspense } from 'react'
 import EndSession from '../meetingmodal/EndSession';
 import CancelSessionPopup from '@/src/component/CancelSessionPopup';
 import { useAuth } from '@/src/app/UserProvider';
 import { Base_image_url } from '@/src/config';
-
-
-
-const notifications = [
-    {
-        id: 1,
-        title: "Sanitas paid invoice INV-2838",
-        category: "Billing",
-        time: "2h ago",
-        isRead: false,
-    },
-    {
-        id: 2,
-        title: "New appointment scheduled for Dr. Ana Ruiz",
-        category: "Appointments",
-        time: "3h ago",
-        isRead: false,
-    },
-    {
-        id: 3,
-        title: "Invoice INV-2839 is overdue (Lucia Hernández)",
-        category: "Overdue",
-        time: "5h ago",
-        isRead: false,
-    },
-    {
-        id: 4,
-        title: "New appointment scheduled for Dr. Ana Ruiz",
-        category: "Appointments",
-        time: "1d ago",
-        isRead: true,
-    },
-];
+import NotificationDropdown from './NotificationDropdown';
 
 const languages = [
     {
@@ -61,11 +29,8 @@ const HeaderContent = ({ isMiniSidebar }: { isMiniSidebar: boolean }) => {
     const searchParams = useSearchParams()
     const sessionId = searchParams.get("therapy_session_id") || searchParams.get("session_id") || searchParams.get("id");
     const { userDetails, therapistProfile } = useAuth()
-    const [isNotiOpen, setIsNotiOpen] = useState(false);
-    const [activeTab, setActiveTab] = useState<"All" | "Unread">("All");
     const [selectedLanguage, setSelectedLanguage] = useState(languages[0]);
     const [isLanguageOpen, setIsLanguageOpen] = useState(false);
-    const notiRef = useRef<HTMLDivElement>(null);
 
     const [joinedCallData, setJoinedCallData] = useState<any>(null);
     const [sessionDurationText, setSessionDurationText] = useState<string>("00:00:00");
@@ -135,24 +100,8 @@ const HeaderContent = ({ isMiniSidebar }: { isMiniSidebar: boolean }) => {
         patientNameFromQuery ||
         "John Carter";
 
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (notiRef.current && !notiRef.current.contains(event.target as Node)) {
-                setIsNotiOpen(false);
-            }
-        };
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, []);
-
     const hideHeader = pathname.includes("/back-to-calendar") ||
         pathname.includes("/video-confrenece");
-
-
-    const filteredNotifications =
-        activeTab === "All"
-            ? notifications
-            : notifications.filter((item) => !item.isRead);
 
     const getGreeting = () => {
         const hour = new Date().getHours();
@@ -278,53 +227,7 @@ const HeaderContent = ({ isMiniSidebar }: { isMiniSidebar: boolean }) => {
                     </div>
 
                     <div className="gl-header-right">
-
-                        <div className="gl-notification-wrapper" ref={notiRef}>
-                            <button type="button" className="gl-action-item gl-notification-trigger" id="notiTrigger" onClick={() => setIsNotiOpen(!isNotiOpen)}>
-                                <img src="/images/notification-icon.svg" alt="Notifications" className="gl-header-icon" />
-                            </button>
-
-                            <div className={`gl-notification-panel ${isNotiOpen ? 'show' : ''}`} id="notiPanel">
-                                <div className="gl-noti-header">
-                                    <h3>Notifications</h3>
-                                </div>
-
-                                <div className="gl-noti-filters">
-                                    <button className={activeTab == "All" ? "gl-filter-btn active" : "gl-filter-btn outline"} onClick={() => setActiveTab("All")}>All</button>
-                                    <button className={activeTab == "Unread" ? "gl-filter-btn active" : "gl-filter-btn outline"} onClick={() => setActiveTab("Unread")}>Unread ({notifications.filter((item) => !item.isRead).length})</button>
-                                </div>
-
-                                <div className="gl-noti-list">
-                                    {filteredNotifications.map((notification) => (
-                                        <div
-                                            key={notification.id}
-                                            className={`gl-noti-item ${!notification.isRead ? "unread" : ""
-                                                }`}
-                                        >
-                                            <div className="gl-noti-content">
-                                                <p className="gl-noti-title">
-                                                    {notification.title}
-
-                                                    {!notification.isRead && (
-                                                        <span className="gl-dot"></span>
-                                                    )}
-                                                </p>
-
-                                                <span className="gl-noti-meta">
-                                                    {notification.category} • {notification.time}
-                                                </span>
-                                            </div>
-
-                                            {!notification.isRead && (
-                                                <button className="gl-mark-read">
-                                                    Mark as read
-                                                </button>
-                                            )}
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
+                        <NotificationDropdown />
 
                         <div className="gl-language-wrapper">
                             <button type="button" className="gl-action-item" onClick={() => setIsLanguageOpen(!isLanguageOpen)}>

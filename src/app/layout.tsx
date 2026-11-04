@@ -25,7 +25,7 @@ export default function RootLayout({
         <script src="/js/jquery.js" defer />
         <script src="/js/bootstrap.min.js" defer />
         <script src="/js/layout.js" defer />
-        <script src="/js/main.js" defer />
+        <script src="/js/main.js?v=2" defer />
       </head>
       <body>
         <AppShell>{children}</AppShell>

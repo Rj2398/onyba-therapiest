@@ -1,13 +1,12 @@
-
-import React from 'react'
-import Dashboard from './Dashboard'
+import React, { Suspense } from 'react';
+import Dashboard from './Dashboard';
 
 const page = () => {
   return (
-     
-       <Dashboard/>
-  
-  )
-}
+    <Suspense fallback={null}>
+      <Dashboard />
+    </Suspense>
+  );
+};
 
-export default page
+export default page;
