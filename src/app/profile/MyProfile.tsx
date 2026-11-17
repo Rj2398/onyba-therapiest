@@ -132,7 +132,9 @@ const MyProfile = () => {
     "email"
   );
   const [otpVerifyVal, setOtpVerifyVal] = useState("");
-  const [otpVerifyCode, setOtpVerifyCode] = useState<string | number | null>(null);
+  const [otpVerifyCode, setOtpVerifyCode] = useState<string | number | null>(
+    null
+  );
 
   const [formData, setFormData] = useState<any>({
     userImage: null,
@@ -1108,10 +1110,11 @@ const MyProfile = () => {
                             zIndex: 5,
                             fontSize: "11px",
                             padding: "4px 8px",
-                            background: "#4F46E5",
-                            border: "none",
+                            background:
+                              "var(--tp-olive-green, linear-gradient(180deg, #93996d 0%, #52553e 100%))",
+                            border: "1px solid var(--tp-olive-green, #52553e)",
                             borderRadius: "4px",
-                            color: "#fff",
+                            color: "#ffffff",
                             fontWeight: "600",
                             cursor: "pointer",
                           }}
@@ -1541,84 +1544,23 @@ const MyProfile = () => {
                     </div>
                   )}
                 </div>
-                <div className="col-md-4">
-                  <label className="tp-label">Clinic Address*</label>
-                  <div
-                    className="tp-input-icon-wrapper position-relative"
-                    id="clinic-address-wrapper"
-                  >
-                    <svg
-                      width="18"
-                      height="18"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      className="icon-left"
-                    >
-                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                      <circle cx="12" cy="10" r="3"></circle>
-                    </svg>
-                    <Autocomplete
-                      key={isLoading ? "loading-clinic" : "clinic"}
-                      apiKey="AIzaSyDcDl4RoLc2oLDDpkJqdhWOWHP0B4qBEqk"
-                      onPlaceSelected={(place) => {
-                        const address =
-                          place.formatted_address || place.name || "";
-                        const lat = place.geometry?.location?.lat();
-                        const lng = place.geometry?.location?.lng();
-                        setFormData((prev: any) => ({
-                          ...prev,
-                          clinicAddress: address,
-                          clinic_latitude: lat
-                            ? String(lat)
-                            : prev.clinic_latitude,
-                          clinic_longitude: lng
-                            ? String(lng)
-                            : prev.clinic_longitude,
-                        }));
-                        if (errors.clinicAddress)
-                          setErrors((prev: any) => ({
-                            ...prev,
-                            clinicAddress: null,
-                          }));
-                      }}
-                      className="tp-input"
-                      placeholder="Enter clinic address"
-                      name="clinicAddress"
-                      value={formData.clinicAddress || ""}
-                      onChange={(e: any) => {
-                        setFormData((prev: any) => ({
-                          ...prev,
-                          clinicAddress: e.target.value,
-                        }));
-                        if (errors.clinicAddress)
-                          setErrors((prev: any) => ({
-                            ...prev,
-                            clinicAddress: null,
-                          }));
-                      }}
-                      style={{ paddingLeft: "40px" }}
-                    />
-                  </div>
-                  {errors.clinicAddress && (
-                    <div
-                      style={{
-                        color: "red",
-                        fontSize: "12px",
-                        marginTop: "5px",
-                      }}
-                    >
-                      {errors.clinicAddress}
-                    </div>
-                  )}
-                </div>
               </div>
             </section>
 
             <section className="tp-section mb-5">
               <h2 className="tp-section-title">
-                <span className="icon">💼</span> Certificate
+                <span className="icon">
+                  <img
+                    src="/images/customImage/Vector.png"
+                    alt="icon"
+                    style={{
+                      width: "20px",
+                      height: "20px",
+                      objectFit: "contain",
+                    }}
+                  />
+                </span>{" "}
+                Certificate
               </h2>
               <label className="tp-label mb-2">
                 Upload your professional certifications*
@@ -1629,6 +1571,16 @@ const MyProfile = () => {
                   type="button"
                   className="tp-btn-file-select"
                   onClick={() => setShowCertModal(true)}
+                  style={{
+                    background:
+                      "var(--tp-olive-green, linear-gradient(180deg, #93996d 0%, #52553e 100%))",
+                    border: "1px solid var(--tp-olive-green, #52553e)",
+                    borderRadius: "8px",
+                    color: "#ffffff",
+                    fontWeight: "600",
+                    padding: "8px 16px",
+                    cursor: "pointer",
+                  }}
                 >
                   Choose File
                 </button>
@@ -1682,7 +1634,18 @@ const MyProfile = () => {
 
             <section className="tp-section mb-5">
               <h2 className="tp-section-title">
-                <span className="icon">📄</span> Category Selection
+                <span className="icon">
+                  <img
+                    src="/images/customImage/categorySelection.png"
+                    alt="icon"
+                    style={{
+                      width: "20px",
+                      height: "20px",
+                      objectFit: "contain",
+                    }}
+                  />
+                </span>{" "}
+                Category Selection
               </h2>
 
               <div className="tp-panel p-4 mb-4">
@@ -1737,6 +1700,7 @@ const MyProfile = () => {
                     In-Person
                   </button>
                 </div>
+
                 {errors.sessionMode && (
                   <div
                     style={{
@@ -1749,6 +1713,96 @@ const MyProfile = () => {
                     {errors.sessionMode}
                   </div>
                 )}
+
+                <div className="row">
+                  <div className="col-md-4">
+                    <label className="tp-label">Clinic Address*</label>
+                    <div
+                      className="tp-input-icon-wrapper position-relative"
+                      id="clinic-address-wrapper"
+                    >
+                      <svg
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        className="icon-left"
+                      >
+                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                        <circle cx="12" cy="10" r="3"></circle>
+                      </svg>
+                      <Autocomplete
+                        key={isLoading ? "loading-clinic" : "clinic"}
+                        apiKey="AIzaSyDcDl4RoLc2oLDDpkJqdhWOWHP0B4qBEqk"
+                        onPlaceSelected={(place) => {
+                          const address =
+                            place.formatted_address || place.name || "";
+                          const lat = place.geometry?.location?.lat();
+                          const lng = place.geometry?.location?.lng();
+                          setFormData((prev: any) => ({
+                            ...prev,
+                            clinicAddress: address,
+                            clinic_latitude: lat
+                              ? String(lat)
+                              : prev.clinic_latitude,
+                            clinic_longitude: lng
+                              ? String(lng)
+                              : prev.clinic_longitude,
+                          }));
+                          if (errors.clinicAddress)
+                            setErrors((prev: any) => ({
+                              ...prev,
+                              clinicAddress: null,
+                            }));
+                        }}
+                        className="tp-input"
+                        style={{
+                          paddingLeft: "40px",
+                          backgroundColor: "#ffffff",
+                          boxShadow: "0 2px 10px rgba(0, 0, 0, 0.06)",
+                        }}
+                        onFocus={(e: any) => {
+                          e.target.style.backgroundColor = "#ffffff";
+                          e.target.style.boxShadow =
+                            "0 4px 14px rgba(0, 0, 0, 0.08)";
+                          e.target.style.outline = "none";
+                        }}
+                        onBlur={(e: any) => {
+                          e.target.style.backgroundColor = "#ffffff";
+                          e.target.style.boxShadow =
+                            "0 2px 10px rgba(0, 0, 0, 0.06)";
+                        }}
+                        placeholder="Enter clinic address"
+                        name="clinicAddress"
+                        value={formData.clinicAddress || ""}
+                        onChange={(e: any) => {
+                          setFormData((prev: any) => ({
+                            ...prev,
+                            clinicAddress: e.target.value,
+                          }));
+                          if (errors.clinicAddress)
+                            setErrors((prev: any) => ({
+                              ...prev,
+                              clinicAddress: null,
+                            }));
+                        }}
+                      />
+                    </div>
+                    {errors.clinicAddress && (
+                      <div
+                        style={{
+                          color: "red",
+                          fontSize: "12px",
+                          marginTop: "5px",
+                        }}
+                      >
+                        {errors.clinicAddress}
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
 
               <div className="mb-3">
@@ -1792,7 +1846,18 @@ const MyProfile = () => {
 
             <section className="tp-section mb-5">
               <h2 className="tp-section-title">
-                <span className="icon">💼</span> Professional Details
+                <span className="icon">
+                  <img
+                    src="/images/customImage/professionalDetails.png"
+                    alt="icon"
+                    style={{
+                      width: "20px",
+                      height: "20px",
+                      objectFit: "contain",
+                    }}
+                  />
+                </span>{" "}
+                Professional Details
               </h2>
 
               <div className="mb-4 position-relative">
@@ -2293,7 +2358,15 @@ const MyProfile = () => {
                   style={{ display: "flex", alignItems: "center", gap: "10px" }}
                 >
                   <span className="icon" style={{ fontSize: "20px" }}>
-                    💼
+                    <img
+                      src="/images/customImage/Vector.png"
+                      alt="icon"
+                      style={{
+                        width: "20px",
+                        height: "20px",
+                        objectFit: "contain",
+                      }}
+                    />
                   </span>
                   <h3
                     style={{
@@ -2368,21 +2441,60 @@ const MyProfile = () => {
                   >
                     Upload File / Image*
                   </label>
-                  <input
-                    type="file"
-                    required
-                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                    onChange={(e) =>
-                      setModalCertFile(e.target.files?.[0] || null)
-                    }
+
+                  <label
                     style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
                       width: "100%",
-                      padding: "8px",
+                      padding: "8px 12px",
                       borderRadius: "8px",
-                      border: "1px solid #ddd",
+                      border: "1px dashed #93996d",
+                      backgroundColor: "#f9faf6",
+                      cursor: "pointer",
                       fontSize: "14px",
                     }}
-                  />
+                  >
+                    <span
+                      style={{
+                        color: modalCertFile ? "#1a1a1a" : "#777",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                        maxWidth: "70%",
+                      }}
+                    >
+                      {modalCertFile
+                        ? modalCertFile.name
+                        : "Select PDF, DOC, or Image..."}
+                    </span>
+
+                    <span
+                      style={{
+                        background:
+                          "var(--tp-olive-green, linear-gradient(180deg, #93996d 0%, #52553e 100%))",
+                        border: "1px solid var(--tp-olive-green, #52553e)",
+                        borderRadius: "6px",
+                        color: "#ffffff",
+                        fontWeight: "600",
+                        fontSize: "12px",
+                        padding: "6px 12px",
+                      }}
+                    >
+                      Browse
+                    </span>
+
+                    <input
+                      type="file"
+                      required
+                      accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                      onChange={(e) =>
+                        setModalCertFile(e.target.files?.[0] || null)
+                      }
+                      style={{ display: "none" }}
+                    />
+                  </label>
                 </div>
 
                 <div
@@ -2418,6 +2530,12 @@ const MyProfile = () => {
                     style={{
                       padding: "9px 22px",
                       borderRadius: "8px",
+                      background:
+                        "var(--tp-olive-green, linear-gradient(180deg, #93996d 0%, #52553e 100%))",
+                      border: "1px solid var(--tp-olive-green, #52553e)",
+                      color: "#ffffff",
+                      fontWeight: "600",
+                      cursor: "pointer",
                     }}
                   >
                     Submit

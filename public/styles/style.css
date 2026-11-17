@@ -111,8 +111,18 @@ body {
   align-items: center;
   color: #363636;
   gap: 10px;
-  border-bottom: 1px solid var(--tp-border-color);
-  padding-bottom: 12px;
+  /* border-bottom: 1px solid var(--tp-border-color); */
+  /* padding-bottom: 12px; */
+}
+input[type="file"]::file-selector-button {
+  background: var(--tp-olive-green, linear-gradient(180deg, #93996d 0%, #52553e 100%));
+  border: 1px solid var(--tp-olive-green, #52553e);
+  border-radius: 6px;
+  color: #ffffff;
+  font-weight: 600;
+  padding: 6px 14px;
+  margin-right: 12px;
+  cursor: pointer;
 }
 
 .therapist-profile-container .tp-label {
@@ -124,13 +134,42 @@ body {
 }
 
 /* Input Fields and Interactive Elements */
+/* .therapist-profile-container .tp-input,
+.therapist-profile-container .tp-select-trigger,
+.therapist-profile-container .tp-multi-select-trigger { */
+
+/* width: 100%;
+  height: 48px;
+  background-color: var(--tp-input-bg); */
+/* border: 1px solid var(--tp-border-color);
+   */
+
+/* border: none;
+  border-radius: var(--tp-radius-lg);
+  padding: 0 20px;
+  font-size: 0.9rem;
+  color: var(--tp-text-dark);
+  outline: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: all 0.2s ease-in-out;
+  font-weight: 500; */
+/* } */
+
 .therapist-profile-container .tp-input,
 .therapist-profile-container .tp-select-trigger,
-.therapist-profile-container .tp-multi-select-trigger {
+.therapist-profile-container .tp-multi-select-trigger,
+.therapist-profile-container .tp-input:focus,
+.therapist-profile-container .tp-select-trigger:focus,
+.therapist-profile-container .tp-multi-select-trigger:focus,
+.therapist-profile-container .tp-input:active,
+.therapist-profile-container .tp-select-trigger:active,
+.therapist-profile-container .tp-multi-select-trigger:active {
   width: 100%;
   height: 48px;
   background-color: var(--tp-input-bg);
-  border: 1px solid var(--tp-border-color);
+  border: none;
   border-radius: var(--tp-radius-lg);
   padding: 0 20px;
   font-size: 0.9rem;
@@ -141,19 +180,13 @@ body {
   justify-content: space-between;
   transition: all 0.2s ease-in-out;
   font-weight: 500;
-}
-
-
-
-.therapist-profile-container .tp-input:focus {
-  border-color: var(--tp-primary-plum);
-  background-color: #ffffff;
+  box-shadow: 0 1px 5px rgba(0, 4, 0, 0.08);
 }
 
 .therapist-profile-container .tp-textarea {
   width: 100%;
   background-color: var(--tp-input-bg);
-  border: 1px solid var(--tp-border-color);
+  border: none;
   border-radius: var(--tp-radius-md);
   padding: 15px 20px;
   font-size: 0.9rem;
@@ -161,14 +194,13 @@ body {
   resize: none;
   font-weight: 500;
   transition: all 0.2s ease-in-out;
+  box-shadow: 0 1px 5px rgba(0, 4, 0, 0.08);
 }
 
-
-
-.therapist-profile-container .tp-textarea:focus {
+/* .therapist-profile-container .tp-textarea:focus {
   border-color: var(--tp-primary-plum);
   background-color: #ffffff;
-}
+} */
 
 /* input:-webkit-autofill,
 input:-webkit-autofill:hover,
@@ -397,7 +429,10 @@ input[type="email"] {
 
 .therapist-profile-container .tp-toggle-pill.active,
 .tp-toggle-pill.active {
-  background: var(--tp-olive-green, linear-gradient(180deg, #93996d 0%, #52553e 100%));
+  background: var(
+    --tp-olive-green,
+    linear-gradient(180deg, #93996d 0%, #52553e 100%)
+  );
   border-color: var(--tp-olive-green, #52553e);
   color: #ffffff;
 }
@@ -531,12 +566,15 @@ input[type="email"] {
   transition: all 0.15s;
 }
 
-.therapist-profile-container .tp-checkbox-item input:checked~.checkmark {
+.therapist-profile-container .tp-checkbox-item input:checked ~ .checkmark {
   background-color: var(--tp-primary-plum);
   border-color: var(--tp-primary-plum);
 }
 
-.therapist-profile-container .tp-checkbox-item input:checked~.checkmark:after {
+.therapist-profile-container
+  .tp-checkbox-item
+  input:checked
+  ~ .checkmark:after {
   content: "";
   position: absolute;
   left: 4px;
@@ -600,7 +638,7 @@ input[type="email"] {
 }
 
 /* Rotate indicator arrow when dropdown is open */
-.therapist-profile-container .show~.arrow,
+.therapist-profile-container .show ~ .arrow,
 .therapist-profile-container .tp-custom-select-wrapper:has(.show) .arrow {
   transform: rotate(180deg);
 }
@@ -614,9 +652,11 @@ input[type="email"] {
 .onyba-login-section {
   width: 100%;
   height: 100vh;
-  background: radial-gradient(201.07% 201.07% at 50% 50%,
-      #ffffff 0%,
-      #93996d 100%);
+  background: radial-gradient(
+    201.07% 201.07% at 50% 50%,
+    #ffffff 0%,
+    #93996d 100%
+  );
   display: flex;
   align-items: center;
   justify-content: center;
@@ -803,9 +843,7 @@ input[type="email"] {
   margin-bottom: 0;
   margin-left: 0;
   margin-right: 0;
-  transition:
-    border-color 0.3s,
-    background-color 0.3s;
+  transition: border-color 0.3s, background-color 0.3s;
 }
 
 .onyba-input-control::placeholder {
@@ -852,9 +890,11 @@ input[type="email"] {
   width: 536px;
   height: 600px;
   background-color: rgba(255, 255, 255, 0.25);
-  background: radial-gradient(57.18% 57.18% at 50% 50%,
-      #93996d 0%,
-      #ffffff 100%);
+  background: radial-gradient(
+    57.18% 57.18% at 50% 50%,
+    #93996d 0%,
+    #ffffff 100%
+  );
   border-radius: 50%;
   z-index: 1;
 }
@@ -935,9 +975,7 @@ input[type="email"] {
   outline: none;
   box-sizing: border-box;
   margin: 0;
-  transition:
-    border-color 0.3s,
-    background-color 0.3s;
+  transition: border-color 0.3s, background-color 0.3s;
 }
 
 /* Chrome, Safari, Edge, Opera se input arrows (spinners) hatane ke liye */
@@ -2099,10 +2137,12 @@ span.dbt-subtext.session {
   bottom: 0;
   pointer-events: none;
   /* Har 136px (1 hour) par perfect solid horizontal border setup */
-  background-image: linear-gradient(to bottom,
-      transparent 135px,
-      #e2e8f0 135px,
-      #e2e8f0 136px);
+  background-image: linear-gradient(
+    to bottom,
+    transparent 135px,
+    #e2e8f0 135px,
+    #e2e8f0 136px
+  );
   background-size: 100% 136px;
 }
 
@@ -2122,7 +2162,7 @@ span.dbt-subtext.session {
   position: absolute;
   padding: 6px 8px;
   font-size: 12px;
-  background-color: #FAE2C8;
+  background-color: #fae2c8;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
   display: flex;
   flex-direction: column;
@@ -2188,7 +2228,7 @@ span.dbt-subtext.session {
   font-weight: 700;
   white-space: nowrap;
   line-height: 1.2;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
 }
 
 /* Card Themes matching the screenshot colors */
@@ -3351,9 +3391,7 @@ select.acp-form-input-field {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  box-shadow:
-    0 4px 20px rgba(0, 0, 0, 0.02),
-    0 1px 3px rgba(0, 0, 0, 0.01);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02), 0 1px 3px rgba(0, 0, 0, 0.01);
   border: 1px solid #f3f3f1;
 }
 
@@ -4310,7 +4348,7 @@ a.session-mode span {
   background-color: #fdfafb;
 } */
 
-.custom-payment-checkbox-input:checked~.custom-payment-checkbox-box {
+.custom-payment-checkbox-input:checked ~ .custom-payment-checkbox-box {
   background-color: #74505c;
 }
 
@@ -4327,7 +4365,7 @@ a.session-mode span {
   transform: rotate(45deg);
 }
 
-.custom-payment-checkbox-input:checked~.custom-payment-checkbox-box::after {
+.custom-payment-checkbox-input:checked ~ .custom-payment-checkbox-box::after {
   display: block;
 }
 
@@ -4850,7 +4888,7 @@ a.session-mode span {
   box-sizing: border-box;
 }
 
-.ps-dashboard-v3-checkbox-container input:checked~.ps-dashboard-v3-checkmark {
+.ps-dashboard-v3-checkbox-container input:checked ~ .ps-dashboard-v3-checkmark {
   background-color: #74505c;
 }
 
@@ -4867,7 +4905,9 @@ a.session-mode span {
   transform: rotate(45deg);
 }
 
-.ps-dashboard-v3-checkbox-container input:checked~.ps-dashboard-v3-checkmark::after {
+.ps-dashboard-v3-checkbox-container
+  input:checked
+  ~ .ps-dashboard-v3-checkmark::after {
   display: block;
 }
 
@@ -5042,7 +5082,7 @@ a.session-mode span {
   flex-direction: column;
 }
 
-.ony-dashboard-col-left>div:not(:first-child) {
+.ony-dashboard-col-left > div:not(:first-child) {
   margin-top: 32px;
 }
 
@@ -5632,7 +5672,7 @@ a.session-mode span {
   box-sizing: border-box;
 }
 
-.ps-part4-checkbox-wrapper input:checked~.ps-part4-checkmark {
+.ps-part4-checkbox-wrapper input:checked ~ .ps-part4-checkmark {
   background-color: #74505c;
 }
 
@@ -5649,7 +5689,7 @@ a.session-mode span {
   transform: rotate(45deg);
 }
 
-.ps-part4-checkbox-wrapper input:checked~.ps-part4-checkmark::after {
+.ps-part4-checkbox-wrapper input:checked ~ .ps-part4-checkmark::after {
   display: block;
 }
 
@@ -6263,12 +6303,7 @@ div#accordionExample .accordion-item {
 
 /* Base Button Styling */
 .action-btn-base {
-  font-family:
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    Roboto,
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
     sans-serif;
   font-size: 14px;
   font-weight: 500;
@@ -6321,9 +6356,8 @@ div#accordionExample .accordion-item {
 .ps-session-info-block {
   display: inline-flex;
   flex-direction: column;
-  font-family:
-    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
-    sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif;
   padding-left: 16px;
   border-left: 1px solid #e5e7eb;
   /* Soft vertical divider line on the left */
@@ -6371,8 +6405,8 @@ div#accordionExample .accordion-item {
 }
 
 .ps-dash-layout-wrapper {
-  font-family:
-    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial,
+    sans-serif;
   background-color: #f8f7f8;
   padding: 24px;
   display: flex;
@@ -7352,10 +7386,10 @@ div#accordionExample .accordion-item {
 /* Custom Buttons */
 .onyba-prof-btn-action {
   background: transparent;
-  border: 1px solid #4C2834;
+  border: 1px solid #4c2834;
   padding: 8px 16px;
   border-radius: 20px;
-  background: linear-gradient(180deg, #74505C 0%, #4C2834 100%);
+  background: linear-gradient(180deg, #74505c 0%, #4c2834 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -7413,7 +7447,7 @@ div#accordionExample .accordion-item {
 
 .onyba-prof-user-subtitle {
   font-size: 12px;
-  color: #1A1A1AB2;
+  color: #1a1a1ab2;
   margin-bottom: 8px;
 }
 
@@ -7430,12 +7464,12 @@ div#accordionExample .accordion-item {
 }
 
 .onyba-prof-badge--exp {
-  background-color: #74505C33;
-  color: #4C2834;
+  background-color: #74505c33;
+  color: #4c2834;
 }
 
 .onyba-prof-badge--status {
-  background-color: #E8FDF2;
+  background-color: #e8fdf2;
   color: #059691;
 }
 
@@ -7485,11 +7519,11 @@ div#accordionExample .accordion-item {
 .onyba-prof-field-box select {
   width: 100%;
   padding: 14px 16px;
-  background-color: #F4F5F07D;
+  background-color: #f4f5f07d;
   border: 1px solid transparent;
   border-radius: 16px;
   font-size: 14px;
-  color: #1A1A1AB2;
+  color: #1a1a1ab2;
   outline: none;
 }
 
@@ -7515,7 +7549,7 @@ div#accordionExample .accordion-item {
   top: 50%;
   transform: translateY(-50%);
 
-  background-image: url('../images/dropdown-icon-select.svg');
+  background-image: url("../images/dropdown-icon-select.svg");
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;
@@ -7561,11 +7595,11 @@ div#accordionExample .accordion-item {
 .onyba-prof-cert-card p {
   font-size: 12px;
   font-weight: 500;
-  color: #5F5F5F;
+  color: #5f5f5f;
 }
 
 .onyba-prof-status-tag {
-  background-color: #74505C33;
+  background-color: #74505c33;
   color: #363636;
   padding: 4px 12px;
   border-radius: 8px;
@@ -7602,7 +7636,7 @@ div#accordionExample .accordion-item {
 }
 
 .onyba-prof-btn-mode--active {
-  background: linear-gradient(180deg, #93996D 0%, #52553E 100%);
+  background: linear-gradient(180deg, #93996d 0%, #52553e 100%);
   color: #fff;
 }
 
@@ -7624,7 +7658,7 @@ div#accordionExample .accordion-item {
 .onyba-prof-address-card {
   display: flex;
   gap: 12px;
-  background-color: #FAFAF8;
+  background-color: #fafaf8;
   padding: 16px;
   border-radius: 16px;
   align-items: flex-start;
@@ -7632,7 +7666,7 @@ div#accordionExample .accordion-item {
 
 .onyba-prof-address-card p {
   font-size: 16px;
-  color: #5F5F5F;
+  color: #5f5f5f;
   font-weight: 500;
   line-height: 1.4;
 }
@@ -7757,7 +7791,6 @@ div#accordionExample .accordion-item {
   display: none;
 }
 
-
 /* Base Top Container Block */
 .onyba-avail-page-wrapper {
   width: 100%;
@@ -7793,7 +7826,7 @@ div#accordionExample .accordion-item {
 .onyba-avail-icon-circle {
   width: 44px;
   height: 44px;
-  background: linear-gradient(180deg, #93996D 0%, #52553E 100%);
+  background: linear-gradient(180deg, #93996d 0%, #52553e 100%);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -7903,7 +7936,7 @@ div#accordionExample .accordion-item {
 
 /* Calendar Date Active State match to design circular token */
 .onyba-avail-date--selected {
-  background: linear-gradient(180deg, #93996D 0%, #52553E 100%);
+  background: linear-gradient(180deg, #93996d 0%, #52553e 100%);
   color: #ffffff !important;
   font-weight: 600;
 }
@@ -8026,7 +8059,7 @@ div#accordionExample .accordion-item {
 .onyba-avail-btn-add-more {
   width: 36px;
   height: 36px;
-  background: linear-gradient(180deg, #74505C 0%, #4C2834 100%);
+  background: linear-gradient(180deg, #74505c 0%, #4c2834 100%);
   color: white;
   border: none;
   border-radius: 50%;
@@ -8064,7 +8097,7 @@ div#accordionExample .accordion-item {
 
 .onyba-avail-btn-maroon {
   flex: 1;
-  background: linear-gradient(180deg, #74505C 0%, #4C2834 100%);
+  background: linear-gradient(180deg, #74505c 0%, #4c2834 100%);
   color: white;
   border: none;
   padding: 14px;
@@ -8077,7 +8110,7 @@ div#accordionExample .accordion-item {
 /* Giant block bottom CTA button */
 .onyba-avail-btn-block-submit {
   width: 100%;
-  background: linear-gradient(180deg, #74505C 0%, #4C2834 100%);
+  background: linear-gradient(180deg, #74505c 0%, #4c2834 100%);
   color: white;
   border: none;
   padding: 16px;
@@ -8094,7 +8127,6 @@ div#accordionExample .accordion-item {
     gap: 40px;
   }
 }
-
 
 /* popup */
 /* Bootstrap dialog default structure overwrites */
@@ -8138,7 +8170,7 @@ div#accordionExample .accordion-item {
 .onyba-spec-pop-icon-badge {
   width: 42px;
   height: 42px;
-  background: linear-gradient(180deg, #93996D 0%, #52553E 100%);
+  background: linear-gradient(180deg, #93996d 0%, #52553e 100%);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -8174,7 +8206,7 @@ div#accordionExample .accordion-item {
 
 /* Main Core White Embedded Checklist Tray Card Container */
 .onyba-spec-pop-main-card {
-  background-color: #F5F5F1;
+  background-color: #f5f5f1;
   border-radius: 24px;
   border: 1px solid #eadecc;
   display: flex;
@@ -8224,9 +8256,8 @@ div#accordionExample .accordion-item {
   background: #fff;
   padding: 15px;
   border-radius: 20px;
-  border: 1px solid #E9E9E9;
+  border: 1px solid #e9e9e9;
 }
-
 
 .onyba-spec-pop-search-wrap {
   position: relative;
@@ -8253,7 +8284,6 @@ div#accordionExample .accordion-item {
   font-size: 14px;
 }
 
-
 .onyba-spec-pop-scroll-stack {
   display: flex;
   flex-direction: column;
@@ -8262,7 +8292,6 @@ div#accordionExample .accordion-item {
   padding-right: 6px;
   margin-bottom: 20px;
 }
-
 
 .onyba-spec-pop-scroll-stack::-webkit-scrollbar {
   width: 4px;
@@ -8276,7 +8305,6 @@ div#accordionExample .accordion-item {
   background-color: #656d58;
   border-radius: 10px;
 }
-
 
 .onyba-spec-pop-checkbox-row {
   display: flex;
@@ -8297,7 +8325,6 @@ div#accordionExample .accordion-item {
   width: 0;
 }
 
-
 .onyba-spec-pop-checkmark {
   height: 20px;
   width: 20px;
@@ -8307,8 +8334,7 @@ div#accordionExample .accordion-item {
   transition: all 0.2s;
 }
 
-
-.onyba-spec-pop-checkbox-row input:checked~.onyba-spec-pop-checkmark {
+.onyba-spec-pop-checkbox-row input:checked ~ .onyba-spec-pop-checkmark {
   background-color: #512b32;
   border-color: #512b32;
 }
@@ -8326,10 +8352,9 @@ div#accordionExample .accordion-item {
   transform: rotate(45deg);
 }
 
-.onyba-spec-pop-checkbox-row input:checked~.onyba-spec-pop-checkmark::after {
+.onyba-spec-pop-checkbox-row input:checked ~ .onyba-spec-pop-checkmark::after {
   display: block;
 }
-
 
 .onyba-spec-pop-actions-box {
   display: flex;
@@ -8363,7 +8388,6 @@ div#accordionExample .accordion-item {
   font-weight: 600;
   cursor: pointer;
 }
-
 
 .onyba-spec-pop-custom-add-box {
   background-color: #ffffff;
@@ -8411,12 +8435,10 @@ div#accordionExample .accordion-item {
 
 /* logout popup */
 
-
 .onyba-logout-dialog {
   max-width: 400px;
   width: 100%;
 }
-
 
 .onyba-logout-content {
   background-color: #ffffff !important;
@@ -8426,7 +8448,6 @@ div#accordionExample .accordion-item {
   position: relative;
   box-shadow: 0 15px 45px rgba(0, 0, 0, 0.12);
 }
-
 
 .onyba-logout-close-cross {
   position: absolute;
@@ -8457,7 +8478,6 @@ div#accordionExample .accordion-item {
   object-fit: contain;
 }
 
-
 .onyba-logout-body {
   display: flex;
   flex-direction: column;
@@ -8466,11 +8486,10 @@ div#accordionExample .accordion-item {
   padding: 10px 0 0 0 !important;
 }
 
-
 .onyba-logout-icon-circle {
   width: 68px;
   height: 68px;
-  background-color: #FB3A341A;
+  background-color: #fb3a341a;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -8491,7 +8510,6 @@ div#accordionExample .accordion-item {
   margin-bottom: 12px;
 }
 
-
 .onyba-logout-text {
   font-size: 15px;
   color: #777777;
@@ -8500,13 +8518,11 @@ div#accordionExample .accordion-item {
   margin-bottom: 28px;
 }
 
-
 .onyba-logout-actions-row {
   display: flex;
   gap: 14px;
   width: 100%;
 }
-
 
 .onyba-logout-btn-cancel {
   flex: 1;
@@ -8525,7 +8541,6 @@ div#accordionExample .accordion-item {
   background-color: #f8f9fa;
   color: #444444;
 }
-
 
 .onyba-logout-btn-confirm {
   flex: 1;
@@ -8862,7 +8877,7 @@ div#accordionExample .accordion-item {
 .onyba-complete-icon-circle {
   width: 60px;
   height: 60px;
-  background: linear-gradient(180deg, #93996D 0%, #52553E 100%);
+  background: linear-gradient(180deg, #93996d 0%, #52553e 100%);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -8892,8 +8907,6 @@ div#accordionExample .accordion-item {
   height: 50px;
   object-fit: contain;
 }
-
-
 
 /* Header Text Typography specs */
 .onyba-complete-title {
@@ -8953,7 +8966,7 @@ div#accordionExample .accordion-item {
 /* Full Width Primary Confirmation Action Link Button Trigger */
 .onyba-complete-btn-continue {
   width: 100%;
-  background-color: #74505C;
+  background-color: #74505c;
   border: none;
   color: #ffffff;
   padding: 15px 0;
@@ -9025,7 +9038,6 @@ div#accordionExample .accordion-item {
   padding: 0 !important;
 }
 
-
 /* .onyba-success-status-panel {
   display: flex;
   flex-direction: column;
@@ -9037,7 +9049,7 @@ div#accordionExample .accordion-item {
 .onyba-end-icon-circle {
   width: 60px;
   height: 60px;
-  background-color: #C90101;
+  background-color: #c90101;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -9350,14 +9362,13 @@ div#accordionExample .accordion-item {
 .onyba-success-status-row p {
   font-size: 15px;
   font-weight: 500;
-  color: #93996D;
+  color: #93996d;
 }
 
 .onyba-ai-status-row p {
   font-size: 15px;
   font-weight: 500;
 }
-
 
 /* State 1: Completed State Color Mapping rules */
 .onyba-ai-state-done p {
@@ -9419,7 +9430,6 @@ div#accordionExample .accordion-item {
   background-color: #512b32;
   /* Transitions to core deep dark maroon accent color on hover */
 }
-
 
 .agd-custom-modal .modal-content {
   border-radius: 20px;
@@ -9603,12 +9613,12 @@ div#accordionExample .accordion-item {
   user-select: none;
 }
 
-.agd-popup-time-input:hover+.agd-popup-time-label {
+.agd-popup-time-input:hover + .agd-popup-time-label {
   border-color: #6e7254;
   background-color: #f8f9fa;
 }
 
-.agd-popup-time-input:checked+.agd-popup-time-label {
+.agd-popup-time-input:checked + .agd-popup-time-label {
   background-color: #6e7254;
   color: #ffffff;
   border-color: #6e7254;
@@ -9669,7 +9679,6 @@ div#accordionExample .accordion-item {
   height: 100%;
 }
 
-
 .dbt4-filter-dropdown.date {
   padding: 0;
   border: none;
@@ -9695,9 +9704,6 @@ div#accordionExample .accordion-item {
   cursor: pointer;
 }
 
-
-
-
 /* Container Box Styling */
 .session-verify-card {
   display: flex;
@@ -9720,7 +9726,7 @@ div#accordionExample .accordion-item {
 
 /* Dark Circular Icon Wrapper */
 .session-verify-icon-wrapper {
-  background: linear-gradient(180deg, #74505C 0%, #4C2834 100%);
+  background: linear-gradient(180deg, #74505c 0%, #4c2834 100%);
   color: #ffffff;
   width: 50px;
   height: 50px;
@@ -9785,10 +9791,6 @@ div#accordionExample .accordion-item {
   transition: all 0.2s ease;
 }
 
-
-
-
-
 /* Focus and Active States */
 .session-code-field:focus {
   border-color: #6a4d57;
@@ -9810,7 +9812,7 @@ div#accordionExample .accordion-item {
 
 /* Verify Button */
 .session-submit-btn {
-  background-color: #74505C;
+  background-color: #74505c;
   color: #ffffff;
   border: none;
   border-radius: 25px;
@@ -9824,7 +9826,7 @@ div#accordionExample .accordion-item {
 }
 
 .session-submit-btn:hover {
-  background-color: #74505C;
+  background-color: #74505c;
 }
 
 /* Resend Section Styling */
@@ -9868,31 +9870,26 @@ div#accordionExample .accordion-item {
   object-fit: contain;
 }
 
-
-
-
 .onyba-avail-date--today {
   background: #f0f1ee;
-  border: 2px solid #93996D;
+  border: 2px solid #93996d;
   color: #333333;
   font-weight: 600;
 }
 
 .onyba-avail-date--selected {
-  background: linear-gradient(180deg, #93996D 0%, #52553E 100%);
+  background: linear-gradient(180deg, #93996d 0%, #52553e 100%);
   color: #ffffff !important;
   font-weight: 600;
 }
 
 .onyba-avail-date--holiday {
-  background: #FFF0F0 !important;
-  border: 1.5px solid #FF8E8E !important;
-  color: #FF5A5A !important;
+  background: #fff0f0 !important;
+  border: 1.5px solid #ff8e8e !important;
+  color: #ff5a5a !important;
   font-weight: 600;
   cursor: not-allowed !important;
 }
-
-
 
 /* --------sunil------ for agenda card dynamic time set*/
 /* .agd-event-card {
@@ -9968,7 +9965,7 @@ div#accordionExample .accordion-item {
   justify-content: space-between;
   align-items: center;
   height: 42px;
-  border: 1px solid #D9D9D9;
+  border: 1px solid #d9d9d9;
   border-radius: 22px;
   padding: 0 14px;
   cursor: pointer;
@@ -9987,7 +9984,7 @@ div#accordionExample .accordion-item {
   align-items: center;
   justify-content: space-between;
   padding: 10px 14px;
-  border: 1px solid #E5E5E5;
+  border: 1px solid #e5e5e5;
   border-radius: 22px;
   margin-bottom: 10px;
 }
@@ -9998,10 +9995,9 @@ div#accordionExample .accordion-item {
   cursor: pointer;
 }
 
-
 .patient-consent-banner {
   width: 100%;
-  background: #C9010114;
+  background: #c9010114;
   border-radius: 20px;
   padding: 24px 28px;
   display: flex;
@@ -10034,7 +10030,7 @@ div#accordionExample .accordion-item {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #93996D;
+  color: #93996d;
   font-size: 18px;
   font-weight: 600;
 }
