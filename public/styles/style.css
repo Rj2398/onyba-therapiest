@@ -11,6 +11,12 @@ a {
   outline: none !important;
 }
 
+.therapist-profile-container .tp-label,
+.modal-content label {
+  color: #000000 !important;
+  margin-left: 10px;
+}
+
 /* 
 img {
   width: 100%;
@@ -114,8 +120,10 @@ body {
   /* border-bottom: 1px solid var(--tp-border-color); */
   /* padding-bottom: 12px; */
 }
+
 input[type="file"]::file-selector-button {
-  background: var(--tp-olive-green, linear-gradient(180deg, #93996d 0%, #52553e 100%));
+  background: var(--tp-olive-green,
+      linear-gradient(180deg, #93996d 0%, #52553e 100%));
   border: 1px solid var(--tp-olive-green, #52553e);
   border-radius: 6px;
   color: #ffffff;
@@ -429,10 +437,8 @@ input[type="email"] {
 
 .therapist-profile-container .tp-toggle-pill.active,
 .tp-toggle-pill.active {
-  background: var(
-    --tp-olive-green,
-    linear-gradient(180deg, #93996d 0%, #52553e 100%)
-  );
+  background: var(--tp-olive-green,
+      linear-gradient(180deg, #93996d 0%, #52553e 100%));
   border-color: var(--tp-olive-green, #52553e);
   color: #ffffff;
 }
@@ -474,6 +480,23 @@ input[type="email"] {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+}
+
+.therapist-profile-container .tp-btn-secondary {
+  background-color: #ffffff;
+  border: 1.5px solid #6d5456;
+  color: #6d5456;
+  border-radius: 9999px;
+  padding: 10px 26px;
+  font-size: 14px;
+  font-weight: 400;
+  transition: all 0.2s ease;
+}
+
+.therapist-profile-container .tp-btn-secondary:hover {
+  background-color: rgba(109, 84, 86, 0.06);
+  border-color: #6d5456;
+  color: #6d5456;
 }
 
 .therapist-profile-container .tag-close {
@@ -566,15 +589,12 @@ input[type="email"] {
   transition: all 0.15s;
 }
 
-.therapist-profile-container .tp-checkbox-item input:checked ~ .checkmark {
+.therapist-profile-container .tp-checkbox-item input:checked~.checkmark {
   background-color: var(--tp-primary-plum);
   border-color: var(--tp-primary-plum);
 }
 
-.therapist-profile-container
-  .tp-checkbox-item
-  input:checked
-  ~ .checkmark:after {
+.therapist-profile-container .tp-checkbox-item input:checked~.checkmark:after {
   content: "";
   position: absolute;
   left: 4px;
@@ -638,7 +658,7 @@ input[type="email"] {
 }
 
 /* Rotate indicator arrow when dropdown is open */
-.therapist-profile-container .show ~ .arrow,
+.therapist-profile-container .show~.arrow,
 .therapist-profile-container .tp-custom-select-wrapper:has(.show) .arrow {
   transform: rotate(180deg);
 }
@@ -652,11 +672,9 @@ input[type="email"] {
 .onyba-login-section {
   width: 100%;
   height: 100vh;
-  background: radial-gradient(
-    201.07% 201.07% at 50% 50%,
-    #ffffff 0%,
-    #93996d 100%
-  );
+  background: radial-gradient(201.07% 201.07% at 50% 50%,
+      #ffffff 0%,
+      #93996d 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -890,11 +908,9 @@ input[type="email"] {
   width: 536px;
   height: 600px;
   background-color: rgba(255, 255, 255, 0.25);
-  background: radial-gradient(
-    57.18% 57.18% at 50% 50%,
-    #93996d 0%,
-    #ffffff 100%
-  );
+  background: radial-gradient(57.18% 57.18% at 50% 50%,
+      #93996d 0%,
+      #ffffff 100%);
   border-radius: 50%;
   z-index: 1;
 }
@@ -2137,12 +2153,10 @@ span.dbt-subtext.session {
   bottom: 0;
   pointer-events: none;
   /* Har 136px (1 hour) par perfect solid horizontal border setup */
-  background-image: linear-gradient(
-    to bottom,
-    transparent 135px,
-    #e2e8f0 135px,
-    #e2e8f0 136px
-  );
+  background-image: linear-gradient(to bottom,
+      transparent 135px,
+      #e2e8f0 135px,
+      #e2e8f0 136px);
   background-size: 100% 136px;
 }
 
@@ -4348,7 +4362,7 @@ a.session-mode span {
   background-color: #fdfafb;
 } */
 
-.custom-payment-checkbox-input:checked ~ .custom-payment-checkbox-box {
+.custom-payment-checkbox-input:checked~.custom-payment-checkbox-box {
   background-color: #74505c;
 }
 
@@ -4365,7 +4379,7 @@ a.session-mode span {
   transform: rotate(45deg);
 }
 
-.custom-payment-checkbox-input:checked ~ .custom-payment-checkbox-box::after {
+.custom-payment-checkbox-input:checked~.custom-payment-checkbox-box::after {
   display: block;
 }
 
@@ -4888,7 +4902,7 @@ a.session-mode span {
   box-sizing: border-box;
 }
 
-.ps-dashboard-v3-checkbox-container input:checked ~ .ps-dashboard-v3-checkmark {
+.ps-dashboard-v3-checkbox-container input:checked~.ps-dashboard-v3-checkmark {
   background-color: #74505c;
 }
 
@@ -4905,9 +4919,7 @@ a.session-mode span {
   transform: rotate(45deg);
 }
 
-.ps-dashboard-v3-checkbox-container
-  input:checked
-  ~ .ps-dashboard-v3-checkmark::after {
+.ps-dashboard-v3-checkbox-container input:checked~.ps-dashboard-v3-checkmark::after {
   display: block;
 }
 
@@ -5082,7 +5094,7 @@ a.session-mode span {
   flex-direction: column;
 }
 
-.ony-dashboard-col-left > div:not(:first-child) {
+.ony-dashboard-col-left>div:not(:first-child) {
   margin-top: 32px;
 }
 
@@ -5672,7 +5684,7 @@ a.session-mode span {
   box-sizing: border-box;
 }
 
-.ps-part4-checkbox-wrapper input:checked ~ .ps-part4-checkmark {
+.ps-part4-checkbox-wrapper input:checked~.ps-part4-checkmark {
   background-color: #74505c;
 }
 
@@ -5689,7 +5701,7 @@ a.session-mode span {
   transform: rotate(45deg);
 }
 
-.ps-part4-checkbox-wrapper input:checked ~ .ps-part4-checkmark::after {
+.ps-part4-checkbox-wrapper input:checked~.ps-part4-checkmark::after {
   display: block;
 }
 
@@ -8334,7 +8346,7 @@ div#accordionExample .accordion-item {
   transition: all 0.2s;
 }
 
-.onyba-spec-pop-checkbox-row input:checked ~ .onyba-spec-pop-checkmark {
+.onyba-spec-pop-checkbox-row input:checked~.onyba-spec-pop-checkmark {
   background-color: #512b32;
   border-color: #512b32;
 }
@@ -8352,7 +8364,7 @@ div#accordionExample .accordion-item {
   transform: rotate(45deg);
 }
 
-.onyba-spec-pop-checkbox-row input:checked ~ .onyba-spec-pop-checkmark::after {
+.onyba-spec-pop-checkbox-row input:checked~.onyba-spec-pop-checkmark::after {
   display: block;
 }
 
@@ -9613,12 +9625,12 @@ div#accordionExample .accordion-item {
   user-select: none;
 }
 
-.agd-popup-time-input:hover + .agd-popup-time-label {
+.agd-popup-time-input:hover+.agd-popup-time-label {
   border-color: #6e7254;
   background-color: #f8f9fa;
 }
 
-.agd-popup-time-input:checked + .agd-popup-time-label {
+.agd-popup-time-input:checked+.agd-popup-time-label {
   background-color: #6e7254;
   color: #ffffff;
   border-color: #6e7254;

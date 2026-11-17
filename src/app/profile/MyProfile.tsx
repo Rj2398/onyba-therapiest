@@ -257,32 +257,32 @@ const MyProfile = () => {
         if (therapist) {
           const activeSpecs = therapist.specialization_id
             ? therapist.specialization_id
-                .split(",")
-                .map((idStr: string) => {
-                  const id = parseInt(idStr.trim(), 10);
-                  return specs.find((o: any) => Number(o.id) === id)?.name;
-                })
-                .filter(Boolean)
+              .split(",")
+              .map((idStr: string) => {
+                const id = parseInt(idStr.trim(), 10);
+                return specs.find((o: any) => Number(o.id) === id)?.name;
+              })
+              .filter(Boolean)
             : [];
 
           const activeReasons = therapist.reason_of_consultation_id
             ? therapist.reason_of_consultation_id
-                .split(",")
-                .map((idStr: string) => {
-                  const id = parseInt(idStr.trim(), 10);
-                  return reasons.find((o: any) => Number(o.id) === id)?.name;
-                })
-                .filter(Boolean)
+              .split(",")
+              .map((idStr: string) => {
+                const id = parseInt(idStr.trim(), 10);
+                return reasons.find((o: any) => Number(o.id) === id)?.name;
+              })
+              .filter(Boolean)
             : [];
 
           const existingCerts = therapist.professional_certificates
             ? therapist.professional_certificates
-                .split(",")
-                .map((url: string) => ({
-                  name: url.substring(url.lastIndexOf("/") + 1),
-                  isRemote: true,
-                  url,
-                }))
+              .split(",")
+              .map((url: string) => ({
+                name: url.substring(url.lastIndexOf("/") + 1),
+                isRemote: true,
+                url,
+              }))
             : [];
 
           setFormData((prev: any) => ({
@@ -309,9 +309,9 @@ const MyProfile = () => {
               ? therapist.session_mode.trim().toLowerCase() === "both"
                 ? ["online", "in_person"]
                 : therapist.session_mode
-                    .split(",")
-                    .map((m: string) => m.trim().toLowerCase())
-                    .filter(Boolean)
+                  .split(",")
+                  .map((m: string) => m.trim().toLowerCase())
+                  .filter(Boolean)
               : prev.sessionMode,
             clinic_name: therapist.clinic_name || "",
             clinicAddress: therapist.clinic_address || "",
@@ -323,8 +323,8 @@ const MyProfile = () => {
             // therapyTypes: therapist.type_of_service ? therapist.type_of_service.split(',').map((t: string) => t.trim().charAt(0).toUpperCase() + t.trim().slice(1)) : prev.therapyTypes,
             therapyTypes: therapist.service_id
               ? String(therapist.service_id)
-                  .split(",")
-                  .map((id: string) => Number(id.trim()))
+                .split(",")
+                .map((id: string) => Number(id.trim()))
               : [],
             consultationReasons: activeReasons,
             languages: therapist.language || "",
@@ -485,9 +485,9 @@ const MyProfile = () => {
     setFormData((prev: any) => {
       const currentLangs = prev.languages
         ? prev.languages
-            .split(",")
-            .map((l: string) => l.trim())
-            .filter(Boolean)
+          .split(",")
+          .map((l: string) => l.trim())
+          .filter(Boolean)
         : [];
       let nextLangs: string[];
       if (currentLangs.includes(lang)) {
@@ -507,9 +507,9 @@ const MyProfile = () => {
   const getSelectedLanguages = () => {
     return formData.languages
       ? formData.languages
-          .split(",")
-          .map((l: string) => l.trim())
-          .filter(Boolean)
+        .split(",")
+        .map((l: string) => l.trim())
+        .filter(Boolean)
       : [];
   };
 
@@ -820,10 +820,10 @@ const MyProfile = () => {
           (hasOnline && hasInPerson) || formData.sessionMode.includes("both")
             ? "both"
             : hasOnline
-            ? "online"
-            : hasInPerson
-            ? "in_person"
-            : formData.sessionMode.join(",");
+              ? "online"
+              : hasInPerson
+                ? "in_person"
+                : formData.sessionMode.join(",");
         payload.append("session_mode", sessionModeValue);
         payload.append("clinic_name", formData.clinic_name || "");
         payload.append("clinic_address", formData.clinicAddress || "");
@@ -1032,6 +1032,16 @@ const MyProfile = () => {
                   type="button"
                   className="tp-btn-secondary"
                   onClick={() => photoInputRef.current?.click()}
+                  style={{
+                    backgroundColor: "#ffffff",
+                    border: "1.5px solid #6D5456",
+                    color: "#6D5456",
+                    borderRadius: "9999px",
+                    padding: "10px 26px",
+                    fontSize: "14px",
+                    fontWeight: "400",
+                    cursor: "pointer",
+                  }}
                 >
                   Upload Photo
                 </button>
@@ -1102,8 +1112,8 @@ const MyProfile = () => {
                           initialPhoneIsNull && !isPhoneVerified
                             ? "75px"
                             : isPhoneVerified
-                            ? "85px"
-                            : "12px",
+                              ? "85px"
+                              : "12px",
                       }}
                       placeholder="+1234567890"
                       required
@@ -1181,8 +1191,8 @@ const MyProfile = () => {
                           initialEmailIsNull && !isEmailVerified
                             ? "75px"
                             : isEmailVerified
-                            ? "85px"
-                            : "12px",
+                              ? "85px"
+                              : "12px",
                       }}
                       placeholder="Enter your email"
                       required
@@ -1297,9 +1307,8 @@ const MyProfile = () => {
                       {documentOptions.map((doc) => (
                         <div
                           key={doc}
-                          className={`tp-dropdown-item ${
-                            formData.doctype === doc ? "active" : ""
-                          }`}
+                          className={`tp-dropdown-item ${formData.doctype === doc ? "active" : ""
+                            }`}
                           onClick={() => {
                             setFormData({ ...formData, doctype: doc });
                             setOpenDropdown(null);
@@ -1581,19 +1590,29 @@ const MyProfile = () => {
                 Upload your professional certifications*
               </label>
 
-              <div className="tp-file-uploader-box mb-3">
+              <div
+                className="tp-file-uploader-box mb-3"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  backgroundColor: "#f8f8f5",
+                  borderRadius: "9999px",
+                  padding: "6px",
+                }}
+              >
                 <button
                   type="button"
                   className="tp-btn-file-select"
                   onClick={() => setShowCertModal(true)}
                   style={{
                     background:
-                      "var(--tp-olive-green, linear-gradient(180deg, #93996d 0%, #52553e 100%))",
-                    border: "1px solid var(--tp-olive-green, #52553e)",
-                    borderRadius: "8px",
+                      "linear-gradient(180deg, #492f35 0%, #492f35 100%)",
+                    border: "none",
+                    borderRadius: "9999px",
                     color: "#ffffff",
-                    fontWeight: "600",
-                    padding: "8px 16px",
+                    fontSize: "14px",
+                    fontWeight: "400",
+                    padding: "10px 26px",
                     cursor: "pointer",
                   }}
                 >
@@ -1668,9 +1687,8 @@ const MyProfile = () => {
                 <div className="d-flex gap-2 mb-3 flex-wrap">
                   <button
                     type="button"
-                    className={`tp-toggle-pill ${
-                      formData.sessionMode.includes("online") ? "active" : ""
-                    }`}
+                    className={`tp-toggle-pill ${formData.sessionMode.includes("online") ? "active" : ""
+                      }`}
                     id="mode-online"
                     onClick={() =>
                       handleToggleArrayItem("sessionMode", "online")
@@ -1692,9 +1710,8 @@ const MyProfile = () => {
                   </button>
                   <button
                     type="button"
-                    className={`tp-toggle-pill ${
-                      formData.sessionMode.includes("in_person") ? "active" : ""
-                    }`}
+                    className={`tp-toggle-pill ${formData.sessionMode.includes("in_person") ? "active" : ""
+                      }`}
                     id="mode-inperson"
                     onClick={() =>
                       handleToggleArrayItem("sessionMode", "in_person")
@@ -2465,8 +2482,8 @@ const MyProfile = () => {
                       width: "100%",
                       padding: "8px 12px",
                       borderRadius: "8px",
-                      border: "1px dashed #93996d",
-                      backgroundColor: "#f9faf6",
+                      border: "1px dashed #6D5456",
+                      backgroundColor: "#faf8f8",
                       cursor: "pointer",
                       fontSize: "14px",
                     }}
@@ -2487,14 +2504,13 @@ const MyProfile = () => {
 
                     <span
                       style={{
-                        background:
-                          "var(--tp-olive-green, linear-gradient(180deg, #93996d 0%, #52553e 100%))",
-                        border: "1px solid var(--tp-olive-green, #52553e)",
-                        borderRadius: "6px",
+                        background: "linear-gradient(180deg, #5e3e46 0%, #492f35 100%)",
+                        border: "none",
+                        borderRadius: "9999px",
                         color: "#ffffff",
-                        fontWeight: "600",
+                        fontWeight: "500",
                         fontSize: "12px",
-                        padding: "6px 12px",
+                        padding: "6px 16px",
                       }}
                     >
                       Browse
@@ -2504,9 +2520,7 @@ const MyProfile = () => {
                       type="file"
                       required
                       accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                      onChange={(e) =>
-                        setModalCertFile(e.target.files?.[0] || null)
-                      }
+                      onChange={(e) => setModalCertFile(e.target.files?.[0] || null)}
                       style={{ display: "none" }}
                     />
                   </label>
@@ -2543,13 +2557,12 @@ const MyProfile = () => {
                     type="submit"
                     className="tp-btn-submit"
                     style={{
-                      padding: "9px 22px",
-                      borderRadius: "8px",
-                      background:
-                        "var(--tp-olive-green, linear-gradient(180deg, #93996d 0%, #52553e 100%))",
-                      border: "1px solid var(--tp-olive-green, #52553e)",
+                      padding: "9px 24px",
+                      borderRadius: "9999px",
+                      background: "linear-gradient(180deg, #5e3e46 0%, #492f35 100%)",
+                      border: "none",
                       color: "#ffffff",
-                      fontWeight: "600",
+                      fontWeight: "500",
                       cursor: "pointer",
                     }}
                   >
