@@ -218,14 +218,33 @@ const MyProfile = () => {
           } else if (Array.isArray(specsRes.data)) {
             specs = specsRes.data;
           } else if (specsRes.data && typeof specsRes.data === "object") {
-            const arrayKey = Object.keys(specsRes.data).find((k) =>
-              Array.isArray(specsRes.data[k])
-            );
-            if (arrayKey) {
-              specs = specsRes.data[arrayKey];
+            if (Array.isArray(specsRes.data.specializations)) {
+              specs = specsRes.data.specializations;
+            } else {
+              const arrayKey = Object.keys(specsRes.data).find((k) =>
+                Array.isArray(specsRes.data[k])
+              );
+              if (arrayKey) {
+                specs = specsRes.data[arrayKey];
+              }
             }
           }
         }
+
+        specs = (Array.isArray(specs) ? specs : [])
+          .map((item: any) => {
+            if (typeof item === "string") return { id: item, name: item };
+            const id = item.id ?? item.specialization_id ?? item.value;
+            const name =
+              item.name ||
+              item.specialization ||
+              item.specialization_name ||
+              item.title ||
+              item.label ||
+              "";
+            return { id, name: String(name).trim() };
+          })
+          .filter((item: any) => item.name);
 
         let reasons: any[] = [];
         if (reasonsRes) {
@@ -234,57 +253,249 @@ const MyProfile = () => {
           } else if (Array.isArray(reasonsRes.data)) {
             reasons = reasonsRes.data;
           } else if (reasonsRes.data && typeof reasonsRes.data === "object") {
-            const arrayKey = Object.keys(reasonsRes.data).find((k) =>
-              Array.isArray(reasonsRes.data[k])
-            );
-            if (arrayKey) {
-              reasons = reasonsRes.data[arrayKey];
+            if (Array.isArray(reasonsRes.data.reasons)) {
+              reasons = reasonsRes.data.reasons;
+            } else if (Array.isArray(reasonsRes.data.consultation_reasons)) {
+              reasons = reasonsRes.data.consultation_reasons;
+            } else {
+              const arrayKey = Object.keys(reasonsRes.data).find((k) =>
+                Array.isArray(reasonsRes.data[k])
+              );
+              if (arrayKey) {
+                reasons = reasonsRes.data[arrayKey];
+              }
             }
           }
         }
+
+        reasons = (Array.isArray(reasons) ? reasons : [])
+          .map((item: any) => {
+            if (typeof item === "string") return { id: item, name: item };
+            const id =
+              item.id ??
+              item.reason_of_consultation_id ??
+              item.reason_id ??
+              item.value;
+            const name =
+              item.name ||
+              item.reason ||
+              item.reason_name ||
+              item.consultation_reason ||
+              item.title ||
+              item.label ||
+              "";
+            return { id, name: String(name).trim() };
+          })
+          .filter((item: any) => item.name);
 
         const sessionTypes = sessionTypeRes?.data?.session_types || [];
 
         setTherapyOptions(sessionTypes);
 
-        // Final fallback checks to guarantee arrays
-        if (!Array.isArray(specs)) specs = [];
-        if (!Array.isArray(reasons)) reasons = [];
+        const extractActiveItems = (
+          fieldVal: any,
+          relationVal: any,
+          optionsList: { id: any; name: string }[]
+        ): string[] => {
+          const resultNames = new Set<string>();
 
-        setSpecializationOptions(specs);
-        setConsultationOptions(reasons);
+          const addMatch = (val: any) => {
+            if (val == null) return;
+            if (typeof val === "object") {
+              const objName =
+                val.name ||
+                val.specialization ||
+                val.specialization_name ||
+                val.reason ||
+                val.reason_name ||
+                val.consultation_reason ||
+                val.title;
+              if (objName) {
+                resultNames.add(String(objName).trim());
+                return;
+              }
+              const objId =
+                val.id ??
+                val.specialization_id ??
+                val.reason_of_consultation_id ??
+                val.reason_id;
+              if (objId != null) {
+                const found = optionsList.find(
+                  (o) => Number(o.id) === Number(objId)
+                );
+                if (found?.name) {
+                  resultNames.add(found.name);
+                  return;
+                }
+              }
+              return;
+            }
 
-        const therapist = profileRes?.data?.therapist;
+            const strVal = String(val).trim();
+            if (!strVal) return;
+
+            const numId = parseInt(strVal, 10);
+            if (!isNaN(numId) && String(numId) === strVal) {
+              const found = optionsList.find((o) => Number(o.id) === numId);
+              if (found?.name) {
+                resultNames.add(found.name);
+                return;
+              }
+            }
+
+            const foundByName = optionsList.find(
+              (o) => o.name.toLowerCase() === strVal.toLowerCase()
+            );
+            if (foundByName?.name) {
+              resultNames.add(foundByName.name);
+              return;
+            }
+
+            resultNames.add(strVal);
+          };
+
+          if (Array.isArray(relationVal)) {
+            relationVal.forEach(addMatch);
+          }
+
+          if (fieldVal != null) {
+            if (Array.isArray(fieldVal)) {
+              fieldVal.forEach((item) => {
+                if (typeof item === "string" && item.includes(",")) {
+                  item.split(",").forEach(addMatch);
+                } else {
+                  addMatch(item);
+                }
+              });
+            } else if (typeof fieldVal === "number") {
+              addMatch(fieldVal);
+            } else if (typeof fieldVal === "string") {
+              fieldVal.split(",").forEach(addMatch);
+            } else if (typeof fieldVal === "object") {
+              addMatch(fieldVal);
+            }
+          }
+
+          return Array.from(resultNames).filter(Boolean);
+        };
+
+        const therapist =
+          profileRes?.data?.therapist || profileRes?.therapist || profileRes?.data;
+
         if (therapist) {
-          const activeSpecs = therapist.specialization_id
-            ? therapist.specialization_id
-              .split(",")
-              .map((idStr: string) => {
-                const id = parseInt(idStr.trim(), 10);
-                return specs.find((o: any) => Number(o.id) === id)?.name;
-              })
-              .filter(Boolean)
-            : [];
+          const activeSpecs = extractActiveItems(
+            therapist.specialization_id ??
+              therapist.specialization ??
+              therapist.specializations,
+            therapist.therapist_specializations ??
+              therapist.specializations ??
+              profileRes?.data?.therapist_specializations ??
+              profileRes?.data?.specializations,
+            specs
+          );
 
-          const activeReasons = therapist.reason_of_consultation_id
-            ? therapist.reason_of_consultation_id
-              .split(",")
-              .map((idStr: string) => {
-                const id = parseInt(idStr.trim(), 10);
-                return reasons.find((o: any) => Number(o.id) === id)?.name;
-              })
-              .filter(Boolean)
-            : [];
+          activeSpecs.forEach((specName) => {
+            if (!specs.some((s) => s.name.toLowerCase() === specName.toLowerCase())) {
+              specs.push({ id: specName, name: specName });
+            }
+          });
 
-          const existingCerts = therapist.professional_certificates
-            ? therapist.professional_certificates
-              .split(",")
-              .map((url: string) => ({
-                name: url.substring(url.lastIndexOf("/") + 1),
+          const activeReasons = extractActiveItems(
+            therapist.reason_of_consultation_id ??
+              therapist.reason_of_consultation ??
+              therapist.consultation_reasons,
+            therapist.therapist_consultation_reasons ??
+              therapist.consultation_reasons ??
+              therapist.reasons ??
+              profileRes?.data?.therapist_consultation_reasons ??
+              profileRes?.data?.consultation_reasons,
+            reasons
+          );
+
+          activeReasons.forEach((rName) => {
+            if (!reasons.some((r) => r.name.toLowerCase() === rName.toLowerCase())) {
+              reasons.push({ id: rName, name: rName });
+            }
+          });
+
+          setSpecializationOptions(specs);
+          setConsultationOptions(reasons);
+
+          const rawCerts =
+            therapist.therapist_certificates ||
+            profileRes?.data?.therapist_certificates ||
+            profileRes?.therapist_certificates ||
+            therapist.professional_certificates ||
+            profileRes?.data?.professional_certificates ||
+            therapist.certificates ||
+            profileRes?.data?.certificates;
+
+          const baseUrlWithSlash = Base_image_url.endsWith("/")
+            ? Base_image_url
+            : `${Base_image_url}/`;
+
+          let existingCerts: any[] = [];
+          if (Array.isArray(rawCerts)) {
+            existingCerts = rawCerts.map((cert: any) => {
+              if (typeof cert === "string") {
+                const cleanUrl = cert.trim();
+                const fileName =
+                  cleanUrl.substring(cleanUrl.lastIndexOf("/") + 1) || "Certificate";
+                const fileUrl = cleanUrl.startsWith("http")
+                  ? cleanUrl
+                  : `${baseUrlWithSlash}${cleanUrl.replace(/^\/+/, "")}`;
+                return {
+                  name: fileName,
+                  customName: fileName,
+                  isRemote: true,
+                  url: fileUrl,
+                  path: cleanUrl,
+                };
+              }
+              const certPath =
+                cert.certificate_path || cert.path || cert.url || cert.file || "";
+              const certName =
+                cert.certificate_name ||
+                cert.name ||
+                cert.customName ||
+                (certPath
+                  ? certPath.substring(certPath.lastIndexOf("/") + 1)
+                  : "Certificate");
+              const fileUrl = certPath
+                ? certPath.startsWith("http")
+                  ? certPath
+                  : `${baseUrlWithSlash}${certPath.replace(/^\/+/, "")}`
+                : "";
+
+              return {
+                id: cert.id,
+                name: certName,
+                customName: certName,
                 isRemote: true,
-                url,
-              }))
-            : [];
+                url: fileUrl,
+                path: certPath,
+              };
+            });
+          } else if (typeof rawCerts === "string" && rawCerts.trim()) {
+            existingCerts = rawCerts
+              .split(",")
+              .map((url: string) => {
+                const cleanUrl = url.trim();
+                const fileName =
+                  cleanUrl.substring(cleanUrl.lastIndexOf("/") + 1) || "Certificate";
+                const fileUrl = cleanUrl.startsWith("http")
+                  ? cleanUrl
+                  : `${baseUrlWithSlash}${cleanUrl.replace(/^\/+/, "")}`;
+                return {
+                  name: fileName,
+                  customName: fileName,
+                  isRemote: true,
+                  url: fileUrl,
+                  path: cleanUrl,
+                };
+              })
+              .filter((c: any) => Boolean(c.name));
+          }
 
           setFormData((prev: any) => ({
             ...prev,
@@ -574,7 +785,19 @@ const MyProfile = () => {
     setModalCertFile(null);
   };
 
-  const handleRemoveCert = (indexToRemove: number) => {
+  const handleRemoveCert = async (indexToRemove: number) => {
+    const certToRemove = formData.certificate[indexToRemove];
+    if (certToRemove?.isRemote && certToRemove?.id) {
+      try {
+        await requestApi({
+          endpoint: "delete-therapist-certificate",
+          method: "POST",
+          data: { certificate_id: certToRemove.id },
+        });
+      } catch (err) {
+        console.error("Error deleting remote certificate:", err);
+      }
+    }
     setFormData((prev: any) => ({
       ...prev,
       certificate: prev.certificate.filter(
@@ -616,15 +839,32 @@ const MyProfile = () => {
             } else if (Array.isArray(specsRes.data)) {
               specs = specsRes.data;
             } else if (specsRes.data && typeof specsRes.data === "object") {
-              const arrayKey = Object.keys(specsRes.data).find((k) =>
-                Array.isArray(specsRes.data[k])
-              );
-              if (arrayKey) {
-                specs = specsRes.data[arrayKey];
+              if (Array.isArray(specsRes.data.specializations)) {
+                specs = specsRes.data.specializations;
+              } else {
+                const arrayKey = Object.keys(specsRes.data).find((k) =>
+                  Array.isArray(specsRes.data[k])
+                );
+                if (arrayKey) {
+                  specs = specsRes.data[arrayKey];
+                }
               }
             }
           }
-          if (!Array.isArray(specs)) specs = [];
+          specs = (Array.isArray(specs) ? specs : [])
+            .map((item: any) => {
+              if (typeof item === "string") return { id: item, name: item };
+              const id = item.id ?? item.specialization_id ?? item.value;
+              const name =
+                item.name ||
+                item.specialization ||
+                item.specialization_name ||
+                item.title ||
+                item.label ||
+                "";
+              return { id, name: String(name).trim() };
+            })
+            .filter((item: any) => item.name);
           setSpecializationOptions(specs);
         } catch (err) {
           console.error(
@@ -835,6 +1075,7 @@ const MyProfile = () => {
         payload.append("clinic_longitude", formData.clinic_longitude || "");
         // payload.append('type_of_service[]', formData.therapyTypes.map((t: string) => t.toLowerCase()).join(','));
         payload.append("service_id[]", formData.therapyTypes.join(","));
+        payload.append("service_id", formData.therapyTypes.join(","));
 
         // Map specialization names to their IDs
         const specIds = formData.specilizations
@@ -842,11 +1083,13 @@ const MyProfile = () => {
             (name: string) =>
               specializationOptions.find(
                 (o) => o.name.toLowerCase() === name.toLowerCase()
-              )?.id
+              )?.id ?? name
           )
           .filter(Boolean)
           .join(",");
         payload.append("specialization_id[]", specIds);
+        payload.append("specialization_id", specIds);
+        payload.append("specialization", specIds);
 
         // Map consultation reason names to their IDs
         const reasonIds = formData.consultationReasons
@@ -854,11 +1097,13 @@ const MyProfile = () => {
             (name: string) =>
               consultationOptions.find(
                 (o) => o.name.toLowerCase() === name.toLowerCase()
-              )?.id
+              )?.id ?? name
           )
           .filter(Boolean)
           .join(",");
         payload.append("reason_of_consultation_id[]", reasonIds);
+        payload.append("reason_of_consultation_id", reasonIds);
+        payload.append("reason_of_consultation", reasonIds);
 
         payload.append("experience", formData.experience);
         payload.append("description", formData.bio);
@@ -1640,18 +1885,62 @@ const MyProfile = () => {
               <div className="row g-2">
                 {formData.certificate.map((file: any, idx: number) => {
                   const isRemote = file.isRemote;
-                  const name = file.customName || file.name;
+                  const name = file.customName || file.name || "Certificate";
                   const size = file.size
                     ? `${(file.size / (1024 * 1024)).toFixed(2)} MB`
-                    : "Remote";
+                    : isRemote
+                      ? "Uploaded"
+                      : "";
+                  const isImg =
+                    (typeof name === "string" &&
+                      /\.(png|jpe?g|webp|gif|svg)$/i.test(name)) ||
+                    (typeof file.url === "string" &&
+                      /\.(png|jpe?g|webp|gif|svg)$/i.test(file.url)) ||
+                    (file instanceof File && file.type?.startsWith("image/"));
+                  const previewUrl = file.url
+                    ? file.url
+                    : file instanceof File && isImg
+                      ? URL.createObjectURL(file)
+                      : null;
+
                   return (
                     <div key={idx} className="col-sm-6 col-md-3">
-                      <div className="tp-file-badge">
+                      <div className="tp-file-badge d-flex align-items-center">
+                        {previewUrl && (
+                          <img
+                            src={previewUrl}
+                            alt={name}
+                            style={{
+                              width: "36px",
+                              height: "36px",
+                              objectFit: "cover",
+                              borderRadius: "4px",
+                              marginRight: "10px",
+                              flexShrink: 0,
+                            }}
+                          />
+                        )}
                         <div className="text-truncate flex-grow-1 me-2">
-                          <span className="file-name d-block text-truncate">
-                            {name}
-                          </span>
-                          <span className="file-size">{size}</span>
+                          {file.url ? (
+                            <a
+                              href={file.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="file-name d-block text-truncate text-decoration-none"
+                              style={{ color: "inherit", cursor: "pointer" }}
+                              title={name}
+                            >
+                              {name}
+                            </a>
+                          ) : (
+                            <span
+                              className="file-name d-block text-truncate"
+                              title={name}
+                            >
+                              {name}
+                            </span>
+                          )}
+                          {size && <span className="file-size">{size}</span>}
                         </div>
                         <button
                           type="button"
