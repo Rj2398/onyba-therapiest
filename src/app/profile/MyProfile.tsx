@@ -974,7 +974,8 @@ const MyProfile = () => {
       newErrors.doctype = "Type of Document is required";
     }
     if (!formData.dni_number || !formData.dni_number.trim()) {
-      newErrors.dni_number = "DNI / Document Number is required";
+      const docLabel = (formData.doctype || "Document").replace(/_/g, " ");
+      newErrors.dni_number = `${docLabel} Number is required`;
     }
     if (!formData.scholarShipId || !formData.scholarShipId.trim()) {
       newErrors.scholarShipId = "Scholarship ID is required";
@@ -1577,11 +1578,21 @@ const MyProfile = () => {
                   )}
                 </div>
                 <div className="col-md-4">
-                  <label className="tp-label">DNI Number*</label>
+                  <label className="tp-label">
+                    {(formData.doctype
+                      ? formData.doctype.replace(/_/g, " ")
+                      : "Document")}{" "}
+                    Number*
+                  </label>
                   <input
                     type="text"
                     className="tp-input"
                     name="dni_number"
+                    placeholder={`Enter ${(
+                      formData.doctype || "document"
+                    )
+                      .replace(/_/g, " ")
+                      .toLowerCase()} number`}
                     value={formData.dni_number || ""}
                     onChange={handleInputChange}
                   />
