@@ -307,7 +307,7 @@ const HeaderContent = ({ isMiniSidebar }: { isMiniSidebar: boolean }) => {
                     </div>
                     <div className="gl-header-right">
                         <div className="action-btn-container">
-                            <button
+                            {/* <button
                                 className="action-btn-base action-btn-filled"
                                 onClick={() => {
                                     const query = searchParams && searchParams.toString() ? `?${searchParams.toString()}` : "";
@@ -316,8 +316,22 @@ const HeaderContent = ({ isMiniSidebar }: { isMiniSidebar: boolean }) => {
                                 }}
                             >
                                 View Filled Form
-                            </button>
+                            </button> */}
 
+
+                            <button
+                                type="button"
+                                className="action-btn-base action-btn-filled"
+                                onClick={() => {
+                                    const query =
+                                        searchParams && searchParams.toString()
+                                            ? `?${searchParams.toString()}`
+                                            : "";
+                                    window.open(`/final-back-to-agenda${query}`, "_blank");
+                                }}
+                            >
+                                View Filled Form
+                            </button>
                             <button className="action-btn-base action-btn-outline" data-bs-toggle="modal" data-bs-target="#endSessionModal">
                                 <span className="action-btn-icon">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

@@ -562,6 +562,7 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
       );
     } finally {
       setIsRequestingPayment(false);
+      window.close();
     }
   };
 
