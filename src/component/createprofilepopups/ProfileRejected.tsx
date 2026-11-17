@@ -3,9 +3,10 @@ import React from 'react'
 interface ProfileRejectedProps {
   isOpen: boolean;
   onClose: () => void;
+  rejectionReson: string
 }
 
-const ProfileRejected: React.FC<ProfileRejectedProps> = ({ isOpen, onClose }) => {
+const ProfileRejected: React.FC<ProfileRejectedProps> = ({ isOpen, onClose, rejectionReson }) => {
   return (
     <>
       <div className={`modal fade ${isOpen ? 'show' : ''}`} style={{ display: isOpen ? 'block' : 'none', zIndex: 1050 }} tabIndex={-1} aria-hidden={!isOpen}>
@@ -28,9 +29,9 @@ const ProfileRejected: React.FC<ProfileRejectedProps> = ({ isOpen, onClose }) =>
                 Unfortunately, your profile has been rejected. Please contact support for more information or register again with updated credentials.
               </p>
               <div className="verification-issue">
-                Rejection reasons may include incomplete certifications or verification issues.
+                {rejectionReson}
               </div>
-              
+
               <button type="button" onClick={onClose} className="btn-custom-ok border-0 w-100 mb-2" style={{ cursor: 'pointer' }}>Contact Support</button>
               <button type="button" onClick={onClose} className="secondary-cta border-0 w-100" style={{ background: 'transparent', cursor: 'pointer' }}>Register Again</button>
 

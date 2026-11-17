@@ -105,12 +105,13 @@ const MyProfile = () => {
   const [specializationOptions, setSpecializationOptions] = useState<
     { id: any; name: string }[]
   >([]);
+
   const [consultationOptions, setConsultationOptions] = useState<
     { id: any; name: string }[]
   >([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
+  const [rejectionReson, setRessonForRej] = useState<string>("");
   const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
   const [isUnderReviewModalOpen, setIsUnderReviewModalOpen] = useState(false);
   const [isApprovedModalOpen, setIsApprovedModalOpen] = useState(false);
@@ -348,6 +349,7 @@ const MyProfile = () => {
               return;
             } else if (therapist.approval_status === "rejected") {
               setIsRejectedModalOpen(true);
+              setRessonForRej(therapist.reason_of_rejection)
             } else {
               setIsUnderReviewModalOpen(true);
             }
@@ -1134,13 +1136,12 @@ const MyProfile = () => {
                             right: "8px",
                             zIndex: 5,
                             fontSize: "11px",
-                            padding: "4px 8px",
-                            background:
-                              "var(--tp-olive-green, linear-gradient(180deg, #93996d 0%, #52553e 100%))",
-                            border: "1px solid var(--tp-olive-green, #52553e)",
-                            borderRadius: "4px",
+                            padding: "4px 12px",
+                            background: "linear-gradient(180deg, #5e3e46 0%, #492f35 100%)",
+                            border: "none",
+                            borderRadius: "9999px",
                             color: "#ffffff",
-                            fontWeight: "600",
+                            fontWeight: "500",
                             cursor: "pointer",
                           }}
                           onClick={() => handleSendOtp("phone")}
@@ -2335,6 +2336,7 @@ const MyProfile = () => {
       />
       <ProfileRejected
         isOpen={isRejectedModalOpen}
+        rejectionReson={rejectionReson}
         onClose={() => {
           setIsRejectedModalOpen(false);
         }}
