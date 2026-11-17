@@ -90,6 +90,31 @@ const getApiErrorMessage = (res: any, fallbackMessage: string = "Failed to add p
   return fallbackMessage;
 };
 
+const getDocLabel = (type?: string, prefix: string = "") => {
+  const t = (type || "").toLowerCase().trim();
+  let label = "Document";
+  if (t === "dni") label = "DNI";
+  else if (t === "nie") label = "NIE";
+  else if (t === "passport") label = "Passport";
+  else if (t && t !== "other") {
+    label = type!.replace(/_/g, " ").trim();
+    label = label.charAt(0).toUpperCase() + label.slice(1);
+  }
+  return `${prefix}${label} Number*`;
+};
+
+const getDocPlaceholder = (type?: string, prefix: string = "") => {
+  const t = (type || "").toLowerCase().trim();
+  let label = "document";
+  if (t === "dni") label = "DNI";
+  else if (t === "nie") label = "NIE";
+  else if (t === "passport") label = "passport";
+  else if (t && t !== "other") {
+    label = type!.replace(/_/g, " ").trim().toLowerCase();
+  }
+  return `Enter ${prefix ? prefix.toLowerCase() : ""}${label} number`;
+};
+
 interface AddPatientFormData {
   first_name: string;
   surname_one: string;
@@ -252,7 +277,7 @@ const AddClinicPatient = () => {
       newErrors.doc_type = "Document Type is required";
     }
     if (!formData.doc_number || !formData.doc_number.trim()) {
-      newErrors.doc_number = "Document Number is required";
+      newErrors.doc_number = `${getDocLabel(formData.doc_type).replace("*", "")} is required`;
     }
     if (!formData.phone || !formData.phone.trim()) {
       newErrors.phone = "Phone is required";
@@ -320,7 +345,7 @@ const AddClinicPatient = () => {
         newErrors.partner_surname_one = "Partner Surname 1 is required";
       }
       if (!formData.partner_doc_number || !formData.partner_doc_number.trim()) {
-        newErrors.partner_doc_number = "Partner Document Number is required";
+        newErrors.partner_doc_number = `${getDocLabel(formData.partner_doc_type, "Partner ").replace("*", "")} is required`;
       }
       if (formData.partner_email && formData.partner_email.trim() && !emailRegex.test(formData.partner_email.trim())) {
         newErrors.partner_email = "Invalid Partner email format";
@@ -546,8 +571,18 @@ const AddClinicPatient = () => {
               </div>
 
               <div className="acp-input-group">
-                <label className="acp-field-label">Document Number*</label>
-                <input type="text" value={formData?.doc_number || ""} onChange={handleInput} placeholder="Enter document number" name='doc_number' className="acp-form-input-field" required />
+                <label className="acp-field-label">
+                  {getDocLabel(formData?.doc_type)}
+                </label>
+                <input
+                  type="text"
+                  value={formData?.doc_number || ""}
+                  onChange={handleInput}
+                  placeholder={getDocPlaceholder(formData?.doc_type)}
+                  name="doc_number"
+                  className="acp-form-input-field"
+                  required
+                />
                 {errors.doc_number && <div style={{ color: "red", fontSize: "12px", marginTop: "4px" }}>{errors.doc_number}</div>}
               </div>
 
@@ -919,8 +954,21 @@ const AddClinicPatient = () => {
 
                 <div className="acp-grid-row acp-grid-3cols" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px', marginBottom: '24px' }}>
                   <div className="acp-input-group">
-                    <label className="acp-field-label">Partner Doc. Number*</label>
-                    <input type="text" value={formData?.partner_doc_number || ""} onChange={handleInput} placeholder="Enter document number" name="partner_doc_number" className="acp-form-input-field" required />
+                    <label className="acp-field-label">
+                      {getDocLabel(formData?.partner_doc_type, "Partner ")}
+                    </label>
+                    <input
+                      type="text"
+                      value={formData?.partner_doc_number || ""}
+                      onChange={handleInput}
+                      placeholder={getDocPlaceholder(
+                        formData?.partner_doc_type,
+                        "partner "
+                      )}
+                      name="partner_doc_number"
+                      className="acp-form-input-field"
+                      required
+                    />
                     {errors.partner_doc_number && <div style={{ color: "red", fontSize: "12px", marginTop: "4px" }}>{errors.partner_doc_number}</div>}
                   </div>
                   <div className="acp-input-group">

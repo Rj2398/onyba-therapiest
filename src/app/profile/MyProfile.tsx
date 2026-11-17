@@ -497,6 +497,27 @@ const MyProfile = () => {
               .filter((c: any) => Boolean(c.name));
           }
 
+          // Preload remote certificate blobs into File objects so they are ready for re-submission
+          existingCerts.forEach(async (cert: any) => {
+            if (cert.url) {
+              try {
+                const res = await fetch(cert.url);
+                if (res.ok) {
+                  const blob = await res.blob();
+                  const filename = cert.name || "certificate.png";
+                  const ext = filename.split(".").pop()?.toLowerCase() || "png";
+                  const mimeType =
+                    blob.type && blob.type !== "application/octet-stream"
+                      ? blob.type
+                      : ext === "pdf"
+                      ? "application/pdf"
+                      : `image/${ext === "jpg" ? "jpeg" : ext}`;
+                  cert.fileObj = new File([blob], filename, { type: mimeType });
+                }
+              } catch (_) {}
+            }
+          });
+
           setFormData((prev: any) => ({
             ...prev,
             profile_image_url: therapist.profile_image || "",
@@ -1074,11 +1095,12 @@ const MyProfile = () => {
         payload.append("longitude", formData.longitude || "");
         payload.append("clinic_latitude", formData.clinic_latitude || "");
         payload.append("clinic_longitude", formData.clinic_longitude || "");
-        // payload.append('type_of_service[]', formData.therapyTypes.map((t: string) => t.toLowerCase()).join(','));
-        payload.append("service_id[]", formData.therapyTypes.join(","));
-        payload.append("service_id", formData.therapyTypes.join(","));
+        // 1. service_id[]: Append each selected service ID individually
+        formData.therapyTypes.forEach((id: any) => {
+          payload.append("service_id[]", String(id));
+        });
 
-        // Map specialization names to their IDs
+        // 2. specialization_id[]: Append each specialization ID individually
         const specIds = formData.specilizations
           .map(
             (name: string) =>
@@ -1086,13 +1108,12 @@ const MyProfile = () => {
                 (o) => o.name.toLowerCase() === name.toLowerCase()
               )?.id ?? name
           )
-          .filter(Boolean)
-          .join(",");
-        payload.append("specialization_id[]", specIds);
-        payload.append("specialization_id", specIds);
-        payload.append("specialization", specIds);
+          .filter(Boolean);
+        specIds.forEach((id: any) => {
+          payload.append("specialization_id[]", String(id));
+        });
 
-        // Map consultation reason names to their IDs
+        // 3. reason_of_consultation_id[]: Append each consultation reason ID individually
         const reasonIds = formData.consultationReasons
           .map(
             (name: string) =>
@@ -1100,11 +1121,10 @@ const MyProfile = () => {
                 (o) => o.name.toLowerCase() === name.toLowerCase()
               )?.id ?? name
           )
-          .filter(Boolean)
-          .join(",");
-        payload.append("reason_of_consultation_id[]", reasonIds);
-        payload.append("reason_of_consultation_id", reasonIds);
-        payload.append("reason_of_consultation", reasonIds);
+          .filter(Boolean);
+        reasonIds.forEach((id: any) => {
+          payload.append("reason_of_consultation_id[]", String(id));
+        });
 
         payload.append("experience", formData.experience);
         payload.append("description", formData.bio);
@@ -1114,15 +1134,50 @@ const MyProfile = () => {
           payload.append("profile_image", formData.userImage);
         }
 
-        // Upload only local certificate files
-        formData.certificate.forEach((file: any) => {
-          if (!file.isRemote) {
-            payload.append("certificates[]", file);
-            if (file.customName) {
-              payload.append("certificates_name[]", file.customName);
+        // 4. certificates[] & certificates_name[]: Append all certificates (both remote and new local files)
+        for (const file of formData.certificate) {
+          let fileToSend = file;
+          const nameToSend = file.customName || file.name || "certificate";
+
+          if (file.isRemote) {
+            if (file.fileObj) {
+              fileToSend = file.fileObj;
+            } else if (file.url) {
+              try {
+                const res = await fetch(file.url);
+                if (res.ok) {
+                  const blob = await res.blob();
+                  const filename =
+                    file.name ||
+                    (file.path
+                      ? file.path.substring(file.path.lastIndexOf("/") + 1)
+                      : "certificate.png");
+                  const ext = filename.split(".").pop()?.toLowerCase() || "png";
+                  const mimeType =
+                    blob.type && blob.type !== "application/octet-stream"
+                      ? blob.type
+                      : ext === "pdf"
+                      ? "application/pdf"
+                      : `image/${ext === "jpg" ? "jpeg" : ext}`;
+                  fileToSend = new File([blob], filename, { type: mimeType });
+                  file.fileObj = fileToSend;
+                }
+              } catch (fetchErr) {
+                console.warn("Could not fetch remote cert blob:", fetchErr);
+                const filename = file.name || "certificate.png";
+                const ext = filename.split(".").pop()?.toLowerCase() || "png";
+                const mimeType =
+                  ext === "pdf"
+                    ? "application/pdf"
+                    : `image/${ext === "jpg" ? "jpeg" : ext}`;
+                fileToSend = new File([""], filename, { type: mimeType });
+              }
             }
           }
-        });
+
+          payload.append("certificates[]", fileToSend);
+          payload.append("certificates_name[]", nameToSend);
+        }
 
         // Convert FormData to a readable JSON object for debugging
         const debugObj: Record<string, any> = {};
