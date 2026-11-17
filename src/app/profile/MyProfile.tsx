@@ -306,7 +306,12 @@ const MyProfile = () => {
             country: therapist.country || prev.country || "",
             certificate: existingCerts,
             sessionMode: therapist.session_mode
-              ? therapist.session_mode.split(",")
+              ? therapist.session_mode.trim().toLowerCase() === "both"
+                ? ["online", "in_person"]
+                : therapist.session_mode
+                    .split(",")
+                    .map((m: string) => m.trim().toLowerCase())
+                    .filter(Boolean)
               : prev.sessionMode,
             clinic_name: therapist.clinic_name || "",
             clinicAddress: therapist.clinic_address || "",
@@ -809,7 +814,17 @@ const MyProfile = () => {
         payload.append("postal_code", formData.postal_code);
         payload.append("province", formData.province);
         payload.append("country", formData.country);
-        payload.append("session_mode", formData.sessionMode.join(","));
+        const hasOnline = formData.sessionMode.includes("online");
+        const hasInPerson = formData.sessionMode.includes("in_person");
+        const sessionModeValue =
+          (hasOnline && hasInPerson) || formData.sessionMode.includes("both")
+            ? "both"
+            : hasOnline
+            ? "online"
+            : hasInPerson
+            ? "in_person"
+            : formData.sessionMode.join(",");
+        payload.append("session_mode", sessionModeValue);
         payload.append("clinic_name", formData.clinic_name || "");
         payload.append("clinic_address", formData.clinicAddress || "");
         payload.append("latitude", formData.latitude || "");
