@@ -293,6 +293,21 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
   const shouldHideActionButtons =
     isCancelled || isCompleted || (isEndTimePassed && !isUpcoming);
 
+  const pDetails = Array.isArray(sessionData?.payment_details)
+    ? sessionData.payment_details[0]
+    : sessionData?.payment_details;
+
+  const isAdditionalPaymentRequested = Boolean(
+    pDetails?.additional_payment_requested === true ||
+    pDetails?.additional_payment_requested === 1 ||
+    pDetails?.additional_payment_requested === "1" ||
+    pDetails?.additional_payment_requested === "true" ||
+    sessionData?.additional_payment_requested === true ||
+    sessionData?.additional_payment_requested === 1 ||
+    sessionData?.additional_payment_requested === "1" ||
+    sessionData?.additional_payment_requested === "true"
+  );
+
   const [serviceList, setServiceList] = useState<{ id: any; name: string }[]>(
     []
   );
@@ -422,6 +437,11 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
   }, [sessionData, router, session_id]);
 
   const handleSelectService = async (service: any) => {
+    if (isAdditionalPaymentRequested) {
+      toast.error("Additional payment has already been requested for this session.");
+      return;
+    }
+
     setSelectedServiceId(service.id);
     setIsServiceDropdownOpen(false);
 
@@ -1970,13 +1990,26 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
 
                 <div
                   className="ony-summary-v2-select-box-wrapper"
-                  style={{ position: "relative", cursor: "pointer" }}
-                  onClick={() =>
-                    setIsServiceDropdownOpen(!isServiceDropdownOpen)
-                  }
+                  style={{
+                    position: "relative",
+                    cursor: isAdditionalPaymentRequested ? "not-allowed" : "pointer",
+                    backgroundColor: isAdditionalPaymentRequested ? "#f5f5f5" : undefined,
+                    opacity: isAdditionalPaymentRequested ? 0.7 : 1,
+                  }}
+                  aria-disabled={isAdditionalPaymentRequested}
+                  onClick={() => {
+                    if (!isAdditionalPaymentRequested) {
+                      setIsServiceDropdownOpen(!isServiceDropdownOpen);
+                    }
+                  }}
                 >
                   <div className="ony-summary-v2-selected-tag">
-                    <span className="ony-summary-v2-tag-text">
+                    <span
+                      className="ony-summary-v2-tag-text"
+                      style={{
+                        color: isAdditionalPaymentRequested ? "#888" : undefined,
+                      }}
+                    >
                       {(() => {
                         const selectedService = serviceList.find(
                           (s) => String(s.id) === String(selectedServiceId)
@@ -1987,7 +2020,7 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
                         return "Select Service to Add";
                       })()}
                     </span>
-                    {selectedServiceId && (
+                    {selectedServiceId && !isAdditionalPaymentRequested && (
                       <button
                         type="button"
                         className="ony-summary-v2-tag-close-btn"
@@ -2009,13 +2042,18 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
                     )}
                   </div>
 
-                  <div className="ony-summary-v2-dropdown-arrow">
+                  <div
+                    className="ony-summary-v2-dropdown-arrow"
+                    style={{
+                      opacity: isAdditionalPaymentRequested ? 0.4 : 1,
+                    }}
+                  >
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                       <path d="M7 10l5 5 5-5H7z" fill="currentColor" />
                     </svg>
                   </div>
 
-                  {isServiceDropdownOpen && (
+                  {isServiceDropdownOpen && !isAdditionalPaymentRequested && (
                     <div
                       style={{
                         position: "absolute",
@@ -2069,6 +2107,19 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
                     </div>
                   )}
                 </div>
+
+                {isAdditionalPaymentRequested && (
+                  <span
+                    style={{
+                      fontSize: "12px",
+                      color: "#8c7b83",
+                      marginTop: "6px",
+                      display: "block",
+                    }}
+                  >
+                    Additional payment has already been requested for this session. Services cannot be modified.
+                  </span>
+                )}
               </div>
             </div>
           </div>
@@ -2830,15 +2881,6 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
               </div>
 
               {(() => {
-                const pDetails = Array.isArray(sessionData?.payment_details)
-                  ? sessionData.payment_details[0]
-                  : sessionData?.payment_details;
-
-                const isAdditionalPaymentRequested = Boolean(
-                  pDetails?.additional_payment_requested ??
-                  sessionData?.additional_payment_requested
-                );
-
                 const isDisabled =
                   isAdditionalPaymentRequested || isRequestingPayment;
 
