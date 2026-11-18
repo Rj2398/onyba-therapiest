@@ -93,6 +93,7 @@ export const requestApi = async ({
     "upload-session-documents",
     "store-session-recording",
     "update-ai-summary",
+    "delete-holiday",
   ];
 
   const cleanEndpoint = endpoint.replace(/^\/+/, "");

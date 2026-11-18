@@ -18,6 +18,7 @@ export const uploadMedia = async (endpoint: string, body: FormData) => {
     "upload-session-documents",
     "store-session-recording",
     "update-ai-summary",
+    "delete-holiday",
   ];
 
   const cleanEndpoint = endpoint.replace(/^\/+/, "");

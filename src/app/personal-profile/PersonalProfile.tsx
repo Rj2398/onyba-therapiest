@@ -216,6 +216,7 @@ const PersonalProfile = () => {
     endDate: null,
   });
   const [holidayList, setHolidayList] = useState<DateRange[]>([]);
+  const [deletingHolidayIndex, setDeletingHolidayIndex] = useState<number | null>(null);
 
   const [selectSession, setSelectSession] = useState(false);
   const [selectedModes, setSelectedModes] = useState<string[]>([]);
@@ -1026,10 +1027,51 @@ const PersonalProfile = () => {
     syncHolidays(merged);
   };
 
-  const removeHoliday = (index: number) => {
-    const updated = holidayList.filter((_, i) => i !== index);
-    setHolidayList(updated);
-    syncHolidays(updated);
+  const removeHoliday = async (index: number) => {
+    const item = holidayList[index];
+    if (!item || !item.startDate || !item.endDate) return;
+
+    const fromDateStr = formatDateToYMD(item.startDate);
+    const toDateStr = formatDateToYMD(item.endDate);
+
+    setDeletingHolidayIndex(index);
+    try {
+      toast.loading("Deleting holiday...", { toastId: "delete-holiday" });
+
+      const formData = new FormData();
+      formData.append("from_date", fromDateStr);
+      formData.append("to_date", toDateStr);
+
+      const response = await requestApi({
+        endpoint: "/api/delete-holiday",
+        method: "POST",
+        data: formData,
+        isFormData: true,
+      });
+
+      toast.dismiss("delete-holiday");
+
+      if (response && (response.success === true || response.code === 200)) {
+        toast.success(response?.message || "Holiday deleted successfully.");
+        const updated = holidayList.filter((_, i) => i !== index);
+        setHolidayList(updated);
+        fetchAvailability(currentDate);
+      } else {
+        toast.error(
+          getApiErrorMessage(response, "Failed to delete holiday")
+        );
+      }
+    } catch (err: any) {
+      toast.dismiss("delete-holiday");
+      console.error("Failed to delete holiday:", err);
+      toast.error(
+        err?.response?.data?.message ||
+        err?.message ||
+        "Failed to delete holiday"
+      );
+    } finally {
+      setDeletingHolidayIndex(null);
+    }
   };
 
   const formatHolidayDate = (date: Date | null) => {
@@ -2232,8 +2274,18 @@ const PersonalProfile = () => {
 
                             <span>{formatHolidayDate(item.endDate)}</span>
 
-                            <button onClick={() => removeHoliday(index)}>
-                              <ImBin style={{ color: "red" }} />
+                            <button
+                              type="button"
+                              onClick={() => removeHoliday(index)}
+                              disabled={deletingHolidayIndex === index}
+                              style={{
+                                background: "none",
+                                border: "none",
+                                cursor: deletingHolidayIndex === index ? "not-allowed" : "pointer",
+                                opacity: deletingHolidayIndex === index ? 0.5 : 1,
+                              }}
+                            >
+                              <ImBin style={{ color: deletingHolidayIndex === index ? "#888" : "red" }} />
                             </button>
                           </div>
                         ))}
