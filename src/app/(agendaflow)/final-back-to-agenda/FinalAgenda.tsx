@@ -277,8 +277,6 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
     return new Date() > sessionEnd;
   }, [sessionData?.session_date, sessionData?.session_end_time]);
 
-  const isPastUpcoming = isEndTimePassed && isUpcoming;
-
   const isSessionVerified = Boolean(
     sessionData?.is_session_verified === true ||
     sessionData?.is_session_verified === 1 ||
@@ -290,8 +288,7 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
     initialSessionData?.is_session_verified === 1
   );
 
-  const shouldHideActionButtons =
-    isCancelled || isCompleted || (isEndTimePassed && !isUpcoming);
+  const shouldHideActionButtons = isCancelled || isCompleted;
 
   const pDetails = Array.isArray(sessionData?.payment_details)
     ? sessionData.payment_details[0]
@@ -1238,7 +1235,7 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
             <div className="patient-nav-container">
               {!shouldHideActionButtons && (
                 <>
-                  {isPastUpcoming ? (
+                  {isEndTimePassed ? (
                     <button
                       type="button"
                       className="patient-link-cancel-session"

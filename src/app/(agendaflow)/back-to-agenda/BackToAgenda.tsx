@@ -194,10 +194,7 @@ const BackToAgendaContent = () => {
     return new Date() > sessionEnd;
   }, [sessionData?.session_date, sessionData?.session_end_time]);
 
-  const isPastUpcoming = isEndTimePassed && isUpcoming;
-
-  const shouldHideActionButtons =
-    isCancelled || isCompleted || (isEndTimePassed && !isUpcoming);
+  const shouldHideActionButtons = isCancelled || isCompleted;
 
   const [isStartingSession, setIsStartingSession] = useState<boolean>(false);
 
@@ -645,7 +642,7 @@ const BackToAgendaContent = () => {
             <div className="patient-nav-container">
               {!shouldHideActionButtons && (
                 <>
-                  {isPastUpcoming ? (
+                  {isEndTimePassed ? (
                     <button
                       type="button"
                       className="patient-link-cancel-session"
