@@ -6790,19 +6790,22 @@ div#accordionExample .accordion-item {
   background-color: #000000;
   border-radius: 28px;
   overflow: hidden;
-  height: 640px;
+  height: 100%;
+  min-height: 480px;
   position: relative;
 }
 
 /* Video Stream Frame simulating a camera feed background color */
 .ps-session-video-viewport {
-  flex-grow: 1;
+  flex: 1 1 0;
+  min-height: 0;
   background-color: #e5c5b5;
   /* Matching the soft warm wall tint of the image */
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
 }
 
 /* Patient Name Overlay on Top Left */
@@ -6907,11 +6910,15 @@ div#accordionExample .accordion-item {
 
 /* Video Control Action Center Dock */
 .ps-session-video-controls-dock {
+  flex-shrink: 0;
   background-color: #000000;
-  padding: 16px 24px;
+  padding: 14px 24px;
   display: flex;
   justify-content: center;
-  gap: 32px;
+  align-items: center;
+  gap: 28px;
+  position: relative;
+  z-index: 15;
 }
 
 .ps-session-dock-btn {
@@ -7276,15 +7283,21 @@ div#accordionExample .accordion-item {
 }
 
 /* Main Layout Wrapper update */
+.ps-session-conference-main {
+  min-height: calc(100vh - 79px);
+  overflow-y: auto;
+  padding: 20px 30px;
+}
+
 .ps-session-page-grid {
   display: grid;
   grid-template-columns: 1.4fr 1fr;
   gap: 20px;
   max-width: 1400px;
   margin: 0 auto;
-  /* Page level scroll rokne ke liye height fix */
-  height: calc(100vh - 48px);
-  overflow: hidden;
+  height: calc(100vh - 120px);
+  min-height: 520px;
+  overflow: visible;
 }
 
 /* Right Side Layout Stack update */
@@ -7292,11 +7305,10 @@ div#accordionExample .accordion-item {
   display: flex;
   flex-direction: column;
   gap: 20px;
-  /* Sidebar ke andar scroll lane ke liye properties */
   height: 100%;
+  max-height: calc(100vh - 120px);
   overflow-y: auto;
   padding-right: 8px;
-  /* Scrollbar ke liye thoda gap */
 }
 
 /* Optional: Right side scrollbar ko thoda clean aur modern banane ke liye */
@@ -7322,11 +7334,20 @@ div#accordionExample .accordion-item {
   .ps-session-page-grid {
     grid-template-columns: 1fr;
     height: auto;
+    min-height: auto;
     overflow: visible;
+  }
+
+  .ps-session-video-panel {
+    height: 60vh;
+    min-height: 400px;
+    max-height: 580px;
+    margin-bottom: 20px;
   }
 
   .ps-session-right-sidebar {
     height: auto;
+    max-height: none;
     overflow-y: visible;
   }
 }

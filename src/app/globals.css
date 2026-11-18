@@ -44,3 +44,87 @@ body {
   position: absolute;
   bottom: -6px;
 }
+
+/* Video Conference Responsive & Visibility Fix */
+.ps-session-conference-main {
+  min-height: calc(100vh - 79px);
+  overflow-y: auto !important;
+  padding: 20px 30px;
+}
+
+.ps-session-page-grid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+  height: calc(100vh - 120px) !important;
+  min-height: 520px;
+  overflow: visible !important;
+}
+
+.ps-session-video-panel {
+  display: flex !important;
+  flex-direction: column !important;
+  background-color: #000000;
+  border-radius: 28px;
+  overflow: hidden !important;
+  height: 100% !important;
+  min-height: 480px;
+  position: relative;
+}
+
+.ps-session-video-viewport {
+  flex: 1 1 0 !important;
+  min-height: 0 !important;
+  background-color: #e5c5b5;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.ps-session-video-controls-dock {
+  flex-shrink: 0 !important;
+  background-color: #000000;
+  padding: 14px 24px !important;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 28px;
+  position: relative;
+  z-index: 15;
+}
+
+.ps-session-right-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  height: 100% !important;
+  max-height: calc(100vh - 120px) !important;
+  overflow-y: auto !important;
+  padding-right: 8px;
+}
+
+@media (max-width: 1024px) {
+  .ps-session-page-grid {
+    grid-template-columns: 1fr !important;
+    height: auto !important;
+    min-height: auto !important;
+    overflow: visible !important;
+  }
+
+  .ps-session-video-panel {
+    height: 60vh !important;
+    min-height: 400px !important;
+    max-height: 580px !important;
+    margin-bottom: 20px;
+  }
+
+  .ps-session-right-sidebar {
+    height: auto !important;
+    max-height: none !important;
+    overflow-y: visible !important;
+  }
+}
