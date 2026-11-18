@@ -385,12 +385,12 @@ const MyProfile = () => {
         if (therapist) {
           const activeSpecs = extractActiveItems(
             therapist.specialization_id ??
-              therapist.specialization ??
-              therapist.specializations,
+            therapist.specialization ??
+            therapist.specializations,
             therapist.therapist_specializations ??
-              therapist.specializations ??
-              profileRes?.data?.therapist_specializations ??
-              profileRes?.data?.specializations,
+            therapist.specializations ??
+            profileRes?.data?.therapist_specializations ??
+            profileRes?.data?.specializations,
             specs
           );
 
@@ -402,13 +402,13 @@ const MyProfile = () => {
 
           const activeReasons = extractActiveItems(
             therapist.reason_of_consultation_id ??
-              therapist.reason_of_consultation ??
-              therapist.consultation_reasons,
+            therapist.reason_of_consultation ??
+            therapist.consultation_reasons,
             therapist.therapist_consultation_reasons ??
-              therapist.consultation_reasons ??
-              therapist.reasons ??
-              profileRes?.data?.therapist_consultation_reasons ??
-              profileRes?.data?.consultation_reasons,
+            therapist.consultation_reasons ??
+            therapist.reasons ??
+            profileRes?.data?.therapist_consultation_reasons ??
+            profileRes?.data?.consultation_reasons,
             reasons
           );
 
@@ -496,27 +496,6 @@ const MyProfile = () => {
               })
               .filter((c: any) => Boolean(c.name));
           }
-
-          // Preload remote certificate blobs into File objects so they are ready for re-submission
-          existingCerts.forEach(async (cert: any) => {
-            if (cert.url) {
-              try {
-                const res = await fetch(cert.url);
-                if (res.ok) {
-                  const blob = await res.blob();
-                  const filename = cert.name || "certificate.png";
-                  const ext = filename.split(".").pop()?.toLowerCase() || "png";
-                  const mimeType =
-                    blob.type && blob.type !== "application/octet-stream"
-                      ? blob.type
-                      : ext === "pdf"
-                      ? "application/pdf"
-                      : `image/${ext === "jpg" ? "jpeg" : ext}`;
-                  cert.fileObj = new File([blob], filename, { type: mimeType });
-                }
-              } catch (_) {}
-            }
-          });
 
           setFormData((prev: any) => ({
             ...prev,
@@ -1134,49 +1113,17 @@ const MyProfile = () => {
           payload.append("profile_image", formData.userImage);
         }
 
-        // 4. certificates[] & certificates_name[]: Append all certificates (both remote and new local files)
-        for (const file of formData.certificate) {
-          let fileToSend = file;
-          const nameToSend = file.customName || file.name || "certificate";
+        // 4. certificates[] & certificates_name[]: Only append if user picked new certificates from the system
+        const newLocalCerts = (formData.certificate || []).filter(
+          (file: any) => !file.isRemote
+        );
 
-          if (file.isRemote) {
-            if (file.fileObj) {
-              fileToSend = file.fileObj;
-            } else if (file.url) {
-              try {
-                const res = await fetch(file.url);
-                if (res.ok) {
-                  const blob = await res.blob();
-                  const filename =
-                    file.name ||
-                    (file.path
-                      ? file.path.substring(file.path.lastIndexOf("/") + 1)
-                      : "certificate.png");
-                  const ext = filename.split(".").pop()?.toLowerCase() || "png";
-                  const mimeType =
-                    blob.type && blob.type !== "application/octet-stream"
-                      ? blob.type
-                      : ext === "pdf"
-                      ? "application/pdf"
-                      : `image/${ext === "jpg" ? "jpeg" : ext}`;
-                  fileToSend = new File([blob], filename, { type: mimeType });
-                  file.fileObj = fileToSend;
-                }
-              } catch (fetchErr) {
-                console.warn("Could not fetch remote cert blob:", fetchErr);
-                const filename = file.name || "certificate.png";
-                const ext = filename.split(".").pop()?.toLowerCase() || "png";
-                const mimeType =
-                  ext === "pdf"
-                    ? "application/pdf"
-                    : `image/${ext === "jpg" ? "jpeg" : ext}`;
-                fileToSend = new File([""], filename, { type: mimeType });
-              }
-            }
+        if (newLocalCerts.length > 0) {
+          for (const file of newLocalCerts) {
+            const nameToSend = file.customName || file.name || "certificate";
+            payload.append("certificates[]", file);
+            payload.append("certificates_name[]", nameToSend);
           }
-
-          payload.append("certificates[]", fileToSend);
-          payload.append("certificates_name[]", nameToSend);
         }
 
         // Convert FormData to a readable JSON object for debugging
@@ -1359,7 +1306,7 @@ const MyProfile = () => {
 
               <div className="row g-4">
                 <div className="col-md-4">
-                  <label className="tp-label">Full Name*</label>
+                  <label className="tp-label">Name*</label>
                   <input
                     type="text"
                     className="tp-input"
