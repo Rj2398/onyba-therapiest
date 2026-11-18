@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useState, useEffect, useMemo } from "react";
 import ReasonConsultationPopup from "@/src/component/personalprofilepopup/ReasonConsultationPopup";
 import SpecializationPopup from "@/src/component/personalprofilepopup/SpecializationPopup";
 import { MdOutlineWatchLater } from "react-icons/md";
@@ -283,6 +283,23 @@ const PersonalProfile = () => {
   const [holidays, setHolidays] = useState<string[]>([]);
   const [monthlyAvailability, setMonthlyAvailability] = useState<any[]>([]);
 
+  const availabilityMap = useMemo(() => {
+    const map = new Map<string, any[]>();
+    if (Array.isArray(monthlyAvailability)) {
+      monthlyAvailability.forEach((item: any) => {
+        if (
+          item &&
+          item.date &&
+          Array.isArray(item.slots) &&
+          item.slots.length > 0
+        ) {
+          map.set(item.date, item.slots);
+        }
+      });
+    }
+    return map;
+  }, [monthlyAvailability]);
+
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
 
@@ -472,9 +489,17 @@ const PersonalProfile = () => {
         data: { year_month: yearMonth },
       });
 
-      if (response.success && response.data) {
+      if (
+        response &&
+        (response.success || response.code === 200) &&
+        response.data
+      ) {
         setHolidays(response.data.holidays || []);
-        setMonthlyAvailability(response.data.availability || []);
+        setMonthlyAvailability(
+          Array.isArray(response.data.availability)
+            ? response.data.availability
+            : []
+        );
         const ranges = groupDatesToRanges(response.data.holidays || []);
         setHolidayList(ranges);
       }
@@ -2069,33 +2094,64 @@ const PersonalProfile = () => {
                           month === selectedDate.getMonth() &&
                           year === selectedDate.getFullYear();
 
+                        const daySlots = day ? availabilityMap.get(dateStr) : undefined;
+                        const hasSlots = Boolean(day && daySlots && daySlots.length > 0);
+
                         return (
                           <div
                             key={index}
                             className={`onyba-avail-date-cell
-                                                            ${!day
-                                ? "onyba-avail-date-empty"
-                                : ""
-                              }
-                                                            ${isToday
-                                ? "onyba-avail-date--today"
-                                : ""
-                              }
-                                                            ${isSelected
-                                ? "onyba-avail-date--selected"
-                                : ""
-                              }
-                                                            ${isHoliday
-                                ? "onyba-avail-date--holiday"
-                                : ""
-                              }
-                                                        `}
+                              ${!day ? "onyba-avail-date-empty" : ""}
+                              ${isToday ? "onyba-avail-date--today" : ""}
+                              ${hasSlots ? "onyba-avail-date--has-slots" : ""}
+                              ${isSelected ? "onyba-avail-date--selected" : ""}
+                              ${isHoliday ? "onyba-avail-date--holiday" : ""}
+                            `}
+                            style={{
+                              ...(hasSlots && !isSelected && !isHoliday
+                                ? {
+                                    border: "2px solid #93996d",
+                                    backgroundColor: "#f0f1ee",
+                                    color: "#333333",
+                                    fontWeight: 600,
+                                  }
+                                : {}),
+                              ...(isToday && !hasSlots && !isSelected && !isHoliday
+                                ? {
+                                    border: "1.5px dashed #93996d",
+                                    backgroundColor: "transparent",
+                                  }
+                                : {}),
+                            }}
                             onClick={() => {
                               if (!day || isHoliday) return;
                               setSelectedDate(new Date(year, month, day));
                             }}
                           >
-                            {day}
+                            <span
+                              style={{
+                                position: "relative",
+                                display: "inline-flex",
+                                flexDirection: "column",
+                                alignItems: "center",
+                                justifyContent: "center",
+                              }}
+                            >
+                              <span>{day}</span>
+                              {hasSlots && (
+                                <span
+                                  className="onyba-avail-slot-dot"
+                                  style={{
+                                    width: "5px",
+                                    height: "5px",
+                                    borderRadius: "50%",
+                                    backgroundColor: isSelected ? "#ffffff" : "#93996d",
+                                    position: "absolute",
+                                    bottom: "-6px",
+                                  }}
+                                />
+                              )}
+                            </span>
                           </div>
                         );
                       })}

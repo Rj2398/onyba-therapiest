@@ -24,3 +24,23 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 } */
+
+.onyba-avail-date--has-slots {
+  background: #f0f1ee;
+  border: 2px solid #93996d;
+  color: #333333;
+  font-weight: 600;
+}
+
+.onyba-avail-date--has-slots:hover:not(.onyba-avail-date--selected) {
+  background-color: #e5e8de;
+}
+
+.onyba-avail-slot-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background-color: #93996d;
+  position: absolute;
+  bottom: -6px;
+}
