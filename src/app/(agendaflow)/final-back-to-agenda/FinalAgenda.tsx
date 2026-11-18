@@ -798,7 +798,7 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
       formData.append("summary", aiSummaryText);
 
       const response = await requestApi({
-        endpoint: "update-ai-summary",
+        endpoint: "/api/update-ai-summary",
         method: "POST",
         data: formData,
         isFormData: true,
