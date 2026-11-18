@@ -187,9 +187,9 @@ const PersonalProfile = () => {
   const [formData, setFormData] = useState({
     therapyTypes: therapistProfile?.service_id
       ? String(therapistProfile.service_id)
-          .split(",")
-          .map((id: string) => Number(id.trim()))
-          .filter(Boolean)
+        .split(",")
+        .map((id: string) => Number(id.trim()))
+        .filter(Boolean)
       : ([] as number[]),
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -2152,17 +2152,17 @@ const PersonalProfile = () => {
                             style={{
                               ...(hasSlots && !isSelected && !isHoliday
                                 ? {
-                                    border: "2px solid #93996d",
-                                    backgroundColor: "#f0f1ee",
-                                    color: "#333333",
-                                    fontWeight: 600,
-                                  }
+                                  border: "2px solid #93996d",
+                                  backgroundColor: "#f0f1ee",
+                                  color: "#333333",
+                                  fontWeight: 600,
+                                }
                                 : {}),
                               ...(isToday && !hasSlots && !isSelected && !isHoliday
                                 ? {
-                                    border: "1.5px dashed #93996d",
-                                    backgroundColor: "transparent",
-                                  }
+                                  border: "1.5px dashed #93996d",
+                                  backgroundColor: "transparent",
+                                }
                                 : {}),
                             }}
                             onClick={() => {
@@ -2213,7 +2213,7 @@ const PersonalProfile = () => {
               >
                 <div className="holiday-wrapper">
                   <label className="holiday-checkbox">
-                    <input type="checkbox" />
+                    <input type="checkbox" style={{ accentColor: "#74505c", cursor: "pointer" }} />
                     <span>Mark as Holiday or Unavailability</span>
                   </label>
 
