@@ -61,16 +61,26 @@ const AgendaContent = () => {
             formData.append('comment', commentInputText);
 
             const response = await requestApi({
-                endpoint: 'session-comment',
+                endpoint: '/api/session-comment',
                 method: 'POST',
                 data: formData,
                 isFormData: true,
             });
 
             if (response && (response.success || response.code === 200 || response.status)) {
+                toast.success(response?.message || 'Comment saved successfully!');
+                const updatedComment = commentInputText.trim();
                 setEvents(prev => prev.map(ev => {
                     if (ev.id === selectedCommentSession.id) {
-                        return { ...ev, comment: commentInputText, hasComment: true };
+                        return {
+                            ...ev,
+                            comment: updatedComment,
+                            hasComment: Boolean(updatedComment),
+                            rawItem: {
+                                ...(ev.rawItem || {}),
+                                comment: updatedComment
+                            }
+                        };
                     }
                     return ev;
                 }));
@@ -225,7 +235,8 @@ const AgendaContent = () => {
                                 sessionType: typeLabel,
                                 sessionStatus: statusLabel,
                                 session_status: rawStatus,
-                                hasComment: Boolean(item.comment || item.hasComment || item.has_comment),
+                                comment: typeof item.comment === 'string' ? item.comment : (item.session_comment || item.notes || ''),
+                                hasComment: Boolean(item.comment && String(item.comment).trim() !== ''),
                                 colorClass: modeLabel === 'In_person' ? 'agd-card-purple' : 'agd-card-green',
                                 session_mode: rawMode,
                                 is_session_verified: Boolean(
@@ -870,7 +881,7 @@ const AgendaContent = () => {
                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
                                                                     setSelectedCommentSession(event);
-                                                                    setCommentInputText(event.comment || '');
+                                                                    setCommentInputText(event.comment || event.rawItem?.comment || '');
                                                                     setShowCommentModal(true);
                                                                 }}
                                                             >
@@ -940,7 +951,7 @@ const AgendaContent = () => {
                                 fontFamily: 'inherit',
                             }}
                         >
-                            Add a comment
+                            {selectedCommentSession?.comment || selectedCommentSession?.rawItem?.comment ? "Edit Comment" : "Add a comment"}
                         </h3>
 
                         <textarea

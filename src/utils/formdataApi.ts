@@ -11,9 +11,22 @@ export const uploadMedia = async (endpoint: string, body: FormData) => {
     console.error("Error reading token:", err);
   }
 
-  const cleanBase = API_BASE_URL.replace(/\/+$/, "");
+  const proxyEndpoints = [
+    "submit-notes",
+    "session-comment",
+    "add-session-task",
+    "upload-session-documents",
+    "store-session-recording",
+  ];
+
   const cleanEndpoint = endpoint.replace(/^\/+/, "");
-  const url = `${cleanBase}/${cleanEndpoint}`;
+  const isProxy =
+    proxyEndpoints.includes(cleanEndpoint) || endpoint.startsWith("/api/");
+  const url = isProxy
+    ? endpoint.startsWith("/api/")
+      ? endpoint
+      : `/api/${cleanEndpoint}`
+    : `${API_BASE_URL.replace(/\/+$/, "")}/${cleanEndpoint}`;
 
   // Use a clean axios call without inherited default headers
   const response = await axios.post(url, body, {

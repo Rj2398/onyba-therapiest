@@ -409,7 +409,7 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
       };
 
       const response = await requestApi({
-        endpoint: "submit-notes",
+        endpoint: "/api/submit-notes",
         method: "POST",
         data: payload,
         isFormData: false,

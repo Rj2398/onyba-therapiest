@@ -855,7 +855,7 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
       formData.append("task", taskInput.trim());
 
       const response = await requestApi({
-        endpoint: "add-session-task",
+        endpoint: "/api/add-session-task",
         method: "POST",
         data: formData,
         isFormData: true,
@@ -1159,7 +1159,7 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
       formData.append("notes", notesText);
 
       const response = await requestApi({
-        endpoint: "submit-notes",
+        endpoint: "/api/submit-notes",
         method: "POST",
         data: formData,
         isFormData: true,

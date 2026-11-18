@@ -85,8 +85,25 @@ export const requestApi = async ({
   const isForm =
     isFormData || (typeof FormData !== "undefined" && data instanceof FormData);
 
+  // Local proxy routes to bypass 406/WAF issues on staging server
+  const proxyEndpoints = [
+    "submit-notes",
+    "session-comment",
+    "add-session-task",
+    "upload-session-documents",
+    "store-session-recording",
+  ];
+
+  const cleanEndpoint = endpoint.replace(/^\/+/, "");
+  const isProxy =
+    proxyEndpoints.includes(cleanEndpoint) || endpoint.startsWith("/api/");
+
   const config: any = {
-    url: endpoint,
+    url: endpoint.startsWith("/api/")
+      ? endpoint
+      : isProxy
+      ? `/api/${cleanEndpoint}`
+      : endpoint,
     method: upperMethod as Method,
     headers: isForm
       ? {}
@@ -94,6 +111,10 @@ export const requestApi = async ({
           "Content-Type": "application/json",
         },
   };
+
+  if (isProxy) {
+    config.baseURL = "";
+  }
 
   if (upperMethod === "GET" && data) {
     config.params = data;

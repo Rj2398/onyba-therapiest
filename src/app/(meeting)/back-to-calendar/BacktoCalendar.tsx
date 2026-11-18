@@ -539,7 +539,7 @@ const BacktoCalendarContent = () => {
       };
 
       const response = await requestApi({
-        endpoint: "submit-notes",
+        endpoint: "/api/submit-notes",
         method: "POST",
         data: payload,
       });
