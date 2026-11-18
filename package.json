@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "gpush": "git add . && git commit -m 'push' && git push"
   },
   "dependencies": {
     "agora-rtc-react": "^2.5.1",
