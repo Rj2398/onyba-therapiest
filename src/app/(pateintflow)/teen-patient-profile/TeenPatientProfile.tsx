@@ -28,9 +28,9 @@ const TeenPatientProfile = () => {
         return true;
     });
 
-    const totalPages = Math.max(1, Math.ceil(filteredHistory.length / ITEMS_PER_PAGE));
-    const validPage = Math.min(currentPage, totalPages);
-    const paginatedHistory = filteredHistory.slice((validPage - 1) * ITEMS_PER_PAGE, validPage * ITEMS_PER_PAGE);
+    const totalPages = filteredHistory.length > 0 ? Math.ceil(filteredHistory.length / ITEMS_PER_PAGE) : 0;
+    const validPage = totalPages > 0 ? Math.min(currentPage, totalPages) : 1;
+    const paginatedHistory = totalPages > 0 ? filteredHistory.slice((validPage - 1) * ITEMS_PER_PAGE, validPage * ITEMS_PER_PAGE) : [];
 
     return (
         <>
@@ -234,11 +234,15 @@ const TeenPatientProfile = () => {
                             </table>
                         </div>
 
-                        <Pagination
-                            currentPage={validPage}
-                            totalPages={totalPages}
-                            onPageChange={(p) => setCurrentPage(p)}
-                        />
+                        {paginatedHistory.length > 0 && totalPages > 0 && (
+                            <Pagination
+                                currentPage={validPage}
+                                totalPages={totalPages}
+                                totalRecords={filteredHistory.length}
+                                hasData={filteredHistory.length > 0}
+                                onPageChange={(p) => setCurrentPage(p)}
+                            />
+                        )}
 
                     </div>
                 </div>

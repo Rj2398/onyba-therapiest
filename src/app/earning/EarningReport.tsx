@@ -136,13 +136,16 @@ const EarningReport = () => {
                 setIsLedgerLoaded(true);
 
                 const pages =
-                    resData?.last_page ||
-                    resData?.pagination?.last_page ||
-                    Math.max(1, Math.ceil((resData?.total || items.length) / ITEMS_PER_PAGE));
-                setLedgerTotalPages(pages || 1);
+                    items.length === 0
+                        ? 0
+                        : (resData?.last_page ||
+                           resData?.pagination?.last_page ||
+                           Math.ceil((resData?.total || items.length) / ITEMS_PER_PAGE));
+                setLedgerTotalPages(pages || 0);
             }
         } catch (error) {
             console.error("Error fetching earnings ledger:", error);
+            setLedgerTotalPages(0);
         } finally {
             setIsLedgerLoading(false);
         }
@@ -187,9 +190,9 @@ const EarningReport = () => {
         return true;
     });
 
-    const ledgerMockTotalPages = Math.max(1, Math.ceil(filteredLedger.length / ITEMS_PER_PAGE));
-    const validLedgerPage = Math.min(ledgerPage, ledgerMockTotalPages);
-    const paginatedLedger = filteredLedger.slice((validLedgerPage - 1) * ITEMS_PER_PAGE, validLedgerPage * ITEMS_PER_PAGE);
+    const ledgerMockTotalPages = filteredLedger.length > 0 ? Math.ceil(filteredLedger.length / ITEMS_PER_PAGE) : 0;
+    const validLedgerPage = ledgerMockTotalPages > 0 ? Math.min(ledgerPage, ledgerMockTotalPages) : 1;
+    const paginatedLedger = ledgerMockTotalPages > 0 ? filteredLedger.slice((validLedgerPage - 1) * ITEMS_PER_PAGE, validLedgerPage * ITEMS_PER_PAGE) : [];
 
     const displayLedger = isLedgerLoaded ? ledgerList : paginatedLedger;
     const displayLedgerTotalPages = isLedgerLoaded ? ledgerTotalPages : ledgerMockTotalPages;
@@ -228,13 +231,16 @@ const EarningReport = () => {
                 setIsRemunLoaded(true);
 
                 const pages =
-                    resData?.last_page ||
-                    resData?.pagination?.last_page ||
-                    Math.max(1, Math.ceil((resData?.total || items.length) / ITEMS_PER_PAGE));
-                setRemunTotalPages(pages || 1);
+                    items.length === 0
+                        ? 0
+                        : (resData?.last_page ||
+                           resData?.pagination?.last_page ||
+                           Math.ceil((resData?.total || items.length) / ITEMS_PER_PAGE));
+                setRemunTotalPages(pages || 0);
             }
         } catch (error) {
             console.error("Error fetching previous month invoices:", error);
+            setRemunTotalPages(0);
         } finally {
             setIsRemunLoading(false);
         }
@@ -399,7 +405,7 @@ const EarningReport = () => {
         : earningData.previousRemuneration.slice((remunPage - 1) * ITEMS_PER_PAGE, remunPage * ITEMS_PER_PAGE);
     const displayRemunTotalPages = isRemunLoaded
         ? remunTotalPages
-        : Math.max(1, Math.ceil(earningData.previousRemuneration.length / ITEMS_PER_PAGE));
+        : (earningData.previousRemuneration.length > 0 ? Math.ceil(earningData.previousRemuneration.length / ITEMS_PER_PAGE) : 0);
 
     // const handleExportPDF = () => {
     //     const doc = new jsPDF();
@@ -865,11 +871,15 @@ const EarningReport = () => {
                             </table>
                         </div>
 
-                        <Pagination
-                            currentPage={ledgerPage}
-                            totalPages={displayLedgerTotalPages}
-                            onPageChange={(p) => setLedgerPage(p)}
-                        />
+                        {displayLedger.length > 0 && displayLedgerTotalPages > 0 && (
+                            <Pagination
+                                currentPage={ledgerPage}
+                                totalPages={displayLedgerTotalPages}
+                                totalRecords={displayLedger.length}
+                                hasData={displayLedger.length > 0}
+                                onPageChange={(p) => setLedgerPage(p)}
+                            />
+                        )}
 
 
 
@@ -1055,11 +1065,15 @@ const EarningReport = () => {
                             </table>
                         </div>
 
-                        <Pagination
-                            currentPage={remunPage}
-                            totalPages={displayRemunTotalPages}
-                            onPageChange={(p) => setRemunPage(p)}
-                        />
+                        {displayRemun.length > 0 && displayRemunTotalPages > 0 && (
+                            <Pagination
+                                currentPage={remunPage}
+                                totalPages={displayRemunTotalPages}
+                                totalRecords={displayRemun.length}
+                                hasData={displayRemun.length > 0}
+                                onPageChange={(p) => setRemunPage(p)}
+                            />
+                        )}
                     </div>
                 </div>
 

@@ -1740,3 +1740,113 @@ span.dbt-subtext.session {
 }
 
 /* Patients  page CSS */
+
+.holiday-wrapper {
+  margin-bottom: 24px;
+}
+
+.holiday-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  margin-bottom: 18px;
+}
+
+.holiday-date-box {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.holiday-date-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.holiday-date-field label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #444;
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.holiday-input {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+  align-items: center;
+  height: 42px;
+  border: 1px solid #d9d9d9;
+  border-radius: 22px;
+  padding: 0 12px;
+  cursor: pointer;
+  background: #fff;
+  white-space: nowrap;
+}
+
+.holiday-input span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 13px;
+  color: #444;
+}
+
+.holiday-input img {
+  flex-shrink: 0;
+  width: 15px;
+  height: 15px;
+}
+
+@media (max-width: 576px) {
+  .holiday-date-box {
+    gap: 8px;
+  }
+  .holiday-date-field {
+    gap: 6px;
+  }
+  .holiday-date-field label {
+    font-size: 13px;
+  }
+  .holiday-input {
+    padding: 0 10px;
+    height: 38px;
+    gap: 6px;
+  }
+  .holiday-input span {
+    font-size: 12px;
+  }
+}
+
+.holiday-title {
+  margin-top: 18px;
+  margin-bottom: 12px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.holiday-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border: 1px solid #e5e5e5;
+  border-radius: 22px;
+  margin-bottom: 10px;
+}
+
+.holiday-item button {
+  border: none;
+  background: none;
+  cursor: pointer;
+}

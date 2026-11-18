@@ -9990,39 +9990,77 @@ div#accordionExample .accordion-item {
 
 .holiday-date-box {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  align-items: center;
   gap: 12px;
+  width: 100%;
 }
 
 .holiday-date-field {
   display: flex;
   align-items: center;
-  gap: 18px;
-  width: 100%;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
 }
 
 .holiday-date-field label {
-  width: 45px;
   font-size: 14px;
   font-weight: 500;
   color: #444;
   margin: 0;
+  flex-shrink: 0;
 }
 
 .holiday-input {
   flex: 1;
+  min-width: 0;
   width: 100%;
   display: flex;
-  /* gap: 15px; */
-  gap: 278px;
+  gap: 8px;
   justify-content: space-between;
   align-items: center;
   height: 42px;
   border: 1px solid #d9d9d9;
   border-radius: 22px;
-  padding: 0 14px;
+  padding: 0 12px;
   cursor: pointer;
   background: #fff;
+  white-space: nowrap;
+}
+
+.holiday-input span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 13px;
+  color: #444;
+}
+
+.holiday-input img {
+  flex-shrink: 0;
+  width: 15px;
+  height: 15px;
+}
+
+@media (max-width: 576px) {
+  .holiday-date-box {
+    gap: 8px;
+  }
+  .holiday-date-field {
+    gap: 6px;
+  }
+  .holiday-date-field label {
+    font-size: 13px;
+  }
+  .holiday-input {
+    padding: 0 10px;
+    height: 38px;
+    gap: 6px;
+  }
+  .holiday-input span {
+    font-size: 12px;
+  }
 }
 
 .holiday-title {

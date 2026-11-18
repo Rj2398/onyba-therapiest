@@ -146,20 +146,23 @@ const Patient = () => {
         });
 
         if (response && response.success && response.data) {
-          setPatientsList(response.data.patients || []);
-          if (response.data.pagination) {
+          const list = response.data.patients || [];
+          setPatientsList(list);
+          if (list.length === 0) {
+            setTotalPages(0);
+          } else if (response.data.pagination) {
             setTotalPages(response.data.pagination.last_page || 1);
           } else {
             setTotalPages(1);
           }
         } else {
           setPatientsList([]);
-          setTotalPages(1);
+          setTotalPages(0);
         }
       } catch (error) {
         console.error("Error fetching patients:", error);
         setPatientsList([]);
-        setTotalPages(1);
+        setTotalPages(0);
       } finally {
         setIsLoading(false);
       }
@@ -401,11 +404,15 @@ const Patient = () => {
             </table>
           </div>
 
-          <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={handlePageChange}
-          />
+          {patientsList.length > 0 && totalPages > 0 && (
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalRecords={patientsList.length}
+              hasData={patientsList.length > 0}
+              onPageChange={handlePageChange}
+            />
+          )}
         </div>
       </main>
     </>

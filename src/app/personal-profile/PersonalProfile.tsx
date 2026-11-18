@@ -2222,33 +2222,141 @@ const PersonalProfile = () => {
                   <DateRangePicker
                     value={holidayRange}
                     onChange={setHolidayRange}
+                    style={{ width: "100%", display: "block" }}
                   >
-                    <div className="holiday-date-box">
-                      <div className="holiday-date-field">
-                        <label>From</label>
+                    <div
+                      className="holiday-date-box"
+                      style={{
+                        display: "flex",
+                        flexDirection: "row",
+                        alignItems: "center",
+                        gap: "12px",
+                        width: "100%",
+                      }}
+                    >
+                      <div
+                        className="holiday-date-field"
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "8px",
+                          flex: 1,
+                          minWidth: 0,
+                        }}
+                      >
+                        <label
+                          style={{
+                            margin: 0,
+                            flexShrink: 0,
+                            fontSize: "14px",
+                            fontWeight: "500",
+                            color: "#444",
+                          }}
+                        >
+                          From
+                        </label>
 
-                        <div className="holiday-input">
-                          <span>
+                        <div
+                          className="holiday-input"
+                          style={{
+                            flex: 1,
+                            minWidth: 0,
+                            width: "100%",
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            height: "42px",
+                            border: "1px solid #d9d9d9",
+                            borderRadius: "22px",
+                            padding: "0 12px",
+                            cursor: "pointer",
+                            background: "#fff",
+                            whiteSpace: "nowrap",
+                            gap: "6px",
+                          }}
+                        >
+                          <span
+                            style={{
+                              whiteSpace: "nowrap",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              fontSize: "13px",
+                              color: "#444",
+                            }}
+                          >
                             {holidayRange.startDate
                               ? formatHolidayDate(holidayRange.startDate)
                               : "Select date"}
                           </span>
 
-                          <img src="/images/date-icon-small.svg" alt="" />
+                          <img
+                            src="/images/date-icon-small.svg"
+                            alt=""
+                            style={{ flexShrink: 0, width: "15px", height: "15px" }}
+                          />
                         </div>
                       </div>
 
-                      <div className="holiday-date-field">
-                        <label>To</label>
+                      <div
+                        className="holiday-date-field"
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "8px",
+                          flex: 1,
+                          minWidth: 0,
+                        }}
+                      >
+                        <label
+                          style={{
+                            margin: 0,
+                            flexShrink: 0,
+                            fontSize: "14px",
+                            fontWeight: "500",
+                            color: "#444",
+                          }}
+                        >
+                          To
+                        </label>
 
-                        <div className="holiday-input">
-                          <span>
+                        <div
+                          className="holiday-input"
+                          style={{
+                            flex: 1,
+                            minWidth: 0,
+                            width: "100%",
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            height: "42px",
+                            border: "1px solid #d9d9d9",
+                            borderRadius: "22px",
+                            padding: "0 12px",
+                            cursor: "pointer",
+                            background: "#fff",
+                            whiteSpace: "nowrap",
+                            gap: "6px",
+                          }}
+                        >
+                          <span
+                            style={{
+                              whiteSpace: "nowrap",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              fontSize: "13px",
+                              color: "#444",
+                            }}
+                          >
                             {holidayRange.endDate
                               ? formatHolidayDate(holidayRange.endDate)
                               : "Select date"}
                           </span>
 
-                          <img src="/images/date-icon-small.svg" alt="" />
+                          <img
+                            src="/images/date-icon-small.svg"
+                            alt=""
+                            style={{ flexShrink: 0, width: "15px", height: "15px" }}
+                          />
                         </div>
                       </div>
                     </div>

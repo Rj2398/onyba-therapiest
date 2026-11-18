@@ -12,6 +12,8 @@ interface DateRangePickerProps {
   placeholder?: string;
   children?: React.ReactNode;
   alignRight?: boolean;
+  className?: string;
+  style?: React.CSSProperties;
 }
 
 const DateRangePicker: React.FC<DateRangePickerProps> = ({
@@ -20,6 +22,8 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
   placeholder = 'Select Date Range',
   children,
   alignRight = false,
+  className,
+  style,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -148,7 +152,11 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
     : placeholder;
 
   return (
-    <div ref={containerRef} style={{ position: 'relative', display: 'inline-block' }}>
+    <div
+      ref={containerRef}
+      className={className}
+      style={{ position: 'relative', display: 'inline-block', ...style }}
+    >
       {/* Trigger */}
       <div onClick={() => setIsOpen(!isOpen)}>
         {children ? (

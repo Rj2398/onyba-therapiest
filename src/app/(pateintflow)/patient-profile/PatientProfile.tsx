@@ -223,20 +223,23 @@ const PatientProfile = () => {
         });
 
         if (response && response.success && response.data) {
-          setSessionsList(response.data.sessions || []);
-          if (response.data.pagination) {
+          const list = response.data.sessions || [];
+          setSessionsList(list);
+          if (list.length === 0) {
+            setTotalHistoryPages(0);
+          } else if (response.data.pagination) {
             setTotalHistoryPages(response.data.pagination.last_page || 1);
           } else {
             setTotalHistoryPages(1);
           }
         } else {
           setSessionsList([]);
-          setTotalHistoryPages(1);
+          setTotalHistoryPages(0);
         }
       } catch (error) {
         console.error("Error fetching session history:", error);
         setSessionsList([]);
-        setTotalHistoryPages(1);
+        setTotalHistoryPages(0);
       } finally {
         setIsHistoryLoading(false);
       }
@@ -844,11 +847,15 @@ const PatientProfile = () => {
               </table>
             </div>
 
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalHistoryPages}
-              onPageChange={(p) => setCurrentPage(p)}
-            />
+            {sessionsList.length > 0 && totalHistoryPages > 0 && (
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalHistoryPages}
+                totalRecords={sessionsList.length}
+                hasData={sessionsList.length > 0}
+                onPageChange={(p) => setCurrentPage(p)}
+              />
+            )}
           </div>
         </div>
       </main>
