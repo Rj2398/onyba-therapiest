@@ -964,9 +964,10 @@ const MyProfile = () => {
       newErrors.email = "Email is required";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
       newErrors.email = "Please enter a valid email address";
-    } else if (initialEmailIsNull && !isEmailVerified) {
-      newErrors.email = "Please verify your email address via OTP first";
     }
+    // else if (initialEmailIsNull && !isEmailVerified) {
+    //   newErrors.email = "Please verify your email address via OTP first";
+    // }
     if (!formData.vat_number || !formData.vat_number.trim()) {
       newErrors.vat_number = "VAT Number is required";
     }
