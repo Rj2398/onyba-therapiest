@@ -15,7 +15,7 @@ const GenerateAiSuccessSummaryModal: React.FC<GenerateAiSuccessSummaryModalProps
   onDoLater,
 }) => {
   const router = useRouter();
-  console.log(sessionId, "sesson id ***")
+  // console.log(sessionId, "sesson id ***")
   const handleAddNotesNow = () => {
     if (onAddNotesNow) onAddNotesNow();
     const redirectUrl = sessionId

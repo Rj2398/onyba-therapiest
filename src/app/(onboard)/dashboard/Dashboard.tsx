@@ -135,7 +135,7 @@ const formatTimeLabel = (timeStr?: string | null) => {
           h = h % 12 || 12;
           return `${String(h).padStart(2, "0")}:${m} ${ap}`;
         }
-      } catch {}
+      } catch { }
       const timePart = cleanTime.split("T")[1];
       if (timePart) {
         cleanTime = timePart.split(".")[0].split("Z")[0];
@@ -206,7 +206,7 @@ const Dashboard = () => {
   const [tablesData, setTablesData] = useState<DashboardTablesData | null>(
     null
   );
-  console.log(tablesData, "table data ***");
+  // console.log(tablesData, "table data ***");
 
   const [isTablesLoading, setIsTablesLoading] = useState<boolean>(true);
 
@@ -269,7 +269,7 @@ const Dashboard = () => {
         });
 
         if (response && response.success && response.data) {
-          console.log(response, "respose of this***");
+          // console.log(response, "respose of this***");
 
           setTablesData(response.data);
         }
@@ -406,8 +406,7 @@ const Dashboard = () => {
 
     if (patientType === "clinic_patient") {
       router.push(
-        `/back-to-agenda${
-          sessionId ? `?therapy_session_id=${sessionId}` : ""
+        `/back-to-agenda${sessionId ? `?therapy_session_id=${sessionId}` : ""
         }`
       );
       return;
@@ -421,8 +420,7 @@ const Dashboard = () => {
 
     if (rawStatus === "completed") {
       router.push(
-        `/final-back-to-agenda${
-          sessionId ? `?therapy_session_id=${sessionId}` : ""
+        `/final-back-to-agenda${sessionId ? `?therapy_session_id=${sessionId}` : ""
         }`
       );
       return;
@@ -430,8 +428,7 @@ const Dashboard = () => {
 
     if (isInPerson && isSessionVerified) {
       router.push(
-        `/back-to-calendar${
-          sessionId ? `?therapy_session_id=${sessionId}` : ""
+        `/back-to-calendar${sessionId ? `?therapy_session_id=${sessionId}` : ""
         }`
       );
       return;
@@ -454,14 +451,12 @@ const Dashboard = () => {
 
       if (patientType === "clinic_patient") {
         router.push(
-          `/back-to-agenda${
-            sessionId ? `?therapy_session_id=${sessionId}` : ""
+          `/back-to-agenda${sessionId ? `?therapy_session_id=${sessionId}` : ""
           }`
         );
       } else {
         router.push(
-          `/final-back-to-agenda${
-            sessionId ? `?therapy_session_id=${sessionId}` : ""
+          `/final-back-to-agenda${sessionId ? `?therapy_session_id=${sessionId}` : ""
           }`
         );
       }
@@ -766,18 +761,18 @@ const Dashboard = () => {
                       );
                       const displayDate = formatDateLabel(
                         payment.created_at ||
-                          payment.session_date ||
-                          payment.date
+                        payment.session_date ||
+                        payment.date
                       );
                       const displayTime = formatTimeLabel(
                         payment.created_at ||
-                          payment.time ||
-                          payment.session_start_time
+                        payment.time ||
+                        payment.session_start_time
                       );
                       const amountText = formatCurrency(
                         payment.amount ??
-                          payment.paid_amount ??
-                          payment.session_amount,
+                        payment.paid_amount ??
+                        payment.session_amount,
                         "$0"
                       );
 
@@ -900,7 +895,7 @@ const Dashboard = () => {
                       const expiresInStr = getExpiresIn(slot);
                       const expiresClass =
                         expiresInStr.includes("m") &&
-                        !expiresInStr.includes("h")
+                          !expiresInStr.includes("h")
                           ? "dbt3-countdown-text dbt3-color-urgent"
                           : "dbt3-countdown-text";
 
