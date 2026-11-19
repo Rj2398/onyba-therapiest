@@ -33,7 +33,7 @@ const consultationOptionsList = [
   "Depression",
   "Grief",
 ];
-const languageOptions = ["English", "Spanish", "Portuguese"];
+const languageOptions = ["Spanish", "English", "Portuguese"];
 
 const getCityName = (place: any) => {
   if (!place || !place.address_components) return place?.name || "";
