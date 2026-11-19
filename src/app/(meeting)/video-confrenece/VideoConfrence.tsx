@@ -194,9 +194,65 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
       }${rawDoctorImg}`
     : "/images/dash-user-icon.svg";
 
-  // Agora Hooks (Initialize tracks as ready)
+  // Camera Device Presence Detection
+  const [hasCameraDevice, setHasCameraDevice] = useState<boolean>(false);
+  const [micActive, setMicActive] = useState<boolean>(true);
+  const [cameraActive, setCameraActive] = useState<boolean>(false);
+
+  useEffect(() => {
+    let isMounted = true;
+    AgoraRTC.getCameras()
+      .then((cams) => {
+        if (isMounted) {
+          const available = Boolean(cams && cams.length > 0);
+          setHasCameraDevice(available);
+          setCameraActive(available);
+        }
+      })
+      .catch((err) => {
+        console.warn("Could not check camera devices:", err);
+        if (isMounted) {
+          setHasCameraDevice(false);
+          setCameraActive(false);
+        }
+      });
+
+    const handleDeviceChange = async () => {
+      try {
+        const cams = await AgoraRTC.getCameras();
+        if (isMounted) {
+          const available = Boolean(cams && cams.length > 0);
+          setHasCameraDevice(available);
+          if (!available) {
+            setCameraActive(false);
+          }
+        }
+      } catch (e) {
+        console.warn("Error checking camera devices on change:", e);
+      }
+    };
+
+    AgoraRTC.onCameraChanged = handleDeviceChange;
+    return () => {
+      isMounted = false;
+      AgoraRTC.onCameraChanged = undefined;
+    };
+  }, []);
+
+  // Agora Hooks (Audio always initialized; Camera initialized ONLY when camera device exists and is active)
   const { localMicrophoneTrack } = useLocalMicrophoneTrack(true);
-  const { localCameraTrack } = useLocalCameraTrack(true);
+  const { localCameraTrack, error: cameraError } = useLocalCameraTrack(
+    hasCameraDevice && cameraActive
+  );
+
+  useEffect(() => {
+    if (cameraError) {
+      console.warn("Camera track error:", cameraError);
+      setHasCameraDevice(false);
+      setCameraActive(false);
+    }
+  }, [cameraError]);
+
   const remoteUsers = useRemoteUsers();
 
   const primaryRemoteUser = remoteUsers[0];
@@ -209,8 +265,6 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
     searchParams.get("patient") ||
     searchParams.get("name") ||
     (primaryRemoteUser ? `Patient (${primaryRemoteUser.uid})` : "John Carter");
-  const [micActive, setMicActive] = useState<boolean>(true);
-  const [cameraActive, setCameraActive] = useState<boolean>(true);
   const [joinedCallData, setJoinedCallData] = useState<any>(null);
 
   // Global Profile Image & Display Name States
@@ -908,8 +962,12 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
     uid: videoCallSession.uid ? Number(videoCallSession.uid) : null,
   });
 
-  // Publish Audio & Video Tracks
-  usePublish([localMicrophoneTrack, localCameraTrack]);
+  // Publish Audio & Video Tracks independently so audio NEVER depends on camera
+  usePublish([localMicrophoneTrack], Boolean(localMicrophoneTrack));
+  usePublish(
+    [localCameraTrack],
+    Boolean(localCameraTrack && hasCameraDevice && cameraActive)
+  );
 
   const router = useRouter();
 
@@ -973,6 +1031,10 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
   };
 
   const toggleCamera = async () => {
+    if (!hasCameraDevice) {
+      toast.error("No camera device detected on your system.");
+      return;
+    }
     const nextState = !cameraActive;
     if (localCameraTrack) {
       try {
@@ -1265,10 +1327,15 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
             >
               <LocalUser
                 audioTrack={localMicrophoneTrack}
-                videoTrack={localCameraTrack}
-                cameraOn={cameraActive}
+                videoTrack={
+                  hasCameraDevice && cameraActive ? localCameraTrack : undefined
+                }
+                cameraOn={
+                  hasCameraDevice && cameraActive && Boolean(localCameraTrack)
+                }
                 micOn={micActive}
                 playAudio={false}
+                cover={doctorProfileImgUrl || "/images/dash-user-icon.svg"}
                 style={{
                   width: "100%",
                   height: "100%",
@@ -1425,7 +1492,7 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
               {cameraActive ? "Camera Off" : "Camera On"}
             </button>
 
-            <button className="ps-session-dock-btn">
+            {/* <button className="ps-session-dock-btn">
               <div className="ps-session-dock-icon-circle">
                 <svg
                   viewBox="0 0 24 24"
@@ -1437,7 +1504,7 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
                 </svg>
               </div>
               Chat
-            </button>
+            </button> */}
 
             <button
               className="ps-session-dock-btn ps-session-dock-btn-end"
@@ -1858,7 +1925,7 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
 
                   const displayText =
                     effectiveFileUrl &&
-                    msgText.trim() === effectiveFileUrl.trim()
+                      msgText.trim() === effectiveFileUrl.trim()
                       ? ""
                       : msgText;
 
@@ -1892,9 +1959,9 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
                           style={
                             isImg && !displayText
                               ? {
-                                  padding: "4px",
-                                  backgroundColor: "transparent",
-                                }
+                                padding: "4px",
+                                backgroundColor: "transparent",
+                              }
                               : undefined
                           }
                         >
@@ -2353,7 +2420,7 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
 
 // 2. Exported Parent Wrapper providing the Agora RTC Client
 const VideoConfrence: React.FC<VideoConferenceProps> = (props) => {
-  const client = useRTCClient(
+  const [client] = useState(() =>
     AgoraRTC.createClient({ mode: "rtc", codec: "vp8" })
   );
 
