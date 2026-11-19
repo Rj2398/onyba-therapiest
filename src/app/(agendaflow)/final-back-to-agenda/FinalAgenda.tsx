@@ -193,6 +193,7 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
 }) => {
   const router = useRouter();
   const searchParams = useSearchParams();
+
   const [sessionData, setSessionData] = useState<any>(
     initialSessionData || null
   );
@@ -207,6 +208,8 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
     sessionData?.therapy_session_id ||
     sessionData?.id ||
     initialSessionData?.id;
+
+  const isRejoin = searchParams.get("is_rejoin");
 
   const startSessionUrl =
     searchParams && searchParams.toString()
@@ -1284,8 +1287,8 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
       console.error("Error sending consent form:", err);
       toast.error(
         err?.response?.data?.message ||
-          err?.message ||
-          "Failed to send consent form."
+        err?.message ||
+        "Failed to send consent form."
       );
     } finally {
       setIsSendingConsent(false);
@@ -1346,10 +1349,10 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
     consentFeedbackData?.have_feedback !== undefined
       ? consentFeedbackData?.have_feedback
       : consentFeedbackData?.data?.have_feedback !== undefined
-      ? consentFeedbackData?.data?.have_feedback
-      : sessionData?.have_feedback !== undefined
-      ? sessionData?.have_feedback
-      : sessionData?.data?.have_feedback;
+        ? consentFeedbackData?.data?.have_feedback
+        : sessionData?.have_feedback !== undefined
+          ? sessionData?.have_feedback
+          : sessionData?.data?.have_feedback;
 
   const showFeedbackCard =
     haveFeedbackFlag === true ||
@@ -1384,11 +1387,11 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
   const moodData = rawMood && MOOD_MAP[rawMood]
     ? MOOD_MAP[rawMood]
     : {
-        emoji: rawMood ? (feedbackObj?.emoji || "") : "",
-        label: rawMood
-          ? rawMood.charAt(0).toUpperCase() + rawMood.slice(1)
-          : "",
-      };
+      emoji: rawMood ? (feedbackObj?.emoji || "") : "",
+      label: rawMood
+        ? rawMood.charAt(0).toUpperCase() + rawMood.slice(1)
+        : "",
+    };
 
   const moodEmoji = moodData.emoji;
   const moodStatus = moodData.label;
@@ -1478,31 +1481,49 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
                           >
                             Start Session
                           </button>
-                          <Link
-                            href={`${startSessionUrl}${startSessionUrl.includes("?") ? "&" : "?"}is_rejoin=true`}
-                            className="patient-link-cancel-session"
-                            style={{
-                              backgroundColor: "#28a745",
-                              borderColor: "#28a745",
-                              color: "#fff",
-                            }}
-                            onClick={() => {
-                              if (sessionData?.start_session) {
-                                sessionStorage.setItem(
-                                  "start_session_data",
-                                  JSON.stringify({
-                                    ...sessionData.start_session,
-                                    patient_name: sessionData.name || "",
-                                    is_rejoin: true, // Flag inside object as well
-                                  })
-                                );
-                              } else {
-                                sessionStorage.removeItem("start_session_data");
-                              }
-                            }}
-                          >
-                            Back To Video Call
-                          </Link>
+                          {isRejoin ? (
+                            <button
+                              type="button"
+                              className="patient-link-cancel-session"
+                              style={{
+                                backgroundColor: "#28a745",
+                                borderColor: "#28a745",
+                                color: "#fff",
+                                cursor: "pointer",
+                              }}
+                              onClick={() => {
+                                window.close();
+                              }}
+                            >
+                              Back To Video Call
+                            </button>
+                          ) : (
+                            <Link
+                              href={`${startSessionUrl}${startSessionUrl.includes("?") ? "&" : "?"}is_rejoin=true`}
+                              className="patient-link-cancel-session"
+                              style={{
+                                backgroundColor: "#28a745",
+                                borderColor: "#28a745",
+                                color: "#fff",
+                              }}
+                              onClick={() => {
+                                if (sessionData?.start_session) {
+                                  sessionStorage.setItem(
+                                    "start_session_data",
+                                    JSON.stringify({
+                                      ...sessionData.start_session,
+                                      patient_name: sessionData.name || "",
+                                      is_rejoin: true, // Flag inside object as well
+                                    })
+                                  );
+                                } else {
+                                  sessionStorage.removeItem("start_session_data");
+                                }
+                              }}
+                            >
+                              Back To Video Call
+                            </Link>
+                          )}
                         </>
                       ) : (
                         <Link
