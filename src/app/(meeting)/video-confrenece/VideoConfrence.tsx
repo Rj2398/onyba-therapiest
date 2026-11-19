@@ -54,6 +54,8 @@ export interface VideoCallSession {
   token: string;
   call_id?: number | string;
   uid?: number | string;
+  patient_uid?: number | string;
+  therapist_uid?: number | string;
   expires_in?: string;
   therapy_session_id?: string;
   patient_name?: string;
@@ -80,13 +82,13 @@ const getDocList = (docData: any) => {
       const ext = extMatch ? extMatch[1].toUpperCase() : "DOC";
       const fullUrl =
         trimmed.startsWith("http://") ||
-        trimmed.startsWith("https://") ||
-        trimmed.startsWith("data:")
+          trimmed.startsWith("https://") ||
+          trimmed.startsWith("data:")
           ? trimmed
           : `${Base_image_url.replace(/\/+$/, "")}/${trimmed.replace(
-              /^\/+/,
-              ""
-            )}`;
+            /^\/+/,
+            ""
+          )}`;
       return {
         id: idx,
         file_name: fileName,
@@ -103,9 +105,9 @@ const getDocList = (docData: any) => {
           rawUrl.startsWith("data:")
           ? rawUrl
           : `${Base_image_url.replace(/\/+$/, "")}/${rawUrl.replace(
-              /^\/+/,
-              ""
-            )}`
+            /^\/+/,
+            ""
+          )}`
         : "";
       const fileName =
         item.file_name ||
@@ -159,6 +161,8 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
   patientName,
   onEndCall,
 }) => {
+
+
   const searchParams = useSearchParams();
   // console.log(videoCallSession, "video call session***");
   const appIdToUse = videoCallSession.APP_ID;
@@ -180,9 +184,8 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
       rawDoctorImg.startsWith("data:") ||
       rawDoctorImg.startsWith("/")
       ? rawDoctorImg
-      : `${Base_image_url}${
-          rawDoctorImg.startsWith("/") ? "" : "/"
-        }${rawDoctorImg}`
+      : `${Base_image_url}${rawDoctorImg.startsWith("/") ? "" : "/"
+      }${rawDoctorImg}`
     : "/images/dash-user-icon.svg";
 
   // Agora Hooks (Initialize tracks as ready)
@@ -285,7 +288,7 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
             ) {
               try {
                 recognition.start();
-              } catch (e) {}
+              } catch (e) { }
             }
           };
 
@@ -306,7 +309,7 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
         if (recognitionRef.current) {
           try {
             recognitionRef.current.stop();
-          } catch (e) {}
+          } catch (e) { }
         }
         if (audioChunksRef.current.length > 0) {
           const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
@@ -327,7 +330,7 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
       if (recognitionRef.current) {
         try {
           recognitionRef.current.stop();
-        } catch (e) {}
+        } catch (e) { }
       }
       if (
         mediaRecorderRef.current &&
@@ -335,7 +338,7 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
       ) {
         try {
           mediaRecorderRef.current.stop();
-        } catch (e) {}
+        } catch (e) { }
       }
       if (audioStreamRef.current) {
         audioStreamRef.current.getTracks().forEach((track) => track.stop());
@@ -424,8 +427,8 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
       console.error("Error submitting private notes:", err);
       toast.error(
         err?.response?.data?.message ||
-          err?.message ||
-          "Error submitting private notes"
+        err?.message ||
+        "Error submitting private notes"
       );
     } finally {
       setIsSubmittingPrivateNotes(false);
@@ -512,13 +515,13 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
       if (docData) {
         const therapistDocs = getDocList(
           docData.therapist_document ||
-            docData.shared_by_therapist ||
-            docData.therapist_documents
+          docData.shared_by_therapist ||
+          docData.therapist_documents
         );
         const patientDocs = getDocList(
           docData.patient_document ||
-            docData.shared_by_patient ||
-            docData.patient_documents
+          docData.shared_by_patient ||
+          docData.patient_documents
         );
         setTherapistDocuments(therapistDocs);
         setPatientDocuments(patientDocs);
@@ -582,8 +585,8 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
         const uploadedFilePath = Array.isArray(response?.data)
           ? response.data[0]
           : response?.data?.file_url ||
-            response?.data?.url ||
-            response?.data?.document;
+          response?.data?.url ||
+          response?.data?.document;
 
         const uploadedDocObj = {
           id: Date.now(),
@@ -601,8 +604,8 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
       console.error("Error uploading document in VideoConference:", err);
       toast.error(
         err?.response?.data?.message ||
-          err?.message ||
-          "Error uploading document"
+        err?.message ||
+        "Error uploading document"
       );
     } finally {
       setIsUploadingDoc(false);
@@ -621,13 +624,13 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
         try {
           const res = val.toMillis();
           if (typeof res === "number" && !isNaN(res) && res > 0) return res;
-        } catch (e) {}
+        } catch (e) { }
       }
       if (typeof val?.toDate === "function") {
         try {
           const d = val.toDate();
           if (d && !isNaN(d.getTime())) return d.getTime();
-        } catch (e) {}
+        } catch (e) { }
       }
 
       if (
@@ -867,7 +870,7 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
 
     const tName = therapistData?.name
       ? `Dr. ${therapistData.name} ${therapistData.surname_one || ""}`.trim() +
-        " (Host)"
+      " (Host)"
       : `${doctorFullName} (Host)`;
 
     const tImg = therapistData?.profile_image
@@ -880,9 +883,9 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
 
     const pImg = patientData?.profile_image
       ? getFullImgUrl(
-          patientData.profile_image,
-          "/images/header-user-right-profile.svg"
-        )
+        patientData.profile_image,
+        "/images/header-user-right-profile.svg"
+      )
       : "/images/header-user-right-profile.svg";
 
     setTherapistDisplayName(tName);
@@ -905,6 +908,13 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
   const router = useRouter();
 
   const handleEndCall = async () => {
+    if (typeof window !== "undefined") {
+      try {
+        sessionStorage.removeItem("start_session_data");
+      } catch (e) {
+        console.error("Error clearing start_session_data on end call:", e);
+      }
+    }
     const sessionId =
       therapySessionId ||
       videoCallSession.therapy_session_id ||
@@ -1431,7 +1441,7 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
                 if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
                   try {
                     mediaRecorderRef.current.stop();
-                  } catch (e) {}
+                  } catch (e) { }
                 }
               }}
             >
@@ -1804,9 +1814,8 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
                   return (
                     <div
                       key={msg.id || index}
-                      className={`ps-session-chat-msg-bubble-line ${
-                        isDoctorMsg ? "ps-session-msg-row-user" : ""
-                      }`}
+                      className={`ps-session-chat-msg-bubble-line ${isDoctorMsg ? "ps-session-msg-row-user" : ""
+                        }`}
                     >
                       <div className="ps-session-chat-sender-avatar">
                         <img
@@ -1814,7 +1823,7 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
                             isDoctorMsg
                               ? therapistImgUrl || doctorProfileImgUrl
                               : patientImgUrl ||
-                                "/images/header-user-right-profile.svg"
+                              "/images/header-user-right-profile.svg"
                           }
                           alt="Avatar"
                           style={{
@@ -1906,9 +1915,8 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
 
             <div className="ps-session-tabs-row">
               <div
-                className={`ps-session-tab ${
-                  docTab === "therapist" ? "ps-session-active-tab" : ""
-                }`}
+                className={`ps-session-tab ${docTab === "therapist" ? "ps-session-active-tab" : ""
+                  }`}
                 style={{ cursor: "pointer" }}
                 onClick={() => setDocTab("therapist")}
               >
@@ -1918,9 +1926,8 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
                 </span>
               </div>
               <div
-                className={`ps-session-tab ${
-                  docTab === "patient" ? "ps-session-active-tab" : ""
-                }`}
+                className={`ps-session-tab ${docTab === "patient" ? "ps-session-active-tab" : ""
+                  }`}
                 style={{ cursor: "pointer" }}
                 onClick={() => setDocTab("patient")}
               >
@@ -1944,7 +1951,7 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
                 Loading documents...
               </div>
             ) : (docTab === "therapist" ? therapistDocuments : patientDocuments)
-                .length === 0 ? (
+              .length === 0 ? (
               <div
                 style={{
                   textAlign: "center",
@@ -2023,8 +2030,8 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
               remoteUsers.length > 0
                 ? remoteUsers.length + 1
                 : patientData
-                ? 2
-                : 1;
+                  ? 2
+                  : 1;
 
             return (
               <div className="ps-session-module-card">
@@ -2067,9 +2074,8 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
                       </span>
                     </div>
                     <svg
-                      className={`ps-session-status-icon-right ${
-                        micActive ? "ps-session-mic-on" : "ps-session-mic-off"
-                      }`}
+                      className={`ps-session-status-icon-right ${micActive ? "ps-session-mic-on" : "ps-session-mic-off"
+                        }`}
                       viewBox="0 0 24 24"
                       fill="none"
                       stroke="currentColor"
@@ -2149,11 +2155,10 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
                         <span>Participant ({user.uid})</span>
                       </div>
                       <svg
-                        className={`ps-session-status-icon-right ${
-                          user.hasAudio
-                            ? "ps-session-mic-on"
-                            : "ps-session-mic-off"
-                        }`}
+                        className={`ps-session-status-icon-right ${user.hasAudio
+                          ? "ps-session-mic-on"
+                          : "ps-session-mic-off"
+                          }`}
                         viewBox="0 0 24 24"
                         fill="none"
                         stroke="currentColor"

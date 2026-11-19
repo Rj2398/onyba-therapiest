@@ -5974,6 +5974,24 @@ a.edit-icon-patients img {
   margin-bottom: 20px;
 }
 
+.ps-part3-status-badge.badge-waiting {
+  background-color: #FCECEF;
+  color: #732A39;
+}
+
+.ps-part3-status-badge.badge-waiting .ps-part3-badge-dot {
+  background-color: #823546;
+}
+
+.ps-part3-status-badge.badge-received {
+  background-color: #EBF2EB;
+  color: #2E5A35;
+}
+
+.ps-part3-status-badge.badge-received .ps-part3-badge-dot {
+  background-color: #4A6B4E;
+}
+
 .ps-part3-badge-dot {
   width: 6px;
   height: 6px;
@@ -6004,6 +6022,13 @@ a.edit-icon-patients img {
 
 .ps-part3-action-btn:hover {
   background-color: #4a3540;
+}
+
+.ps-part3-action-btn.btn-waiting,
+.ps-part3-action-btn:disabled {
+  background-color: #5c4350;
+  opacity: 0.8;
+  cursor: not-allowed;
 }
 
 .ps-part3-footer-info {

@@ -16,6 +16,42 @@ const VideoConfrence = dynamic(() => import("./VideoConfrence"), {
 
 export type { VideoCallSession };
 
+const isValidCallData = (data: any): boolean => {
+  if (!data || typeof data !== "object") return false;
+  const appId = data.app_id || data.APP_ID;
+  const channelName = data.channel_name;
+  const token = data.token;
+  const uid = data.therapist_uid ?? data.uid;
+  const status = String(data.status || "").toLowerCase().trim();
+
+  // If status is explicitly ended, completed, or cancelled, it's not active
+  if (status && (status === "completed" || status === "ended" || status === "cancelled")) {
+    return false;
+  }
+
+  return Boolean(appId && channelName && token && uid !== undefined && uid !== null);
+};
+
+const formatVideoSession = (
+  data: any,
+  therapySessionId: string,
+  patientNameFallback: string
+): VideoCallSession => {
+  return {
+    APP_ID: data.app_id || data.APP_ID || "",
+    security: data.security || "",
+    channel_name: data.channel_name || "",
+    token: data.token || "",
+    call_id: data.call_id || data.id,
+    uid: data.therapist_uid ?? data.uid,
+    patient_uid: data.patient_uid,
+    therapist_uid: data.therapist_uid,
+    expires_in: data.expires_in ? String(data.expires_in) : "3600",
+    therapy_session_id: String(data.therapy_session_id || therapySessionId),
+    patient_name: data.patient_name || data.patient?.name || patientNameFallback || "",
+  };
+};
+
 const VideoConferenceContent: React.FC = () => {
   const searchParams = useSearchParams();
   const therapySessionId =
@@ -30,16 +66,79 @@ const VideoConferenceContent: React.FC = () => {
     "";
 
   const [session, setSession] = useState<VideoCallSession | null>(null);
+  console.log(session, "session api data");
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [isCallActive, setIsCallActive] = useState<boolean>(true);
 
   useEffect(() => {
-    const startCall = async () => {
+    const initCallSession = async () => {
       try {
         setLoading(true);
         setError(null);
 
+        // 1. Check if sessionStorage has valid start_session_data for this therapySessionId
+        if (typeof window !== "undefined") {
+          try {
+            const cachedDataStr = sessionStorage.getItem("start_session_data");
+            if (cachedDataStr) {
+              const cachedData = JSON.parse(cachedDataStr);
+              const cachedSessionId = String(
+                cachedData.therapy_session_id || cachedData.session_id || ""
+              );
+              if (
+                isValidCallData(cachedData) &&
+                (!therapySessionId || !cachedSessionId || cachedSessionId === String(therapySessionId))
+              ) {
+                console.log("Joining existing video call from sessionStorage:", cachedData);
+                const sessionData = formatVideoSession(cachedData, therapySessionId, patientNameParam);
+                setSession(sessionData);
+                setLoading(false);
+                return;
+              }
+            }
+          } catch (storageErr) {
+            console.error("Error reading sessionStorage start_session_data:", storageErr);
+          }
+        }
+
+        // 2. Check get-session-details for start_session key
+        if (therapySessionId) {
+          try {
+            const detailsRes = await requestApi({
+              endpoint: `get-session-details/${therapySessionId}`,
+              method: "POST",
+            });
+
+            const sessionDetails = detailsRes?.data || detailsRes;
+            const startSessionObj = sessionDetails?.start_session;
+
+            if (isValidCallData(startSessionObj)) {
+              console.log("Joining existing video call from start_session details:", startSessionObj);
+              const sessionData = formatVideoSession(
+                {
+                  ...startSessionObj,
+                  patient_name: sessionDetails?.name || patientNameParam,
+                },
+                therapySessionId,
+                patientNameParam
+              );
+
+              if (typeof window !== "undefined") {
+                sessionStorage.setItem("start_session_data", JSON.stringify(sessionData));
+              }
+
+              setSession(sessionData);
+              setLoading(false);
+              return;
+            }
+          } catch (detailsErr) {
+            console.warn("get-session-details check failed, falling back to therapist-start-call:", detailsErr);
+          }
+        }
+
+        // 3. If start_session key is empty, null, or missing credentials, hit therapist-start-call API
+        console.log("No valid start_session found, hitting therapist-start-call API...");
         const response = await requestApi({
           endpoint: "therapist-start-call",
           method: "POST",
@@ -51,17 +150,12 @@ const VideoConferenceContent: React.FC = () => {
 
         if (response && response.data) {
           const data = response.data;
-          const sessionData: VideoCallSession = {
-            APP_ID: data.app_id,
-            security: data.security || "",
-            channel_name: data.channel_name || "",
-            token: data.token || "",
-            call_id: data.call_id,
-            uid: data.uid,
-            expires_in: data.expires_in,
-            therapy_session_id: therapySessionId,
-            patient_name: data.patient_name || data.patient?.name || patientNameParam || "",
-          };
+          const sessionData = formatVideoSession(data, therapySessionId, patientNameParam);
+
+          if (typeof window !== "undefined") {
+            sessionStorage.setItem("start_session_data", JSON.stringify(sessionData));
+          }
+
           setSession(sessionData);
         } else {
           setError(response?.message || "Failed to start video call session.");
@@ -78,10 +172,17 @@ const VideoConferenceContent: React.FC = () => {
       }
     };
 
-    startCall();
+    initCallSession();
   }, [therapySessionId, patientNameParam]);
 
   const handleEndCall = () => {
+    if (typeof window !== "undefined") {
+      try {
+        sessionStorage.removeItem("start_session_data");
+      } catch (e) {
+        console.error("Error clearing start_session_data:", e);
+      }
+    }
     setIsCallActive(false);
   };
 

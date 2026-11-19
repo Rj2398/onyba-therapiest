@@ -247,6 +247,8 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
     "therapist"
   );
   const [prevSessionSearch, setPrevSessionSearch] = useState<string>("");
+  const [consentFeedbackData, setConsentFeedbackData] = useState<any>(null);
+  const [isSendingConsent, setIsSendingConsent] = useState<boolean>(false);
 
   const isOnline = sessionData?.session_mode?.toLowerCase() === "online";
   const isStartedCall = Boolean(sessionData?.is_started_call);
@@ -369,8 +371,35 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
     fetchServices();
   }, []);
 
+  const fetchConsentFeedback = async (sid?: string | number) => {
+    const targetId =
+      sid ||
+      session_id ||
+      sessionData?.therapy_session_id ||
+      sessionData?.id;
+    if (!targetId) return;
+
+    try {
+      const response = await requestApi({
+        endpoint: `get-consent-feedback/${targetId}`,
+        method: "POST",
+      });
+
+      if (response && (response.success === true || response.code === 200)) {
+        const payload =
+          response.data && typeof response.data === "object"
+            ? { ...response, ...response.data }
+            : response;
+        setConsentFeedbackData(payload);
+      }
+    } catch (err) {
+      console.error("Error fetching consent feedback in FinalAgenda:", err);
+    }
+  };
+
   const fetchSessionDetails = async () => {
     if (!session_id) return;
+    fetchConsentFeedback(session_id);
     try {
       const response = await requestApi({
         endpoint: `get-session-details/${session_id}`,
@@ -385,7 +414,11 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
           );
           return;
         }
-        setSessionData(response.data);
+        const mergedData =
+          response.data && typeof response.data === "object"
+            ? { ...response, ...response.data }
+            : response.data;
+        setSessionData(mergedData);
         setPrivateNotes(response.data.therapist_private_notes || "");
         setPublicNotes(response.data.therapist_public_notes || "");
         if (response.data.task_list && Array.isArray(response.data.task_list)) {
@@ -432,6 +465,16 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
       );
     }
   }, [sessionData, router, session_id]);
+
+  useEffect(() => {
+    const effectiveSid =
+      session_id ||
+      sessionData?.therapy_session_id ||
+      sessionData?.id;
+    if (effectiveSid) {
+      fetchConsentFeedback(effectiveSid);
+    }
+  }, [session_id, sessionData?.id, sessionData?.therapy_session_id]);
 
   const handleSelectService = async (service: any) => {
     if (isAdditionalPaymentRequested) {
@@ -1206,6 +1249,173 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
   const therapistDocs = getDocList(sessionData?.documents?.shared_by_therapist);
   const patientDocs = getDocList(sessionData?.documents?.shared_by_patient);
 
+  const handleSendConsentForm = async () => {
+    const effectiveSessionId =
+      session_id || sessionData?.therapy_session_id || sessionData?.id;
+
+    if (!effectiveSessionId) {
+      toast.error("Session ID not found.");
+      return;
+    }
+
+    try {
+      setIsSendingConsent(true);
+      const formData = new FormData();
+      formData.append("session_id", String(effectiveSessionId));
+
+      const response = await requestApi({
+        endpoint: "send-consent-form",
+        method: "POST",
+        data: formData,
+        isFormData: true,
+      });
+
+      if (response && (response.success === true || response.code === 200)) {
+        toast.success(response.message || "Consent form sent successfully.");
+        setConsentFeedbackData((prev: any) => ({
+          ...(prev || {}),
+          parent_consent_for_status: "waiting",
+        }));
+        fetchConsentFeedback(effectiveSessionId);
+      } else {
+        toast.error(response?.message || "Failed to send consent form.");
+      }
+    } catch (err: any) {
+      console.error("Error sending consent form:", err);
+      toast.error(
+        err?.response?.data?.message ||
+          err?.message ||
+          "Failed to send consent form."
+      );
+    } finally {
+      setIsSendingConsent(false);
+    }
+  };
+
+  const handleViewConsentForm = () => {
+    const consentDocUrl =
+      consentFeedbackData?.consent_form_url ||
+      consentFeedbackData?.file_url ||
+      consentFeedbackData?.document_url ||
+      consentFeedbackData?.file ||
+      consentFeedbackData?.consent_form ||
+      consentFeedbackData?.url ||
+      sessionData?.consent_form_url ||
+      sessionData?.consent_file ||
+      patientDocs?.find((d: any) =>
+        (d.file_name || d.name || "").toLowerCase().includes("consent")
+      )?.file_url ||
+      therapistDocs?.find((d: any) =>
+        (d.file_name || d.name || "").toLowerCase().includes("consent")
+      )?.file_url;
+
+    if (consentDocUrl) {
+      window.open(consentDocUrl, "_blank", "noopener,noreferrer");
+    } else {
+      toast("Consent form document is not available to view yet.");
+    }
+  };
+
+  const rawConsentStatus =
+    consentFeedbackData?.parent_consent_for_status ??
+    sessionData?.parent_consent_for_status ??
+    "";
+
+  const parentConsentStatus =
+    typeof rawConsentStatus === "string"
+      ? rawConsentStatus.toLowerCase().trim()
+      : "";
+
+  const isConsentVisible = parentConsentStatus === "visible";
+  const isConsentWaiting = parentConsentStatus === "waiting";
+  const isConsentReceived =
+    parentConsentStatus === "recieved" || parentConsentStatus === "received";
+
+  const showConsentCard =
+    rawConsentStatus !== false &&
+    parentConsentStatus !== "not_visible" &&
+    (isConsentVisible || isConsentWaiting || isConsentReceived);
+
+  const currentFeedback =
+    consentFeedbackData?.feedback ||
+    sessionData?.feedback ||
+    consentFeedbackData?.data?.feedback ||
+    sessionData?.data?.feedback;
+
+  const haveFeedbackFlag =
+    consentFeedbackData?.have_feedback !== undefined
+      ? consentFeedbackData?.have_feedback
+      : consentFeedbackData?.data?.have_feedback !== undefined
+      ? consentFeedbackData?.data?.have_feedback
+      : sessionData?.have_feedback !== undefined
+      ? sessionData?.have_feedback
+      : sessionData?.data?.have_feedback;
+
+  const showFeedbackCard =
+    haveFeedbackFlag === true ||
+    haveFeedbackFlag === "true" ||
+    haveFeedbackFlag === 1 ||
+    haveFeedbackFlag === "1";
+
+  const MOOD_MAP: Record<string, { emoji: string; label: string }> = {
+    low: { emoji: "😞", label: "Low" },
+    down: { emoji: "🙁", label: "Down" },
+    meh: { emoji: "😐", label: "Meh" },
+    good: { emoji: "🙂", label: "Good" },
+    great: { emoji: "😆", label: "Great" },
+  };
+
+  const feedbackObj =
+    typeof currentFeedback === "object" && currentFeedback !== null
+      ? currentFeedback
+      : null;
+
+  const rawMood = (
+    feedbackObj?.mood ||
+    feedbackObj?.patient_reflection?.mood ||
+    sessionData?.patient_reflection?.mood ||
+    sessionData?.mood ||
+    ""
+  )
+    .toString()
+    .toLowerCase()
+    .trim();
+
+  const moodData = rawMood && MOOD_MAP[rawMood]
+    ? MOOD_MAP[rawMood]
+    : {
+        emoji: rawMood ? (feedbackObj?.emoji || "") : "",
+        label: rawMood
+          ? rawMood.charAt(0).toUpperCase() + rawMood.slice(1)
+          : "",
+      };
+
+  const moodEmoji = moodData.emoji;
+  const moodStatus = moodData.label;
+
+  const reflectionText =
+    feedbackObj?.mood_description ||
+    feedbackObj?.reflection ||
+    feedbackObj?.patient_reflection?.text ||
+    feedbackObj?.patient_reflection?.comment ||
+    "";
+
+  const ratingVal =
+    feedbackObj?.patient_rating !== undefined && feedbackObj?.patient_rating !== null
+      ? Number(feedbackObj.patient_rating) || 0
+      : Number(feedbackObj?.rating || feedbackObj?.patient_feedback?.rating) || 0;
+
+  const feedbackComment =
+    feedbackObj?.patient_comment ||
+    feedbackObj?.patient_feedback?.text ||
+    feedbackObj?.patient_feedback?.comment ||
+    feedbackObj?.comment ||
+    feedbackObj?.text ||
+    (typeof currentFeedback === "string" ? currentFeedback : "") ||
+    "";
+
+
+
   return (
     <>
       <main className="gl-content-body">
@@ -1269,12 +1479,26 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
                             Start Session
                           </button>
                           <Link
-                            href={startSessionUrl}
+                            href={`${startSessionUrl}${startSessionUrl.includes("?") ? "&" : "?"}is_rejoin=true`}
                             className="patient-link-cancel-session"
                             style={{
                               backgroundColor: "#28a745",
                               borderColor: "#28a745",
                               color: "#fff",
+                            }}
+                            onClick={() => {
+                              if (sessionData?.start_session) {
+                                sessionStorage.setItem(
+                                  "start_session_data",
+                                  JSON.stringify({
+                                    ...sessionData.start_session,
+                                    patient_name: sessionData.name || "",
+                                    is_rejoin: true, // Flag inside object as well
+                                  })
+                                );
+                              } else {
+                                sessionStorage.removeItem("start_session_data");
+                              }
                             }}
                           >
                             Back To Video Call
@@ -1307,8 +1531,21 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
                                   toast.error(
                                     `You can only start the session 5 minutes before the start time (${formattedStartTime}).`
                                   );
+                                  return;
                                 }
                               }
+                            }
+
+                            if (sessionData?.start_session) {
+                              sessionStorage.setItem(
+                                "start_session_data",
+                                JSON.stringify({
+                                  ...sessionData.start_session,
+                                  patient_name: sessionData.name || "",
+                                })
+                              );
+                            } else {
+                              sessionStorage.removeItem("start_session_data");
                             }
                           }}
                           style={{
@@ -2418,70 +2655,144 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
 
             <div className="ony-dashboard-col-right">
               <div className="ps-part3-wrapper">
-                <div className="ps-part3-section-block">
-                  <div className="ps-part3-block-header">
-                    <div className="ps-part3-header-main">
-                      <div className="ps-part3-icon-circle ps-part3-bg-maroon">
-                        <svg
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="1.5"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M12 18a3.75 3.75 0 0 0 .495-7.467 5.99 5.99 0 0 0-1.925-3.546 5.974 5.974 0 0 0-2.133-1A3.75 3.75 0 0 0 4.5 9a3.75 3.75 0 0 0 .545 1.956 5.973 5.973 0 0 0-.27 1.411 3.75 3.75 0 0 0 5.225 3.738A3.75 3.75 0 0 0 12 18Z"
-                          />
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M12 18a3.75 3.75 0 0 1-.495-7.467 5.99 5.99 0 0 1 1.925-3.546 5.974 5.974 0 0 1 2.133-1A3.75 3.75 0 0 1 19.5 9a3.75 3.75 0 0 1-.545 1.956 5.973 5.973 0 0 1 .27 1.411 3.75 3.75 0 0 1-5.225 3.738A3.75 3.75 0 0 1 12 18Z"
-                          />
-                        </svg>
+                {showConsentCard && (
+                  <div className="ps-part3-section-block">
+                    <div className="ps-part3-block-header">
+                      <div className="ps-part3-header-main">
+                        <div className="ps-part3-icon-circle ps-part3-bg-maroon">
+                          <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M12 18a3.75 3.75 0 0 0 .495-7.467 5.99 5.99 0 0 0-1.925-3.546 5.974 5.974 0 0 0-2.133-1A3.75 3.75 0 0 0 4.5 9a3.75 3.75 0 0 0 .545 1.956 5.973 5.973 0 0 0-.27 1.411 3.75 3.75 0 0 0 5.225 3.738A3.75 3.75 0 0 0 12 18Z"
+                            />
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M12 18a3.75 3.75 0 0 1-.495-7.467 5.99 5.99 0 0 1 1.925-3.546 5.974 5.974 0 0 1 2.133-1A3.75 3.75 0 0 1 19.5 9a3.75 3.75 0 0 1-.545 1.956 5.973 5.973 0 0 1 .27 1.411 3.75 3.75 0 0 1-5.225 3.738A3.75 3.75 0 0 1 12 18Z"
+                            />
+                          </svg>
+                        </div>
+                        <span className="ps-part3-title">
+                          Parent Consent Required
+                        </span>
                       </div>
-                      <span className="ps-part3-title">
-                        Parent Consent Required
+                    </div>
+
+                    <div className="ps-part3-inner-content-card">
+                      <p className="ps-part3-content-label">Consent Status</p>
+
+                      {isConsentWaiting ? (
+                        <div
+                          className="ps-part3-status-badge badge-waiting"
+                          style={{
+                            backgroundColor: "#FCECEF",
+                            color: "#732A39",
+                          }}
+                        >
+                          <span
+                            className="ps-part3-badge-dot"
+                            style={{ backgroundColor: "#823546" }}
+                          ></span>
+                          Consent form not received yet
+                        </div>
+                      ) : isConsentReceived ? (
+                        <div
+                          className="ps-part3-status-badge badge-received"
+                          style={{
+                            backgroundColor: "#EBF2EB",
+                            color: "#2E5A35",
+                          }}
+                        >
+                          <span
+                            className="ps-part3-badge-dot"
+                            style={{ backgroundColor: "#4A6B4E" }}
+                          ></span>
+                          Consent form received
+                        </div>
+                      ) : (
+                        <div
+                          className="ps-part3-status-badge"
+                          style={{
+                            backgroundColor: "#D1D1D1",
+                            color: "#1a1a1a",
+                          }}
+                        >
+                          <span
+                            className="ps-part3-badge-dot"
+                            style={{ backgroundColor: "#000000" }}
+                          ></span>
+                          Consent form not sent yet
+                        </div>
+                      )}
+
+                      <p className="ps-part3-content-label">Action Required</p>
+                      <p className="ps-part3-description">
+                        Send parent/guardian consent form and collect digital
+                        signature
+                      </p>
+                    </div>
+
+                    {isConsentWaiting ? (
+                      <button
+                        type="button"
+                        className="ps-part3-action-btn btn-waiting"
+                        disabled
+                        style={{
+                          backgroundColor: "#5c4350",
+                          opacity: 0.8,
+                          cursor: "not-allowed",
+                        }}
+                      >
+                        Waiting
+                      </button>
+                    ) : isConsentReceived ? (
+                      <button
+                        type="button"
+                        className="ps-part3-action-btn"
+                        onClick={handleViewConsentForm}
+                      >
+                        View Consent Form
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        className="ps-part3-action-btn"
+                        onClick={handleSendConsentForm}
+                        disabled={isSendingConsent}
+                        style={{
+                          opacity: isSendingConsent ? 0.7 : 1,
+                          cursor: isSendingConsent ? "not-allowed" : "pointer",
+                        }}
+                      >
+                        {isSendingConsent
+                          ? "Sending..."
+                          : "Send Parent Consent Form"}
+                      </button>
+                    )}
+
+                    <div className="ps-part3-footer-info">
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      >
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="16" x2="12" y2="12"></line>
+                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                      </svg>
+                      <span>
+                        You will be notified once the consent is completed
                       </span>
                     </div>
                   </div>
-
-                  <div className="ps-part3-inner-content-card">
-                    <p className="ps-part3-content-label">Consent Status</p>
-
-                    <div className="ps-part3-status-badge">
-                      <span className="ps-part3-badge-dot"></span>
-                      {sessionData?.consent_status ||
-                        "Consent form not sent yet"}
-                    </div>
-
-                    <p className="ps-part3-content-label">Action Required</p>
-                    <p className="ps-part3-description">
-                      Send parent/guardian consent form and collect digital
-                      signature
-                    </p>
-                  </div>
-
-                  <button className="ps-part3-action-btn">
-                    Send Parent Consent Form
-                  </button>
-
-                  <div className="ps-part3-footer-info">
-                    <svg
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                    >
-                      <circle cx="12" cy="12" r="10"></circle>
-                      <line x1="12" y1="16" x2="12" y2="12"></line>
-                      <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                    </svg>
-                    <span>
-                      You will be notified once the consent is completed
-                    </span>
-                  </div>
-                </div>
+                )}
 
                 <div className="ps-part3-section-block">
                   <div className="ps-part3-block-header">
@@ -2647,94 +2958,84 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
                 </div>
               </div>
 
-              <div className="ps-part4-section-block">
-                <div className="ps-part4-block-header">
-                  <div className="ps-part4-header-main">
-                    <div className="ps-part4-icon-circle ps-part4-bg-maroon">
-                      <svg
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.5"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M12 18a3.75 3.75 0 0 0 .495-7.467 5.99 5.99 0 0 0-1.925-3.546 5.974 5.974 0 0 0-2.133-1A3.75 3.75 0 0 0 4.5 9a3.75 3.75 0 0 0 .545 1.956 5.973 5.973 0 0 0-.27 1.411 3.75 3.75 0 0 0 5.225 3.738A3.75 3.75 0 0 0 12 18Z"
-                        />
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M12 18a3.75 3.75 0 0 1-.495-7.467 5.99 5.99 0 0 1 1.925-3.546 5.974 5.974 0 0 1 2.133-1A3.75 3.75 0 0 1 19.5 9a3.75 3.75 0 0 1-.545 1.956 5.973 5.973 0 0 1 .27 1.411 3.75 3.75 0 0 1-5.225 3.738A3.75 3.75 0 0 1 12 18Z"
-                        />
-                      </svg>
-                    </div>
-                    <span className="ps-part4-title">Patient Reflection</span>
-                  </div>
-                </div>
-
-                <div className="ps-part4-content-group">
-                  <h4 className="ps-part4-section-subtitle">
-                    Mood after session
-                  </h4>
-                  <div className="ps-part4-mood-container">
-                    <span className="ps-part4-emoji-wrapper">
-                      {sessionData?.patient_reflection?.emoji ||
-                        sessionData?.emoji ||
-                        "😆"}
-                    </span>
-                    <span className="ps-part4-mood-status">
-                      {sessionData?.patient_reflection?.mood ||
-                        sessionData?.mood ||
-                        "Great"}
-                    </span>
-                  </div>
-                  <p className="ps-part4-reflection-text">
-                    {sessionData?.patient_reflection?.text ||
-                      sessionData?.patient_reflection?.comment ||
-                      sessionData?.reflection ||
-                      "I feel lighter after talking things through. It helped me clear my thoughts a bit."}
-                  </p>
-                </div>
-
-                <hr className="ps-part4-divider" />
-
-                <div className="ps-part4-content-group">
-                  <h4 className="ps-part4-section-subtitle">
-                    Patient Feedback
-                  </h4>
-
-                  <div className="ps-part4-rating-stars">
-                    {Array.from({ length: 5 }).map((_, index) => {
-                      const ratingVal =
-                        sessionData?.patient_feedback?.rating ||
-                        sessionData?.feedback?.rating ||
-                        sessionData?.rating ||
-                        4;
-                      return (
+              {showFeedbackCard && (
+                <div className="ps-part4-section-block">
+                  <div className="ps-part4-block-header">
+                    <div className="ps-part4-header-main">
+                      <div className="ps-part4-icon-circle ps-part4-bg-maroon">
                         <svg
-                          key={index}
-                          className="ps-part4-star"
                           viewBox="0 0 24 24"
-                          fill={index < ratingVal ? "#F5C443" : "#E2E8F0"}
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
                         >
-                          <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M12 18a3.75 3.75 0 0 0 .495-7.467 5.99 5.99 0 0 0-1.925-3.546 5.974 5.974 0 0 0-2.133-1A3.75 3.75 0 0 0 4.5 9a3.75 3.75 0 0 0 .545 1.956 5.973 5.973 0 0 0-.27 1.411 3.75 3.75 0 0 0 5.225 3.738A3.75 3.75 0 0 0 12 18Z"
+                          />
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M12 18a3.75 3.75 0 0 1-.495-7.467 5.99 5.99 0 0 1 1.925-3.546 5.974 5.974 0 0 1 2.133-1A3.75 3.75 0 0 1 19.5 9a3.75 3.75 0 0 1-.545 1.956 5.973 5.973 0 0 1 .27 1.411 3.75 3.75 0 0 1-5.225 3.738A3.75 3.75 0 0 1 12 18Z"
+                          />
                         </svg>
-                      );
-                    })}
+                      </div>
+                      <span className="ps-part4-title">Patient Reflection</span>
+                    </div>
                   </div>
 
-                  <p className="ps-part4-reflection-text">
-                    {typeof sessionData?.feedback === "string"
-                      ? sessionData.feedback
-                      : sessionData?.patient_feedback?.text ||
-                      sessionData?.patient_feedback?.comment ||
-                      sessionData?.feedback?.comment ||
-                      sessionData?.feedback?.text ||
-                      "The session was really helpful. I liked how the therapist guided me through techniques. I'd like to explore more coping strategies next time."}
-                  </p>
+                  <div className="ps-part4-content-group">
+                    <h4 className="ps-part4-section-subtitle">
+                      Mood after session
+                    </h4>
+                    <div className="ps-part4-mood-container">
+                      {moodEmoji && (
+                        <span className="ps-part4-emoji-wrapper">
+                          {moodEmoji}
+                        </span>
+                      )}
+                      <span className="ps-part4-mood-status">
+                        {moodStatus || "N/A"}
+                      </span>
+                    </div>
+                    {reflectionText ? (
+                      <p className="ps-part4-reflection-text">
+                        {reflectionText}
+                      </p>
+                    ) : null}
+                  </div>
+
+                  <hr className="ps-part4-divider" />
+
+                  <div className="ps-part4-content-group">
+                    <h4 className="ps-part4-section-subtitle">
+                      Patient Feedback
+                    </h4>
+
+                    <div className="ps-part4-rating-stars">
+                      {Array.from({ length: 5 }).map((_, index) => {
+                        return (
+                          <svg
+                            key={index}
+                            className="ps-part4-star"
+                            viewBox="0 0 24 24"
+                            fill={index < ratingVal ? "#F5C443" : "#E2E8F0"}
+                          >
+                            <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                          </svg>
+                        );
+                      })}
+                    </div>
+
+                    {feedbackComment ? (
+                      <p className="ps-part4-reflection-text">
+                        {feedbackComment}
+                      </p>
+                    ) : null}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
 
