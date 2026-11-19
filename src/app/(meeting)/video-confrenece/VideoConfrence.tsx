@@ -45,6 +45,12 @@ export interface FirebaseChatMessage {
   sender_type?: string;
   sender_id?: string | number;
   created_at?: any;
+  fileUrl?: string;
+  fileName?: string;
+  fileType?: string;
+  file_url?: string;
+  file_name?: string;
+  file_type?: string;
 }
 
 export interface VideoCallSession {
@@ -1811,6 +1817,51 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
                         msg.senderId.startsWith("doctor") ||
                         msg.senderId === String(parsedUser?.user?.id)));
 
+                  const rawFileUrl =
+                    msg.fileUrl ||
+                    (msg as any).file_url ||
+                    (msg as any).url ||
+                    "";
+                  const rawFileName =
+                    msg.fileName ||
+                    (msg as any).file_name ||
+                    (msg as any).name ||
+                    "";
+                  const rawFileType = (
+                    msg.fileType ||
+                    (msg as any).file_type ||
+                    ""
+                  ).toLowerCase();
+
+                  const isRawImageUrl =
+                    !rawFileUrl &&
+                    typeof msgText === "string" &&
+                    /^https?:\/\/.+\.(jpg|jpeg|png|gif|webp|svg|bmp)(\?.*)?$/i.test(
+                      msgText.trim()
+                    );
+
+                  const effectiveFileUrl =
+                    rawFileUrl || (isRawImageUrl ? msgText.trim() : "");
+                  const effectiveFileName =
+                    rawFileName ||
+                    (effectiveFileUrl
+                      ? effectiveFileUrl.split("/").pop()?.split("?")[0]
+                      : "");
+
+                  const isImg =
+                    Boolean(effectiveFileUrl) &&
+                    (rawFileType === "image" ||
+                      rawFileType.startsWith("image/") ||
+                      /\.(jpg|jpeg|png|gif|webp|svg|bmp|heic)(\?.*)?$/i.test(
+                        (effectiveFileName || effectiveFileUrl).toLowerCase()
+                      ));
+
+                  const displayText =
+                    effectiveFileUrl &&
+                    msgText.trim() === effectiveFileUrl.trim()
+                      ? ""
+                      : msgText;
+
                   return (
                     <div
                       key={msg.id || index}
@@ -1836,8 +1887,112 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
                         />
                       </div>
                       <div className="ps-session-msg-wrapper-inner">
-                        <div className="ps-session-msg-text-bubble">
-                          {msgText}
+                        <div
+                          className="ps-session-msg-text-bubble"
+                          style={
+                            isImg && !displayText
+                              ? {
+                                  padding: "4px",
+                                  backgroundColor: "transparent",
+                                }
+                              : undefined
+                          }
+                        >
+                          {effectiveFileUrl && isImg && (
+                            <a
+                              href={effectiveFileUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style={{
+                                display: "block",
+                                textDecoration: "none",
+                              }}
+                            >
+                              <img
+                                src={effectiveFileUrl}
+                                alt={effectiveFileName || "Image"}
+                                style={{
+                                  maxWidth: "100%",
+                                  maxHeight: "220px",
+                                  borderRadius: "10px",
+                                  objectFit: "cover",
+                                  display: "block",
+                                  cursor: "pointer",
+                                  marginBottom: displayText ? "6px" : "0",
+                                }}
+                                loading="lazy"
+                              />
+                            </a>
+                          )}
+
+                          {effectiveFileUrl && !isImg && (
+                            <a
+                              href={effectiveFileUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "8px",
+                                padding: "6px 10px",
+                                borderRadius: "8px",
+                                backgroundColor: isDoctorMsg
+                                  ? "rgba(255, 255, 255, 0.18)"
+                                  : "rgba(0, 0, 0, 0.05)",
+                                color: "inherit",
+                                textDecoration: "none",
+                                marginBottom: displayText ? "6px" : "0",
+                              }}
+                            >
+                              <svg
+                                width="20"
+                                height="20"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                style={{ flexShrink: 0 }}
+                              >
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                <polyline points="14 2 14 8 20 8" />
+                                <line x1="16" y1="13" x2="8" y2="13" />
+                                <line x1="16" y1="17" x2="8" y2="17" />
+                              </svg>
+                              <span
+                                style={{
+                                  fontSize: "12px",
+                                  fontWeight: 500,
+                                  wordBreak: "break-all",
+                                  flexGrow: 1,
+                                }}
+                              >
+                                {effectiveFileName || "View File"}
+                              </span>
+                              <svg
+                                width="14"
+                                height="14"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                style={{ flexShrink: 0 }}
+                              >
+                                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                                <polyline points="15 3 21 3 21 9" />
+                                <line x1="10" y1="14" x2="21" y2="3" />
+                              </svg>
+                            </a>
+                          )}
+
+                          {displayText ? (
+                            displayText
+                          ) : !effectiveFileUrl ? (
+                            msgText
+                          ) : null}
                         </div>
                         <span
                           className="ps-session-chat-time-text"
