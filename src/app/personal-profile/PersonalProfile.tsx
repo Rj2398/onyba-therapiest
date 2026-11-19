@@ -217,6 +217,7 @@ const PersonalProfile = () => {
   });
   const [holidayList, setHolidayList] = useState<DateRange[]>([]);
   const [deletingHolidayIndex, setDeletingHolidayIndex] = useState<number | null>(null);
+  const [isMarkHolidayChecked, setIsMarkHolidayChecked] = useState<boolean>(false);
 
   const [selectSession, setSelectSession] = useState(false);
   const [selectedModes, setSelectedModes] = useState<string[]>([]);
@@ -1023,6 +1024,7 @@ const PersonalProfile = () => {
       startDate: null,
       endDate: null,
     });
+    setIsMarkHolidayChecked(false);
 
     syncHolidays(merged);
   };
@@ -1071,6 +1073,30 @@ const PersonalProfile = () => {
       );
     } finally {
       setDeletingHolidayIndex(null);
+    }
+  };
+
+  const handleToggleHolidayCheckbox = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const checked = e.target.checked;
+    setIsMarkHolidayChecked(checked);
+
+    if (checked) {
+      if (!selectedDate) {
+        toast.error("Please select a date from the calendar first.");
+        return;
+      }
+
+      setHolidayRange({
+        startDate: new Date(selectedDate),
+        endDate: new Date(selectedDate),
+      });
+    } else {
+      setHolidayRange({
+        startDate: null,
+        endDate: null,
+      });
     }
   };
 
@@ -2167,7 +2193,15 @@ const PersonalProfile = () => {
                             }}
                             onClick={() => {
                               if (!day || isHoliday) return;
-                              setSelectedDate(new Date(year, month, day));
+                              const newDate = new Date(year, month, day);
+                              setSelectedDate(newDate);
+
+                              if (isMarkHolidayChecked) {
+                                setHolidayRange({
+                                  startDate: new Date(newDate),
+                                  endDate: new Date(newDate),
+                                });
+                              }
                             }}
                           >
                             <span
@@ -2212,8 +2246,13 @@ const PersonalProfile = () => {
                 }}
               >
                 <div className="holiday-wrapper">
-                  <label className="holiday-checkbox">
-                    <input type="checkbox" style={{ accentColor: "#74505c", cursor: "pointer" }} />
+                  <label className="holiday-checkbox" style={{ cursor: "pointer" }}>
+                    <input
+                      type="checkbox"
+                      style={{ accentColor: "#74505c", cursor: "pointer" }}
+                      checked={isMarkHolidayChecked}
+                      onChange={handleToggleHolidayCheckbox}
+                    />
                     <span>Mark as Holiday or Unavailability</span>
                   </label>
 
@@ -2221,7 +2260,10 @@ const PersonalProfile = () => {
 
                   <DateRangePicker
                     value={holidayRange}
-                    onChange={setHolidayRange}
+                    onChange={(val) => {
+                      setHolidayRange(val);
+                      setIsMarkHolidayChecked(false);
+                    }}
                     style={{ width: "100%", display: "block" }}
                   >
                     <div
