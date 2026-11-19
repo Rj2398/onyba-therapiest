@@ -960,11 +960,12 @@ const MyProfile = () => {
       newErrors.contact_number =
         "Please verify your contact number via OTP first";
     }
-    if (!formData.email || !formData.email.trim()) {
-      newErrors.email = "Email is required";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
-      newErrors.email = "Please enter a valid email address";
-    }
+    // if (!formData.email || !formData.email.trim()) {
+    //   newErrors.email = "Email is required";
+    // } 
+    // else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
+    //   newErrors.email = "Please enter a valid email address";
+    // }
     // else if (initialEmailIsNull && !isEmailVerified) {
     //   newErrors.email = "Please verify your email address via OTP first";
     // }
