@@ -1036,7 +1036,7 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
 
   const router = useRouter();
 
-  // const handleEndCall = async () => {
+  // const handleEndCall = useCallback(async () => {
   //   if (typeof window !== "undefined") {
   //     try {
   //       sessionStorage.removeItem("start_session_data");
@@ -1066,7 +1066,6 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
   //         },
   //         { merge: true }
   //       );
-  //       setCallStatus("ended");
 
   //       // 2. Backend APIs call karein
   //       const payload = {
@@ -1095,7 +1094,13 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
   //   if (onEndCall) {
   //     onEndCall();
   //   }
-  // };
+  // }, [
+  //   rawSessionId,
+  //   therapySessionId,
+  //   videoCallSession,
+  //   searchParams,
+  //   onEndCall,
+  // ]);
 
   const handleEndCall = useCallback(async () => {
     if (typeof window !== "undefined") {
