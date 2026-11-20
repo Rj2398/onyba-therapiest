@@ -135,7 +135,7 @@ const formatTimeLabel = (timeStr?: string | null) => {
           h = h % 12 || 12;
           return `${String(h).padStart(2, "0")}:${m} ${ap}`;
         }
-      } catch { }
+      } catch {}
       const timePart = cleanTime.split("T")[1];
       if (timePart) {
         cleanTime = timePart.split(".")[0].split("Z")[0];
@@ -222,10 +222,13 @@ const Dashboard = () => {
         if (response && response.success && response.data) {
           const count = Number(response.data.unread_count) || 0;
           if (count > 0) {
-            toast(`You have ${count} unread notification${count === 1 ? "" : "s"}`, {
-              icon: "🔔",
-              id: "unread-notification-count",
-            });
+            toast(
+              `You have ${count} unread notification${count === 1 ? "" : "s"}`,
+              {
+                icon: "🔔",
+                id: "unread-notification-count",
+              }
+            );
           }
 
           if (typeof window !== "undefined") {
@@ -367,8 +370,8 @@ const Dashboard = () => {
         minutes,
         0
       ).getTime();
-      const now = Date.now();
-      // const now = 1795095000000;
+      // const now = Date.now();
+      const now = 1795168800000;
 
       const diffMinutes = (sessionDateTime - now) / (1000 * 60);
 
@@ -384,13 +387,13 @@ const Dashboard = () => {
     const isInPerson = rawMode === "in_person" || rawMode === "in person";
     const isSessionVerified = Boolean(
       session?.is_session_verified === true ||
-      session?.is_session_verified === 1 ||
-      session?.is_session_verified === "1" ||
-      session?.is_session_verified === "true" ||
-      session?.otp_verify === true ||
-      session?.otp_verify === 1 ||
-      session?.otp_verify === "1" ||
-      session?.otp_verify === "true"
+        session?.is_session_verified === 1 ||
+        session?.is_session_verified === "1" ||
+        session?.is_session_verified === "true" ||
+        session?.otp_verify === true ||
+        session?.otp_verify === 1 ||
+        session?.otp_verify === "1" ||
+        session?.otp_verify === "true"
     );
 
     const canStartSession = isStartSessionAvailable(
@@ -406,8 +409,7 @@ const Dashboard = () => {
 
     if (patientType === "clinic_patient") {
       router.push(
-        `/back-to-agenda${sessionId ? `?therapy_session_id=${sessionId}` : ""
-        }`
+        `/back-to-agenda${sessionId ? `?therapy_session_id=${sessionId}` : ""}`
       );
       return;
     }
@@ -416,11 +418,14 @@ const Dashboard = () => {
       (session as any)?.session_status ||
       (session as any)?.status ||
       ""
-    ).toLowerCase().trim();
+    )
+      .toLowerCase()
+      .trim();
 
     if (rawStatus === "completed") {
       router.push(
-        `/final-back-to-agenda${sessionId ? `?therapy_session_id=${sessionId}` : ""
+        `/final-back-to-agenda${
+          sessionId ? `?therapy_session_id=${sessionId}` : ""
         }`
       );
       return;
@@ -428,7 +433,8 @@ const Dashboard = () => {
 
     if (isInPerson && isSessionVerified) {
       router.push(
-        `/back-to-calendar${sessionId ? `?therapy_session_id=${sessionId}` : ""
+        `/back-to-calendar${
+          sessionId ? `?therapy_session_id=${sessionId}` : ""
         }`
       );
       return;
@@ -451,12 +457,14 @@ const Dashboard = () => {
 
       if (patientType === "clinic_patient") {
         router.push(
-          `/back-to-agenda${sessionId ? `?therapy_session_id=${sessionId}` : ""
+          `/back-to-agenda${
+            sessionId ? `?therapy_session_id=${sessionId}` : ""
           }`
         );
       } else {
         router.push(
-          `/final-back-to-agenda${sessionId ? `?therapy_session_id=${sessionId}` : ""
+          `/final-back-to-agenda${
+            sessionId ? `?therapy_session_id=${sessionId}` : ""
           }`
         );
       }
@@ -761,18 +769,18 @@ const Dashboard = () => {
                       );
                       const displayDate = formatDateLabel(
                         payment.created_at ||
-                        payment.session_date ||
-                        payment.date
+                          payment.session_date ||
+                          payment.date
                       );
                       const displayTime = formatTimeLabel(
                         payment.created_at ||
-                        payment.time ||
-                        payment.session_start_time
+                          payment.time ||
+                          payment.session_start_time
                       );
                       const amountText = formatCurrency(
                         payment.amount ??
-                        payment.paid_amount ??
-                        payment.session_amount,
+                          payment.paid_amount ??
+                          payment.session_amount,
                         "$0"
                       );
 
@@ -895,7 +903,7 @@ const Dashboard = () => {
                       const expiresInStr = getExpiresIn(slot);
                       const expiresClass =
                         expiresInStr.includes("m") &&
-                          !expiresInStr.includes("h")
+                        !expiresInStr.includes("h")
                           ? "dbt3-countdown-text dbt3-color-urgent"
                           : "dbt3-countdown-text";
 

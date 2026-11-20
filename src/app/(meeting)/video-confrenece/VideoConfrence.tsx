@@ -30,6 +30,8 @@ import {
   Timestamp,
   getDoc,
   setDoc,
+  DocumentReference,
+  runTransaction,
 } from "firebase/firestore";
 import { uploadMedia } from "@/src/utils/formdataApi";
 import axios from "axios";
@@ -296,6 +298,96 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
   const finalTranscriptRef = useRef<string>("");
   const [transcriptText, setTranscriptText] = useState<string>("");
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+
+  //started call inlilzie
+  const activeSessionId = String(
+    rawSessionId ??
+      therapySessionId ??
+      videoCallSession?.therapy_session_id ??
+      searchParams.get("therapy_session_id") ??
+      searchParams.get("session_id") ??
+      searchParams.get("id") ??
+      ""
+  ).trim();
+  const [callStatus, setCallStatus] = useState<"ongoing" | "ended">("ongoing");
+
+  const sessionRef = useRef<DocumentReference | null>(null);
+  const hasTriggeredEndRef = useRef(false);
+  const isEndingCallRef = useRef(false);
+  const isMountedRef = useRef(true);
+
+  useEffect(() => {
+    if (!activeSessionId) {
+      sessionRef.current = null;
+      return;
+    }
+
+    let isMounted = true;
+
+    hasTriggeredEndRef.current = false;
+    isEndingCallRef.current = false;
+
+    const callDocRef = doc(db, "video_session_calls", activeSessionId);
+
+    sessionRef.current = callDocRef;
+
+    console.log("Initializing Firestore:", activeSessionId);
+
+    const initializeCall = async () => {
+      try {
+        await runTransaction(db, async (transaction) => {
+          const snapshot = await transaction.get(callDocRef);
+
+          if (!snapshot.exists()) {
+            const therapistId =
+              parsedUser?.user?.id || videoCallSession?.therapist_uid || "";
+
+            transaction.set(callDocRef, {
+              status: "ongoing",
+              ...(therapistId ? { therapist_id: String(therapistId) } : {}),
+              createdAt: serverTimestamp(),
+            });
+          }
+        });
+
+        console.log("Firestore initialization completed");
+      } catch (error) {
+        console.error("Firestore initialization failed:", error);
+      }
+    };
+
+    initializeCall();
+
+    const unsubscribe = onSnapshot(
+      callDocRef,
+      (snapshot) => {
+        if (!isMounted || !snapshot.exists()) return;
+
+        const status = snapshot.data()?.status;
+
+        console.log("FIRESTORE STATUS:", status);
+
+        if (status === "ended") {
+          setCallStatus("ended");
+
+          if (!hasTriggeredEndRef.current) {
+            hasTriggeredEndRef.current = true;
+            onEndCall?.();
+          }
+        } else if (status === "ongoing") {
+          setCallStatus("ongoing");
+        }
+      },
+      (error) => {
+        console.error("Firestore listener error:", error);
+      }
+    );
+
+    return () => {
+      isMounted = false;
+      unsubscribe();
+    };
+  }, [activeSessionId]);
 
   const startAudioAndTranscriptCapture = useCallback(async () => {
     try {
@@ -812,54 +904,6 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
   }, [chatMessages]);
 
   //call end initilze
-  // const [callStatus, setCallStatus] = useState<"ongoing" | "ended">("ongoing");
-  // useEffect(() => {
-  //   if (!rawSessionId) return;
-
-  //   // 1. Exact collection & document reference from your Firestore screenshot
-  //   const callsCollectionRef = collection(db, "video_session_calls");
-  //   const callDocRef = doc(callsCollectionRef, String(rawSessionId));
-
-  //   // 2. First Time Initialize: Sirf tab "ongoing" set karo jab document pehle se na ho
-  //   // (Agar pehle se "ended" hai toh page reload par overwrite hokar "ongoing" nahi hoga)
-  //   const initCallStatus = async () => {
-  //     try {
-  //       const existingSnap = await getDoc(callDocRef);
-  //       if (!existingSnap.exists()) {
-  //         const therapistId =
-  //           parsedUser?.user?.id || videoCallSession?.therapist_uid || "";
-
-  //         await setDoc(callDocRef, {
-  //           status: "ongoing",
-  //           ...(therapistId ? { therapist_id: String(therapistId) } : {}),
-  //           createdAt: serverTimestamp(),
-  //         });
-  //       }
-  //     } catch (error) {
-  //       console.error("Error initializing video_session_calls status:", error);
-  //     }
-  //   };
-
-  //   initCallStatus();
-
-  //   // 3. Real-time Listener (Page reload par bhi Firestore ka "ended" status read karega)
-  //   const unsubscribe = onSnapshot(callDocRef, (snapshot) => {
-  //     if (snapshot.exists()) {
-  //       const currentStatus = snapshot.data()?.status;
-
-  //       if (currentStatus === "ended") {
-  //         setCallStatus("ended");
-  //         if (onEndCall) {
-  //           onEndCall(); // Reload par bhi agar "ended" hai toh ended screen/redirect trigger karega
-  //         }
-  //       } else {
-  //         setCallStatus("ongoing");
-  //       }
-  //     }
-  //   });
-
-  //   return () => unsubscribe();
-  // }, [rawSessionId]);
 
   // Send Message Handler
   const handleSendChatMessage = async (e?: React.FormEvent) => {
@@ -1036,71 +1080,94 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
 
   const router = useRouter();
 
-  // const handleEndCall = useCallback(async () => {
+  // const handleEndCall = async () => {
+  //   console.log("Console.log********");
+  //   if (isEndingCallRef.current) {
+  //     console.log("End call already processing");
+  //     return;
+  //   }
+
+  //   isEndingCallRef.current = true;
+
+  //   const sessionId = activeSessionId;
+
+  //   console.log("END CALL CLICKED");
+  //   console.log("Session ID:", sessionId);
+
   //   if (typeof window !== "undefined") {
-  //     try {
-  //       sessionStorage.removeItem("start_session_data");
-  //     } catch (e) {
-  //       console.error("Error clearing start_session_data on end call:", e);
+  //     sessionStorage.removeItem("start_session_data");
+  //   }
+
+  //   if (!sessionId) {
+  //     console.error("Session ID missing");
+
+  //     if (!hasTriggeredEndRef.current) {
+  //       hasTriggeredEndRef.current = true;
+  //       onEndCall?.();
+  //     }
+  //     return;
+  //   }
+
+  //   // Prevent duplicate callback from onSnapshot
+  //   hasTriggeredEndRef.current = true;
+
+  //   try {
+  //     // Always use the current session ID
+  //     const callDocRef = doc(db, "video_session_calls", sessionId);
+
+  //     sessionRef.current = callDocRef;
+
+  //     console.log("Updating Firestore status to ended...");
+
+  //     await setDoc(
+  //       callDocRef,
+  //       {
+  //         status: "ended",
+  //         updatedAt: serverTimestamp(),
+  //       },
+  //       { merge: true }
+  //     );
+
+  //     console.log("SUCCESS: Firestore status is ended");
+
+  //     setCallStatus("ended");
+
+  //     // Backend API calls
+  //     const payload = {
+  //       therapy_session_id: sessionId,
+  //     };
+
+  //     const results = await Promise.allSettled([
+  //       requestApi({
+  //         endpoint: "therapist-end-call",
+  //         method: "POST",
+  //         data: payload,
+  //         isFormData: false,
+  //       }),
+
+  //       requestApi({
+  //         endpoint: "therapist-refresh-token",
+  //         method: "POST",
+  //         data: payload,
+  //         isFormData: false,
+  //       }),
+  //     ]);
+
+  //     results.forEach((result, index) => {
+  //       if (result.status === "rejected") {
+  //         console.error(`Backend API ${index + 1} failed:`, result.reason);
+  //       }
+  //     });
+  //   } catch (error) {
+  //     console.error("FIRESTORE END CALL ERROR:", error);
+  //   } finally {
+  //     // Exit local call exactly once
+  //     if (!hasTriggeredEndRef.current || isEndingCallRef.current) {
+  //       hasTriggeredEndRef.current = true;
+  //       onEndCall?.();
   //     }
   //   }
-
-  //   const sessionId =
-  //     rawSessionId ||
-  //     therapySessionId ||
-  //     videoCallSession.therapy_session_id ||
-  //     searchParams.get("therapy_session_id") ||
-  //     searchParams.get("session_id") ||
-  //     searchParams.get("id") ||
-  //     "";
-
-  //   if (sessionId) {
-  //     try {
-  //       // 1. Firestore me status ko "ended" update karein
-  //       const callDocRef = doc(db, "video_session_calls", String(sessionId));
-  //       await setDoc(
-  //         callDocRef,
-  //         {
-  //           status: "ended",
-  //           updatedAt: serverTimestamp(),
-  //         },
-  //         { merge: true }
-  //       );
-
-  //       // 2. Backend APIs call karein
-  //       const payload = {
-  //         therapy_session_id: String(sessionId),
-  //       };
-
-  //       await Promise.allSettled([
-  //         requestApi({
-  //           endpoint: "therapist-end-call",
-  //           method: "POST",
-  //           data: payload,
-  //           isFormData: false,
-  //         }),
-  //         requestApi({
-  //           endpoint: "therapist-refresh-token",
-  //           method: "POST",
-  //           data: payload,
-  //           isFormData: false,
-  //         }),
-  //       ]);
-  //     } catch (err) {
-  //       console.error("Error ending call:", err);
-  //     }
-  //   }
-
-  //   if (onEndCall) {
-  //     onEndCall();
-  //   }
-  // }, [
-  //   rawSessionId,
-  //   therapySessionId,
-  //   videoCallSession,
-  //   searchParams,
-  //   onEndCall,
-  // ]);
+  // };
 
   const handleEndCall = useCallback(async () => {
     if (typeof window !== "undefined") {
@@ -1734,14 +1801,42 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
               className="ps-session-dock-btn ps-session-dock-btn-end"
               data-bs-toggle="modal"
               data-bs-target="#endSessionModal"
-              onClick={() => {
+              onClick={async () => {
+                // Stop recording
                 if (
                   mediaRecorderRef.current &&
                   mediaRecorderRef.current.state === "recording"
                 ) {
                   try {
                     mediaRecorderRef.current.stop();
-                  } catch (e) {}
+                  } catch (e) {
+                    console.error("Recording stop error:", e);
+                  }
+                }
+
+                // Update Firebase directly
+                try {
+                  const sessionId = activeSessionId;
+
+                  if (!sessionId) {
+                    console.error("Session ID not found");
+                    return;
+                  }
+
+                  const callDocRef = doc(db, "video_session_calls", sessionId);
+
+                  await setDoc(
+                    callDocRef,
+                    {
+                      status: "ended",
+                      updatedAt: serverTimestamp(),
+                    },
+                    { merge: true }
+                  );
+
+                  console.log("Firebase call status updated: ended");
+                } catch (error) {
+                  console.error("Firebase End Call Error:", error);
                 }
               }}
             >
