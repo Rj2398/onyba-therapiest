@@ -76,7 +76,7 @@ const VideoConferenceContent: React.FC = () => {
     "";
 
   const [session, setSession] = useState<VideoCallSession | null>(null);
-  // console.log(session, "session api data");
+  console.log(session, "session api data");
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [isCallActive, setIsCallActive] = useState<boolean>(true);
