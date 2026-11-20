@@ -88,13 +88,13 @@ const getDocList = (docData: any) => {
       const ext = extMatch ? extMatch[1].toUpperCase() : "DOC";
       const fullUrl =
         trimmed.startsWith("http://") ||
-          trimmed.startsWith("https://") ||
-          trimmed.startsWith("data:")
+        trimmed.startsWith("https://") ||
+        trimmed.startsWith("data:")
           ? trimmed
           : `${Base_image_url.replace(/\/+$/, "")}/${trimmed.replace(
-            /^\/+/,
-            ""
-          )}`;
+              /^\/+/,
+              ""
+            )}`;
       return {
         id: idx,
         file_name: fileName,
@@ -111,9 +111,9 @@ const getDocList = (docData: any) => {
           rawUrl.startsWith("data:")
           ? rawUrl
           : `${Base_image_url.replace(/\/+$/, "")}/${rawUrl.replace(
-            /^\/+/,
-            ""
-          )}`
+              /^\/+/,
+              ""
+            )}`
         : "";
       const fileName =
         item.file_name ||
@@ -167,8 +167,6 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
   patientName,
   onEndCall,
 }) => {
-
-
   const searchParams = useSearchParams();
   // console.log(videoCallSession, "video call session***");
   const appIdToUse = videoCallSession.APP_ID;
@@ -190,8 +188,9 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
       rawDoctorImg.startsWith("data:") ||
       rawDoctorImg.startsWith("/")
       ? rawDoctorImg
-      : `${Base_image_url}${rawDoctorImg.startsWith("/") ? "" : "/"
-      }${rawDoctorImg}`
+      : `${Base_image_url}${
+          rawDoctorImg.startsWith("/") ? "" : "/"
+        }${rawDoctorImg}`
     : "/images/dash-user-icon.svg";
 
   // Camera Device Presence Detection
@@ -298,7 +297,11 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
 
   const startAudioAndTranscriptCapture = useCallback(async () => {
     try {
-      if (typeof window === "undefined" || !navigator.mediaDevices?.getUserMedia) return;
+      if (
+        typeof window === "undefined" ||
+        !navigator.mediaDevices?.getUserMedia
+      )
+        return;
 
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       audioStreamRef.current = stream;
@@ -348,7 +351,7 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
             ) {
               try {
                 recognition.start();
-              } catch (e) { }
+              } catch (e) {}
             }
           };
 
@@ -369,7 +372,7 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
         if (recognitionRef.current) {
           try {
             recognitionRef.current.stop();
-          } catch (e) { }
+          } catch (e) {}
         }
         if (audioChunksRef.current.length > 0) {
           const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
@@ -379,7 +382,10 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
 
       mediaRecorder.start(1000);
     } catch (err) {
-      console.warn("Could not start background audio recording/transcript:", err);
+      console.warn(
+        "Could not start background audio recording/transcript:",
+        err
+      );
     }
   }, []);
 
@@ -390,7 +396,7 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
       if (recognitionRef.current) {
         try {
           recognitionRef.current.stop();
-        } catch (e) { }
+        } catch (e) {}
       }
       if (
         mediaRecorderRef.current &&
@@ -398,7 +404,7 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
       ) {
         try {
           mediaRecorderRef.current.stop();
-        } catch (e) { }
+        } catch (e) {}
       }
       if (audioStreamRef.current) {
         audioStreamRef.current.getTracks().forEach((track) => track.stop());
@@ -406,7 +412,12 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
     };
   }, [startAudioAndTranscriptCapture]);
 
-  const getRecordingData = useCallback(async (): Promise<{ blob: Blob; transcript: string }> => {
+  //call end
+
+  const getRecordingData = useCallback(async (): Promise<{
+    blob: Blob;
+    transcript: string;
+  }> => {
     return new Promise((resolve) => {
       const currentTranscript =
         transcriptTextRef.current ||
@@ -414,7 +425,10 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
         transcriptText ||
         "Session audio recording transcript.";
 
-      if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
+      if (
+        mediaRecorderRef.current &&
+        mediaRecorderRef.current.state === "recording"
+      ) {
         mediaRecorderRef.current.onstop = () => {
           const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
           setAudioBlob(blob);
@@ -433,7 +447,6 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
       }
     });
   }, [audioBlob, transcriptText]);
-
 
   // Private Notes State & Rich Text Editor Handlers
   const [privateNotesText, setPrivateNotesText] = useState<string>("");
@@ -487,8 +500,8 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
       console.error("Error submitting private notes:", err);
       toast.error(
         err?.response?.data?.message ||
-        err?.message ||
-        "Error submitting private notes"
+          err?.message ||
+          "Error submitting private notes"
       );
     } finally {
       setIsSubmittingPrivateNotes(false);
@@ -575,13 +588,13 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
       if (docData) {
         const therapistDocs = getDocList(
           docData.therapist_document ||
-          docData.shared_by_therapist ||
-          docData.therapist_documents
+            docData.shared_by_therapist ||
+            docData.therapist_documents
         );
         const patientDocs = getDocList(
           docData.patient_document ||
-          docData.shared_by_patient ||
-          docData.patient_documents
+            docData.shared_by_patient ||
+            docData.patient_documents
         );
         setTherapistDocuments(therapistDocs);
         setPatientDocuments(patientDocs);
@@ -645,8 +658,8 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
         const uploadedFilePath = Array.isArray(response?.data)
           ? response.data[0]
           : response?.data?.file_url ||
-          response?.data?.url ||
-          response?.data?.document;
+            response?.data?.url ||
+            response?.data?.document;
 
         const uploadedDocObj = {
           id: Date.now(),
@@ -664,8 +677,8 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
       console.error("Error uploading document in VideoConference:", err);
       toast.error(
         err?.response?.data?.message ||
-        err?.message ||
-        "Error uploading document"
+          err?.message ||
+          "Error uploading document"
       );
     } finally {
       setIsUploadingDoc(false);
@@ -684,13 +697,13 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
         try {
           const res = val.toMillis();
           if (typeof res === "number" && !isNaN(res) && res > 0) return res;
-        } catch (e) { }
+        } catch (e) {}
       }
       if (typeof val?.toDate === "function") {
         try {
           const d = val.toDate();
           if (d && !isNaN(d.getTime())) return d.getTime();
-        } catch (e) { }
+        } catch (e) {}
       }
 
       if (
@@ -930,7 +943,7 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
 
     const tName = therapistData?.name
       ? `Dr. ${therapistData.name} ${therapistData.surname_one || ""}`.trim() +
-      " (Host)"
+        " (Host)"
       : `${doctorFullName} (Host)`;
 
     const tImg = therapistData?.profile_image
@@ -943,9 +956,9 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
 
     const pImg = patientData?.profile_image
       ? getFullImgUrl(
-        patientData.profile_image,
-        "/images/header-user-right-profile.svg"
-      )
+          patientData.profile_image,
+          "/images/header-user-right-profile.svg"
+        )
       : "/images/header-user-right-profile.svg";
 
     setTherapistDisplayName(tName);
@@ -1511,10 +1524,13 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
               data-bs-toggle="modal"
               data-bs-target="#endSessionModal"
               onClick={() => {
-                if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
+                if (
+                  mediaRecorderRef.current &&
+                  mediaRecorderRef.current.state === "recording"
+                ) {
                   try {
                     mediaRecorderRef.current.stop();
-                  } catch (e) { }
+                  } catch (e) {}
                 }
               }}
             >
@@ -1925,15 +1941,16 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
 
                   const displayText =
                     effectiveFileUrl &&
-                      msgText.trim() === effectiveFileUrl.trim()
+                    msgText.trim() === effectiveFileUrl.trim()
                       ? ""
                       : msgText;
 
                   return (
                     <div
                       key={msg.id || index}
-                      className={`ps-session-chat-msg-bubble-line ${isDoctorMsg ? "ps-session-msg-row-user" : ""
-                        }`}
+                      className={`ps-session-chat-msg-bubble-line ${
+                        isDoctorMsg ? "ps-session-msg-row-user" : ""
+                      }`}
                     >
                       <div className="ps-session-chat-sender-avatar">
                         <img
@@ -1941,7 +1958,7 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
                             isDoctorMsg
                               ? therapistImgUrl || doctorProfileImgUrl
                               : patientImgUrl ||
-                              "/images/header-user-right-profile.svg"
+                                "/images/header-user-right-profile.svg"
                           }
                           alt="Avatar"
                           style={{
@@ -1959,9 +1976,9 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
                           style={
                             isImg && !displayText
                               ? {
-                                padding: "4px",
-                                backgroundColor: "transparent",
-                              }
+                                  padding: "4px",
+                                  backgroundColor: "transparent",
+                                }
                               : undefined
                           }
                         >
@@ -2055,11 +2072,11 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
                             </a>
                           )}
 
-                          {displayText ? (
-                            displayText
-                          ) : !effectiveFileUrl ? (
-                            msgText
-                          ) : null}
+                          {displayText
+                            ? displayText
+                            : !effectiveFileUrl
+                            ? msgText
+                            : null}
                         </div>
                         <span
                           className="ps-session-chat-time-text"
@@ -2137,8 +2154,9 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
 
             <div className="ps-session-tabs-row">
               <div
-                className={`ps-session-tab ${docTab === "therapist" ? "ps-session-active-tab" : ""
-                  }`}
+                className={`ps-session-tab ${
+                  docTab === "therapist" ? "ps-session-active-tab" : ""
+                }`}
                 style={{ cursor: "pointer" }}
                 onClick={() => setDocTab("therapist")}
               >
@@ -2148,8 +2166,9 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
                 </span>
               </div>
               <div
-                className={`ps-session-tab ${docTab === "patient" ? "ps-session-active-tab" : ""
-                  }`}
+                className={`ps-session-tab ${
+                  docTab === "patient" ? "ps-session-active-tab" : ""
+                }`}
                 style={{ cursor: "pointer" }}
                 onClick={() => setDocTab("patient")}
               >
@@ -2173,7 +2192,7 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
                 Loading documents...
               </div>
             ) : (docTab === "therapist" ? therapistDocuments : patientDocuments)
-              .length === 0 ? (
+                .length === 0 ? (
               <div
                 style={{
                   textAlign: "center",
@@ -2246,14 +2265,39 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
           </div>
 
           {/* Dynamic Participants Card */}
+
+          {/* Dynamic Participants Card */}
           {(() => {
             const patientData = joinedCallData?.patient;
+            const expectedPatientUid =
+              videoCallSession?.patient_uid ||
+              patientData?.uid ||
+              patientData?.id;
+
+            // Identify which remoteUser is the patient so we don't render them twice
+            const patientRemoteUser =
+              remoteUsers.find(
+                (u) =>
+                  expectedPatientUid &&
+                  String(u.uid) === String(expectedPatientUid)
+              ) ||
+              (remoteUsers.length === 1 && patientData
+                ? remoteUsers[0]
+                : undefined);
+
+            const extraRemoteUsers = remoteUsers.filter(
+              (u) =>
+                !patientRemoteUser ||
+                String(u.uid) !== String(patientRemoteUser.uid)
+            );
+
+            const hasPatient = Boolean(patientData || patientRemoteUser);
             const totalParticipantsCount =
-              remoteUsers.length > 0
-                ? remoteUsers.length + 1
-                : patientData
-                  ? 2
-                  : 1;
+              1 + (hasPatient ? 1 : 0) + extraRemoteUsers.length;
+
+            const isPatientMicOn = patientRemoteUser
+              ? patientRemoteUser.hasAudio
+              : true;
 
             return (
               <div className="ps-session-module-card">
@@ -2296,8 +2340,9 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
                       </span>
                     </div>
                     <svg
-                      className={`ps-session-status-icon-right ${micActive ? "ps-session-mic-on" : "ps-session-mic-off"
-                        }`}
+                      className={`ps-session-status-icon-right ${
+                        micActive ? "ps-session-mic-on" : "ps-session-mic-off"
+                      }`}
                       viewBox="0 0 24 24"
                       fill="none"
                       stroke="currentColor"
@@ -2318,8 +2363,8 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
                     </svg>
                   </div>
 
-                  {/* Patient Participant */}
-                  {(patientData || remoteUsers.length > 0) && (
+                  {/* Patient Participant (Merged API + Agora Stream) */}
+                  {hasPatient && (
                     <div className="ps-session-participant-line">
                       <div className="ps-session-participant-meta">
                         <div className="ps-session-chat-sender-avatar">
@@ -2341,25 +2386,40 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
                         <span>
                           {patientDisplayName ||
                             dynamicPatientName ||
-                            "Patient"}
+                            (patientRemoteUser
+                              ? `Participant (${patientRemoteUser.uid})`
+                              : "Patient")}
                         </span>
                       </div>
                       <svg
-                        className="ps-session-status-icon-right ps-session-mic-on"
+                        className={`ps-session-status-icon-right ${
+                          isPatientMicOn
+                            ? "ps-session-mic-on"
+                            : "ps-session-mic-off"
+                        }`}
                         viewBox="0 0 24 24"
                         fill="none"
                         stroke="currentColor"
                         strokeWidth="2"
                       >
-                        <rect x="4" y="9" width="3" height="6" rx="1.5" />
-                        <rect x="10" y="5" width="3" height="14" rx="1.5" />
-                        <rect x="16" y="7" width="3" height="10" rx="1.5" />
+                        {isPatientMicOn ? (
+                          <>
+                            <rect x="4" y="9" width="3" height="6" rx="1.5" />
+                            <rect x="10" y="5" width="3" height="14" rx="1.5" />
+                            <rect x="16" y="7" width="3" height="10" rx="1.5" />
+                          </>
+                        ) : (
+                          <>
+                            <line x1="1" y1="1" x2="23" y2="23"></line>
+                            <path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6" />
+                          </>
+                        )}
                       </svg>
                     </div>
                   )}
 
-                  {/* Extra Remote Users (if any) */}
-                  {remoteUsers.map((user) => (
+                  {/* Extra Remote Users (Excluding Patient) */}
+                  {extraRemoteUsers.map((user) => (
                     <div className="ps-session-participant-line" key={user.uid}>
                       <div className="ps-session-participant-meta">
                         <div className="ps-session-chat-sender-avatar">
@@ -2370,6 +2430,7 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
                               width: "25px",
                               height: "25px",
                               borderRadius: "50%",
+                              objectFit: "cover",
                               overflow: "hidden",
                             }}
                           />
@@ -2377,10 +2438,11 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
                         <span>Participant ({user.uid})</span>
                       </div>
                       <svg
-                        className={`ps-session-status-icon-right ${user.hasAudio
-                          ? "ps-session-mic-on"
-                          : "ps-session-mic-off"
-                          }`}
+                        className={`ps-session-status-icon-right ${
+                          user.hasAudio
+                            ? "ps-session-mic-on"
+                            : "ps-session-mic-off"
+                        }`}
                         viewBox="0 0 24 24"
                         fill="none"
                         stroke="currentColor"
@@ -2822,3 +2884,165 @@ export default VideoConfrence;
 // };
 
 // export default VideoConfrence;
+
+// {(() => {
+//   const patientData = joinedCallData?.patient;
+//   const totalParticipantsCount =
+//     remoteUsers.length > 0
+//       ? remoteUsers.length + 1
+//       : patientData
+//       ? 2
+//       : 1;
+
+//   return (
+//     <div className="ps-session-module-card">
+//       <div className="ps-session-card-head">
+//         <h3 className="ps-session-card-title">
+//           <svg
+//             className="ps-session-head-icon-plum"
+//             viewBox="0 0 24 24"
+//             fill="none"
+//             stroke="currentColor"
+//             strokeWidth="2"
+//           >
+//             <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 7a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm14 14v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+//           </svg>
+//           Participants{" "}
+//           <span className="ps-session-title-aside">
+//             ({totalParticipantsCount})
+//           </span>
+//         </h3>
+//       </div>
+//       <div className="ps-session-participants-list-holder">
+//         {/* Therapist (Host) */}
+//         <div className="ps-session-participant-line">
+//           <div className="ps-session-participant-meta">
+//             <div className="ps-session-chat-sender-avatar">
+//               <img
+//                 src={therapistImgUrl || doctorProfileImgUrl}
+//                 alt="Therapist Profile"
+//                 style={{
+//                   width: "25px",
+//                   height: "25px",
+//                   borderRadius: "50%",
+//                   objectFit: "cover",
+//                   overflow: "hidden",
+//                 }}
+//               />
+//             </div>
+//             <span>
+//               {therapistDisplayName || `${doctorFullName} (Host)`}
+//             </span>
+//           </div>
+//           <svg
+//             className={`ps-session-status-icon-right ${
+//               micActive ? "ps-session-mic-on" : "ps-session-mic-off"
+//             }`}
+//             viewBox="0 0 24 24"
+//             fill="none"
+//             stroke="currentColor"
+//             strokeWidth="2"
+//           >
+//             {micActive ? (
+//               <>
+//                 <rect x="4" y="9" width="3" height="6" rx="1.5" />
+//                 <rect x="10" y="5" width="3" height="14" rx="1.5" />
+//                 <rect x="16" y="7" width="3" height="10" rx="1.5" />
+//               </>
+//             ) : (
+//               <>
+//                 <line x1="1" y1="1" x2="23" y2="23"></line>
+//                 <path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6" />
+//               </>
+//             )}
+//           </svg>
+//         </div>
+
+//         {/* Patient Participant */}
+//         {(patientData || remoteUsers.length > 0) && (
+//           <div className="ps-session-participant-line">
+//             <div className="ps-session-participant-meta">
+//               <div className="ps-session-chat-sender-avatar">
+//                 <img
+//                   src={
+//                     patientImgUrl ||
+//                     "/images/header-user-right-profile.svg"
+//                   }
+//                   alt="Patient Profile"
+//                   style={{
+//                     width: "25px",
+//                     height: "25px",
+//                     borderRadius: "50%",
+//                     objectFit: "cover",
+//                     overflow: "hidden",
+//                   }}
+//                 />
+//               </div>
+//               <span>
+//                 {patientDisplayName ||
+//                   dynamicPatientName ||
+//                   "Patient"}
+//               </span>
+//             </div>
+//             <svg
+//               className="ps-session-status-icon-right ps-session-mic-on"
+//               viewBox="0 0 24 24"
+//               fill="none"
+//               stroke="currentColor"
+//               strokeWidth="2"
+//             >
+//               <rect x="4" y="9" width="3" height="6" rx="1.5" />
+//               <rect x="10" y="5" width="3" height="14" rx="1.5" />
+//               <rect x="16" y="7" width="3" height="10" rx="1.5" />
+//             </svg>
+//           </div>
+//         )}
+
+//         {/* Extra Remote Users (if any) */}
+//         {remoteUsers.map((user) => (
+//           <div className="ps-session-participant-line" key={user.uid}>
+//             <div className="ps-session-participant-meta">
+//               <div className="ps-session-chat-sender-avatar">
+//                 <img
+//                   src="/images/header-user-right-profile.svg"
+//                   alt="User Profile"
+//                   style={{
+//                     width: "25px",
+//                     height: "25px",
+//                     borderRadius: "50%",
+//                     overflow: "hidden",
+//                   }}
+//                 />
+//               </div>
+//               <span>Participant ({user.uid})</span>
+//             </div>
+//             <svg
+//               className={`ps-session-status-icon-right ${
+//                 user.hasAudio
+//                   ? "ps-session-mic-on"
+//                   : "ps-session-mic-off"
+//               }`}
+//               viewBox="0 0 24 24"
+//               fill="none"
+//               stroke="currentColor"
+//               strokeWidth="2"
+//             >
+//               {user.hasAudio ? (
+//                 <>
+//                   <rect x="4" y="9" width="3" height="6" rx="1.5" />
+//                   <rect x="10" y="5" width="3" height="14" rx="1.5" />
+//                   <rect x="16" y="7" width="3" height="10" rx="1.5" />
+//                 </>
+//               ) : (
+//                 <>
+//                   <line x1="1" y1="1" x2="23" y2="23"></line>
+//                   <path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6" />
+//                 </>
+//               )}
+//             </svg>
+//           </div>
+//         ))}
+//       </div>
+//     </div>
+//   );
+// })()}

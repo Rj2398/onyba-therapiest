@@ -8,7 +8,9 @@ import { requestApi } from "@/src/utils/api";
 const VideoConfrence = dynamic(() => import("./VideoConfrence"), {
   ssr: false,
   loading: () => (
-    <div style={{ textAlign: "center", padding: "60px", fontFamily: "sans-serif" }}>
+    <div
+      style={{ textAlign: "center", padding: "60px", fontFamily: "sans-serif" }}
+    >
       <h3>Loading video conference...</h3>
     </div>
   ),
@@ -22,14 +24,21 @@ const isValidCallData = (data: any): boolean => {
   const channelName = data.channel_name;
   const token = data.token;
   const uid = data.therapist_uid ?? data.uid;
-  const status = String(data.status || "").toLowerCase().trim();
+  const status = String(data.status || "")
+    .toLowerCase()
+    .trim();
 
   // If status is explicitly ended, completed, or cancelled, it's not active
-  if (status && (status === "completed" || status === "ended" || status === "cancelled")) {
+  if (
+    status &&
+    (status === "completed" || status === "ended" || status === "cancelled")
+  ) {
     return false;
   }
 
-  return Boolean(appId && channelName && token && uid !== undefined && uid !== null);
+  return Boolean(
+    appId && channelName && token && uid !== undefined && uid !== null
+  );
 };
 
 const formatVideoSession = (
@@ -48,7 +57,8 @@ const formatVideoSession = (
     therapist_uid: data.therapist_uid,
     expires_in: data.expires_in ? String(data.expires_in) : "3600",
     therapy_session_id: String(data.therapy_session_id || therapySessionId),
-    patient_name: data.patient_name || data.patient?.name || patientNameFallback || "",
+    patient_name:
+      data.patient_name || data.patient?.name || patientNameFallback || "",
   };
 };
 
@@ -66,7 +76,7 @@ const VideoConferenceContent: React.FC = () => {
     "";
 
   const [session, setSession] = useState<VideoCallSession | null>(null);
-  console.log(session, "session api data");
+  // console.log(session, "session api data");
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [isCallActive, setIsCallActive] = useState<boolean>(true);
@@ -88,17 +98,29 @@ const VideoConferenceContent: React.FC = () => {
               );
               if (
                 isValidCallData(cachedData) &&
-                (!therapySessionId || !cachedSessionId || cachedSessionId === String(therapySessionId))
+                (!therapySessionId ||
+                  !cachedSessionId ||
+                  cachedSessionId === String(therapySessionId))
               ) {
-                console.log("Joining existing video call from sessionStorage:", cachedData);
-                const sessionData = formatVideoSession(cachedData, therapySessionId, patientNameParam);
+                console.log(
+                  "Joining existing video call from sessionStorage:",
+                  cachedData
+                );
+                const sessionData = formatVideoSession(
+                  cachedData,
+                  therapySessionId,
+                  patientNameParam
+                );
                 setSession(sessionData);
                 setLoading(false);
                 return;
               }
             }
           } catch (storageErr) {
-            console.error("Error reading sessionStorage start_session_data:", storageErr);
+            console.error(
+              "Error reading sessionStorage start_session_data:",
+              storageErr
+            );
           }
         }
 
@@ -114,7 +136,10 @@ const VideoConferenceContent: React.FC = () => {
             const startSessionObj = sessionDetails?.start_session;
 
             if (isValidCallData(startSessionObj)) {
-              console.log("Joining existing video call from start_session details:", startSessionObj);
+              console.log(
+                "Joining existing video call from start_session details:",
+                startSessionObj
+              );
               const sessionData = formatVideoSession(
                 {
                   ...startSessionObj,
@@ -125,7 +150,10 @@ const VideoConferenceContent: React.FC = () => {
               );
 
               if (typeof window !== "undefined") {
-                sessionStorage.setItem("start_session_data", JSON.stringify(sessionData));
+                sessionStorage.setItem(
+                  "start_session_data",
+                  JSON.stringify(sessionData)
+                );
               }
 
               setSession(sessionData);
@@ -133,12 +161,17 @@ const VideoConferenceContent: React.FC = () => {
               return;
             }
           } catch (detailsErr) {
-            console.warn("get-session-details check failed, falling back to therapist-start-call:", detailsErr);
+            console.warn(
+              "get-session-details check failed, falling back to therapist-start-call:",
+              detailsErr
+            );
           }
         }
 
         // 3. If start_session key is empty, null, or missing credentials, hit therapist-start-call API
-        console.log("No valid start_session found, hitting therapist-start-call API...");
+        console.log(
+          "No valid start_session found, hitting therapist-start-call API..."
+        );
         const response = await requestApi({
           endpoint: "therapist-start-call",
           method: "POST",
@@ -150,10 +183,17 @@ const VideoConferenceContent: React.FC = () => {
 
         if (response && response.data) {
           const data = response.data;
-          const sessionData = formatVideoSession(data, therapySessionId, patientNameParam);
+          const sessionData = formatVideoSession(
+            data,
+            therapySessionId,
+            patientNameParam
+          );
 
           if (typeof window !== "undefined") {
-            sessionStorage.setItem("start_session_data", JSON.stringify(sessionData));
+            sessionStorage.setItem(
+              "start_session_data",
+              JSON.stringify(sessionData)
+            );
           }
 
           setSession(sessionData);
@@ -164,8 +204,8 @@ const VideoConferenceContent: React.FC = () => {
         console.error("therapist-start-call error:", err);
         setError(
           err?.response?.data?.message ||
-          err?.message ||
-          "Failed to start video call. Please try again."
+            err?.message ||
+            "Failed to start video call. Please try again."
         );
       } finally {
         setLoading(false);
@@ -192,7 +232,13 @@ const VideoConferenceContent: React.FC = () => {
 
   if (loading) {
     return (
-      <div style={{ textAlign: "center", padding: "60px", fontFamily: "sans-serif" }}>
+      <div
+        style={{
+          textAlign: "center",
+          padding: "60px",
+          fontFamily: "sans-serif",
+        }}
+      >
         <h3>Connecting to video conference...</h3>
       </div>
     );
@@ -200,7 +246,14 @@ const VideoConferenceContent: React.FC = () => {
 
   if (error || !session) {
     return (
-      <div style={{ textAlign: "center", padding: "60px", color: "red", fontFamily: "sans-serif" }}>
+      <div
+        style={{
+          textAlign: "center",
+          padding: "60px",
+          color: "red",
+          fontFamily: "sans-serif",
+        }}
+      >
         <h3>Unable to start conference session</h3>
         <p>{error || "No session data received from server."}</p>
         <button
@@ -215,7 +268,13 @@ const VideoConferenceContent: React.FC = () => {
 
   if (!isCallActive) {
     return (
-      <div style={{ textAlign: "center", padding: "60px", fontFamily: "sans-serif" }}>
+      <div
+        style={{
+          textAlign: "center",
+          padding: "60px",
+          fontFamily: "sans-serif",
+        }}
+      >
         <h2>The call has ended</h2>
         <p>Thank you for attending the session.</p>
         <button
@@ -249,7 +308,13 @@ const Page: React.FC = () => {
   return (
     <Suspense
       fallback={
-        <div style={{ textAlign: "center", padding: "60px", fontFamily: "sans-serif" }}>
+        <div
+          style={{
+            textAlign: "center",
+            padding: "60px",
+            fontFamily: "sans-serif",
+          }}
+        >
           <h3>Loading video conference...</h3>
         </div>
       }
