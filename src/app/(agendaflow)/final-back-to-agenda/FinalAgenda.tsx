@@ -1480,7 +1480,7 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
                           >
                             Start Session
                           </button>
-                          {isRejoin ? (
+                          {searchParams?.get("is_rejoin") === "true" ? (
                             <button
                               type="button"
                               className="patient-link-cancel-session"
