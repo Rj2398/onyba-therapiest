@@ -692,6 +692,9 @@ const MyProfile = () => {
       }
     });
     if (errors[field]) setErrors((prev: any) => ({ ...prev, [field]: null }));
+    if (field === "sessionMode" && item === "in_person") {
+      setErrors((prev: any) => ({ ...prev, clinicAddress: null }));
+    }
   };
 
   const handleToggleLanguage = (lang: string) => {
@@ -997,11 +1000,10 @@ const MyProfile = () => {
     if (!formData.country || !formData.country.trim()) {
       newErrors.country = "Country is required";
     }
-    if (!formData.clinic_name || !formData.clinic_name.trim()) {
-      newErrors.clinic_name = "Clinic Name is required";
-    }
-    if (!formData.clinicAddress || !formData.clinicAddress.trim()) {
-      newErrors.clinicAddress = "Clinic Address is required";
+    if (formData.sessionMode.includes("in_person")) {
+      if (!formData.clinicAddress || !formData.clinicAddress.trim()) {
+        newErrors.clinicAddress = "Clinic Address is required";
+      }
     }
     if (formData.certificate.length === 0) {
       newErrors.certificate = "Please upload at least one certification";
@@ -1071,11 +1073,20 @@ const MyProfile = () => {
                 : formData.sessionMode.join(",");
         payload.append("session_mode", sessionModeValue);
         payload.append("clinic_name", formData.clinic_name || "");
-        payload.append("clinic_address", formData.clinicAddress || "");
+        payload.append(
+          "clinic_address",
+          hasInPerson ? (formData.clinicAddress || "") : ""
+        );
         payload.append("latitude", formData.latitude || "");
         payload.append("longitude", formData.longitude || "");
-        payload.append("clinic_latitude", formData.clinic_latitude || "");
-        payload.append("clinic_longitude", formData.clinic_longitude || "");
+        payload.append(
+          "clinic_latitude",
+          hasInPerson ? (formData.clinic_latitude || "") : ""
+        );
+        payload.append(
+          "clinic_longitude",
+          hasInPerson ? (formData.clinic_longitude || "") : ""
+        );
         // 1. service_id[]: Append each selected service ID individually
         formData.therapyTypes.forEach((id: any) => {
           payload.append("service_id[]", String(id));
@@ -1808,7 +1819,7 @@ const MyProfile = () => {
                   )}
                 </div>
                 <div className="col-md-4">
-                  <label className="tp-label">Clinic Name*</label>
+                  <label className="tp-label">Clinic Name</label>
                   <input
                     type="text"
                     className="tp-input"
@@ -2051,95 +2062,97 @@ const MyProfile = () => {
                   </div>
                 )}
 
-                <div className="row">
-                  <div className="col-md-4">
-                    <label className="tp-label">Clinic Address*</label>
-                    <div
-                      className="tp-input-icon-wrapper position-relative"
-                      id="clinic-address-wrapper"
-                    >
-                      <svg
-                        width="18"
-                        height="18"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        className="icon-left"
-                      >
-                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                        <circle cx="12" cy="10" r="3"></circle>
-                      </svg>
-                      <Autocomplete
-                        key={isLoading ? "loading-clinic" : "clinic"}
-                        apiKey="AIzaSyDcDl4RoLc2oLDDpkJqdhWOWHP0B4qBEqk"
-                        onPlaceSelected={(place) => {
-                          const address =
-                            place.formatted_address || place.name || "";
-                          const lat = place.geometry?.location?.lat();
-                          const lng = place.geometry?.location?.lng();
-                          setFormData((prev: any) => ({
-                            ...prev,
-                            clinicAddress: address,
-                            clinic_latitude: lat
-                              ? String(lat)
-                              : prev.clinic_latitude,
-                            clinic_longitude: lng
-                              ? String(lng)
-                              : prev.clinic_longitude,
-                          }));
-                          if (errors.clinicAddress)
-                            setErrors((prev: any) => ({
-                              ...prev,
-                              clinicAddress: null,
-                            }));
-                        }}
-                        className="tp-input"
-                        style={{
-                          paddingLeft: "40px",
-                          backgroundColor: "#ffffff",
-                          boxShadow: "0 2px 10px rgba(0, 0, 0, 0.06)",
-                        }}
-                        onFocus={(e: any) => {
-                          e.target.style.backgroundColor = "#ffffff";
-                          e.target.style.boxShadow =
-                            "0 4px 14px rgba(0, 0, 0, 0.08)";
-                          e.target.style.outline = "none";
-                        }}
-                        onBlur={(e: any) => {
-                          e.target.style.backgroundColor = "#ffffff";
-                          e.target.style.boxShadow =
-                            "0 2px 10px rgba(0, 0, 0, 0.06)";
-                        }}
-                        placeholder="Enter clinic address"
-                        name="clinicAddress"
-                        value={formData.clinicAddress || ""}
-                        onChange={(e: any) => {
-                          setFormData((prev: any) => ({
-                            ...prev,
-                            clinicAddress: e.target.value,
-                          }));
-                          if (errors.clinicAddress)
-                            setErrors((prev: any) => ({
-                              ...prev,
-                              clinicAddress: null,
-                            }));
-                        }}
-                      />
-                    </div>
-                    {errors.clinicAddress && (
+                {formData.sessionMode.includes("in_person") && (
+                  <div className="row">
+                    <div className="col-md-4">
+                      <label className="tp-label">Clinic Address*</label>
                       <div
-                        style={{
-                          color: "red",
-                          fontSize: "12px",
-                          marginTop: "5px",
-                        }}
+                        className="tp-input-icon-wrapper position-relative"
+                        id="clinic-address-wrapper"
                       >
-                        {errors.clinicAddress}
+                        <svg
+                          width="18"
+                          height="18"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          className="icon-left"
+                        >
+                          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                          <circle cx="12" cy="10" r="3"></circle>
+                        </svg>
+                        <Autocomplete
+                          key={isLoading ? "loading-clinic" : "clinic"}
+                          apiKey="AIzaSyDcDl4RoLc2oLDDpkJqdhWOWHP0B4qBEqk"
+                          onPlaceSelected={(place) => {
+                            const address =
+                              place.formatted_address || place.name || "";
+                            const lat = place.geometry?.location?.lat();
+                            const lng = place.geometry?.location?.lng();
+                            setFormData((prev: any) => ({
+                              ...prev,
+                              clinicAddress: address,
+                              clinic_latitude: lat
+                                ? String(lat)
+                                : prev.clinic_latitude,
+                              clinic_longitude: lng
+                                ? String(lng)
+                                : prev.clinic_longitude,
+                            }));
+                            if (errors.clinicAddress)
+                              setErrors((prev: any) => ({
+                                ...prev,
+                                clinicAddress: null,
+                              }));
+                          }}
+                          className="tp-input"
+                          style={{
+                            paddingLeft: "40px",
+                            backgroundColor: "#ffffff",
+                            boxShadow: "0 2px 10px rgba(0, 0, 0, 0.06)",
+                          }}
+                          onFocus={(e: any) => {
+                            e.target.style.backgroundColor = "#ffffff";
+                            e.target.style.boxShadow =
+                              "0 4px 14px rgba(0, 0, 0, 0.08)";
+                            e.target.style.outline = "none";
+                          }}
+                          onBlur={(e: any) => {
+                            e.target.style.backgroundColor = "#ffffff";
+                            e.target.style.boxShadow =
+                              "0 2px 10px rgba(0, 0, 0, 0.06)";
+                          }}
+                          placeholder="Enter clinic address"
+                          name="clinicAddress"
+                          value={formData.clinicAddress || ""}
+                          onChange={(e: any) => {
+                            setFormData((prev: any) => ({
+                              ...prev,
+                              clinicAddress: e.target.value,
+                            }));
+                            if (errors.clinicAddress)
+                              setErrors((prev: any) => ({
+                                ...prev,
+                                clinicAddress: null,
+                              }));
+                          }}
+                        />
                       </div>
-                    )}
+                      {errors.clinicAddress && (
+                        <div
+                          style={{
+                            color: "red",
+                            fontSize: "12px",
+                            marginTop: "5px",
+                          }}
+                        >
+                          {errors.clinicAddress}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
 
               <div className="mb-3">

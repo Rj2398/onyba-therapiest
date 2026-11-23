@@ -70,6 +70,21 @@ const addMinutesToTime = (timeStr: string, minutesToAdd: number = 60) => {
   return `${String(newH).padStart(2, "0")}:${String(newM).padStart(2, "0")}`;
 };
 
+const normalizeTime24 = (val: string) => {
+  if (!val) return "";
+  const trimmed = val.trim();
+  if (/^\d{4}$/.test(trimmed)) {
+    return `${trimmed.slice(0, 2)}:${trimmed.slice(2)}`;
+  }
+  if (/^\d{3}$/.test(trimmed)) {
+    return `0${trimmed.slice(0, 1)}:${trimmed.slice(1)}`;
+  }
+  if (/^\d{1}:\d{2}$/.test(trimmed)) {
+    return `0${trimmed}`;
+  }
+  return convert12To24(trimmed);
+};
+
 const groupDatesToRanges = (dates: string[]): DateRange[] => {
   if (!dates || dates.length === 0) return [];
   const sorted = [...dates].sort(
@@ -539,7 +554,8 @@ const PersonalProfile = () => {
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
 
-  const firstDay = new Date(year, month, 1).getDay();
+  // Week starts on Monday: (0=Sun -> 6, 1=Mon -> 0, 2=Tue -> 1, etc.)
+  const firstDay = (new Date(year, month, 1).getDay() + 6) % 7;
   const daysInMonth = new Date(year, month + 1, 0).getDate();
 
   const calendarDays: (number | null)[] = [];
@@ -2122,13 +2138,13 @@ const PersonalProfile = () => {
               </div>
 
               <div className="onyba-avail-weekdays-row">
-                <div className="onyba-avail-day-label">SUN</div>
                 <div className="onyba-avail-day-label">MON</div>
                 <div className="onyba-avail-day-label">TUE</div>
                 <div className="onyba-avail-day-label">WED</div>
                 <div className="onyba-avail-day-label">THU</div>
                 <div className="onyba-avail-day-label">FRI</div>
                 <div className="onyba-avail-day-label">SAT</div>
+                <div className="onyba-avail-day-label">SUN</div>
               </div>
 
               <div className="onyba-avail-days-stack">
@@ -2478,12 +2494,14 @@ const PersonalProfile = () => {
                       className="onyba-avail-input-time-wrap"
                       style={{ flex: 1 }}
                     >
-                      <select
+                      <input
+                        type="text"
                         className="onyba-avail-time-field"
+                        placeholder="Start time (e.g. 09:00)"
                         style={{
                           width: "100%",
                           padding: "12px 16px",
-                          cursor: "pointer",
+                          cursor: "text",
                           backgroundColor: "#ffffff",
                         }}
                         value={slot.start_time || ""}
@@ -2491,61 +2509,58 @@ const PersonalProfile = () => {
                           const newStartTime = e.target.value;
                           const updated = [...slots];
                           updated[index].start_time = newStartTime;
-                          updated[index].end_time = newStartTime
-                            ? addMinutesToTime(newStartTime, 60)
-                            : "";
                           setSlots(updated);
                         }}
+                        onBlur={(e) => {
+                          const formatted = normalizeTime24(e.target.value);
+                          if (formatted && formatted !== e.target.value) {
+                            const updated = [...slots];
+                            updated[index].start_time = formatted;
+                            setSlots(updated);
+                          }
+                        }}
+                      />
+                      <span
+                        className="onyba-avail-clock-icon"
+                        style={{ pointerEvents: "none" }}
                       >
-                        <option value="" disabled>
-                          Select start time
-                        </option>
-                        {slot.start_time &&
-                          !TIME_OPTIONS_24H.includes(slot.start_time) && (
-                            <option value={slot.start_time}>
-                              {slot.start_time}
-                            </option>
-                          )}
-                        {TIME_OPTIONS_24H.map((timeOption) => (
-                          <option key={timeOption} value={timeOption}>
-                            {timeOption}
-                          </option>
-                        ))}
-                      </select>
-                      <span className="onyba-avail-clock-icon">
                         <MdOutlineWatchLater />
                       </span>
                     </div>
                     <span style={{ color: "#666" }}>-</span>
                     <div
                       className="onyba-avail-input-time-wrap"
-                      style={{
-                        flex: 1,
-                        backgroundColor: "#f5f5f7",
-                        borderRadius: "8px",
-                        opacity: 0.85,
-                        cursor: "not-allowed",
-                      }}
-                      title="End time is automatically calculated (24-hour)"
+                      style={{ flex: 1 }}
                     >
                       <input
                         type="text"
                         className="onyba-avail-time-field"
+                        placeholder="End time (e.g. 10:00)"
                         style={{
                           width: "100%",
                           padding: "12px 16px",
-                          backgroundColor: "transparent",
-                          cursor: "not-allowed",
-                          pointerEvents: "none",
+                          cursor: "text",
+                          backgroundColor: "#ffffff",
                         }}
                         value={slot.end_time || ""}
-                        placeholder="End time"
-                        disabled
-                        readOnly
+                        onChange={(e) => {
+                          const newEndTime = e.target.value;
+                          const updated = [...slots];
+                          updated[index].end_time = newEndTime;
+                          setSlots(updated);
+                        }}
+                        onBlur={(e) => {
+                          const formatted = normalizeTime24(e.target.value);
+                          if (formatted && formatted !== e.target.value) {
+                            const updated = [...slots];
+                            updated[index].end_time = formatted;
+                            setSlots(updated);
+                          }
+                        }}
                       />
                       <span
                         className="onyba-avail-clock-icon"
-                        style={{ pointerEvents: "none", cursor: "not-allowed" }}
+                        style={{ pointerEvents: "none" }}
                       >
                         <MdOutlineWatchLater />
                       </span>
