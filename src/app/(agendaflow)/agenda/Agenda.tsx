@@ -221,7 +221,7 @@ const AgendaContent = () => {
                             return {
                                 id: item.id || idx + 1,
                                 dayIndex: dayIndex,
-                                name: item.patient_name || item.name || item.patientName || 'Appointment',
+                                name: item.patient_name || item.name || item.patientName || (item.patient_id ? `Patient #${item.patient_id}` : 'Appointment'),
                                 age: item.age || item.patient_age || 0,
                                 appId: item.id || item.appId || item.app_id || item.appointment_id || `${item.id || idx + 1}`,
                                 type: typeLabel,

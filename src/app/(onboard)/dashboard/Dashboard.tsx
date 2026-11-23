@@ -21,6 +21,7 @@ interface UpcomingSessionItem {
   patient_name?: string | null;
   session_date?: string | null;
   session_start_time?: string | null;
+  session_end_time?: string | null;
   session_mode?: string | null;
   patient_type?: string | null;
   is_session_verified?: boolean | number | string | null;
@@ -335,47 +336,71 @@ const Dashboard = () => {
 
   const isStartSessionAvailable = (
     sessionDate?: string | null,
-    startTime?: string | null
+    startTime?: string | null,
+    endTime?: string | null
   ) => {
     if (!sessionDate || !startTime) return false;
     try {
       const cleanDateStr = sessionDate.split("T")[0];
-      let cleanTimeStr = startTime.trim();
 
-      const parts = cleanTimeStr.split(/\s+/);
-      let hours = 0;
-      let minutes = 0;
-
-      if (parts.length >= 2) {
-        const [timePart, period] = parts;
-        const timeParts = timePart.split(":").map(Number);
-        hours = timeParts[0] || 0;
-        minutes = timeParts[1] || 0;
-        if (period.toUpperCase() === "PM" && hours !== 12) hours += 12;
-        if (period.toUpperCase() === "AM" && hours === 12) hours = 0;
-      } else {
-        const timeParts = cleanTimeStr.split(":").map(Number);
-        hours = timeParts[0] || 0;
-        minutes = timeParts[1] || 0;
-      }
+      const parseTime = (tStr: string) => {
+        const parts = tStr.trim().split(/\s+/);
+        let hours = 0;
+        let minutes = 0;
+        if (parts.length >= 2) {
+          const [timePart, period] = parts;
+          const timeParts = timePart.split(":").map(Number);
+          hours = timeParts[0] || 0;
+          minutes = timeParts[1] || 0;
+          if (period.toUpperCase() === "PM" && hours !== 12) hours += 12;
+          if (period.toUpperCase() === "AM" && hours === 12) hours = 0;
+        } else {
+          const timeParts = parts[0].split(":").map(Number);
+          hours = timeParts[0] || 0;
+          minutes = timeParts[1] || 0;
+        }
+        return { hours, minutes };
+      };
 
       const [year, month, day] = cleanDateStr.split("-").map(Number);
       if (!year || !month || !day) return false;
 
-      const sessionDateTime = new Date(
+      const { hours: startH, minutes: startM } = parseTime(startTime);
+      const sessionStartDateTime = new Date(
         year,
         month - 1,
         day,
-        hours,
-        minutes,
+        startH,
+        startM,
         0
       ).getTime();
+
+      let sessionEndDateTime: number;
+      if (endTime) {
+        const { hours: endH, minutes: endM } = parseTime(endTime);
+        sessionEndDateTime = new Date(
+          year,
+          month - 1,
+          day,
+          endH,
+          endM,
+          0
+        ).getTime();
+      } else {
+        sessionEndDateTime = sessionStartDateTime + 45 * 60 * 1000;
+      }
+
       const now = Date.now();
-      // const now = 1795168800000;
 
-      const diffMinutes = (sessionDateTime - now) / (1000 * 60);
+      // If current time has already passed the session end time, session cannot be started
+      if (now > sessionEndDateTime) {
+        return false;
+      }
 
-      return diffMinutes <= 5 && diffMinutes >= -120;
+      const diffToStartMinutes = (sessionStartDateTime - now) / (1000 * 60);
+
+      // Session can be started within 5 minutes before start time until the session end time
+      return diffToStartMinutes <= 5;
     } catch {
       return false;
     }
@@ -398,7 +423,8 @@ const Dashboard = () => {
 
     const canStartSession = isStartSessionAvailable(
       session?.session_date,
-      session?.session_start_time
+      session?.session_start_time,
+      session?.session_end_time
     );
     const patientId = session?.patient_id || session?.id;
     const sessionId = session?.id || (session as any)?.therapy_session_id;
@@ -590,7 +616,8 @@ const Dashboard = () => {
                         const statusText = isOnline ? "Online" : "In-Person";
                         const canStartSession = isStartSessionAvailable(
                           session.session_date,
-                          session.session_start_time
+                          session.session_start_time,
+                          session.session_end_time
                         );
                         const actionButtonText = canStartSession
                           ? "Start Session"
