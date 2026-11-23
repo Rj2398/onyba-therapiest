@@ -111,6 +111,14 @@ const formatStatus = (status?: string) => {
     .replace(/\b\w/g, (char) => char.toUpperCase());
 };
 
+
+const INTAKE_QUESTION_LABELS: Record<string, string> = {
+  booking_session_reason: "Why are you booking this session?",
+  past_difficulty: "What are the main challenges you are facing?",
+  session_goal: "How long have you been experiencing this?",
+  additional_details: "Have you had any past therapy or similar experiences?",
+  document: "Is there any past experience or event you’d like to share?",
+};
 const getDocList = (docData: any) => {
   if (!docData) return [];
 
@@ -125,13 +133,13 @@ const getDocList = (docData: any) => {
       const ext = extMatch ? extMatch[1].toUpperCase() : "DOC";
       const fullUrl =
         trimmed.startsWith("http://") ||
-        trimmed.startsWith("https://") ||
-        trimmed.startsWith("data:")
+          trimmed.startsWith("https://") ||
+          trimmed.startsWith("data:")
           ? trimmed
           : `${Base_image_url.replace(/\/+$/, "")}/${trimmed.replace(
-              /^\/+/,
-              ""
-            )}`;
+            /^\/+/,
+            ""
+          )}`;
       return {
         id: idx,
         file_name: fileName,
@@ -148,9 +156,9 @@ const getDocList = (docData: any) => {
           rawUrl.startsWith("data:")
           ? rawUrl
           : `${Base_image_url.replace(/\/+$/, "")}/${rawUrl.replace(
-              /^\/+/,
-              ""
-            )}`
+            /^\/+/,
+            ""
+          )}`
         : "";
       const fileName =
         item.file_name ||
@@ -293,13 +301,13 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
 
   const isSessionVerified = Boolean(
     sessionData?.is_session_verified === true ||
-      sessionData?.is_session_verified === 1 ||
-      sessionData?.is_session_verified === "1" ||
-      sessionData?.is_session_verified === "true" ||
-      sessionData?.otp_verify === true ||
-      sessionData?.otp_verify === 1 ||
-      initialSessionData?.is_session_verified === true ||
-      initialSessionData?.is_session_verified === 1
+    sessionData?.is_session_verified === 1 ||
+    sessionData?.is_session_verified === "1" ||
+    sessionData?.is_session_verified === "true" ||
+    sessionData?.otp_verify === true ||
+    sessionData?.otp_verify === 1 ||
+    initialSessionData?.is_session_verified === true ||
+    initialSessionData?.is_session_verified === 1
   );
 
   const shouldHideActionButtons = isCancelled || isCompleted;
@@ -310,13 +318,13 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
 
   const isAdditionalPaymentRequested = Boolean(
     pDetails?.additional_payment_requested === true ||
-      pDetails?.additional_payment_requested === 1 ||
-      pDetails?.additional_payment_requested === "1" ||
-      pDetails?.additional_payment_requested === "true" ||
-      sessionData?.additional_payment_requested === true ||
-      sessionData?.additional_payment_requested === 1 ||
-      sessionData?.additional_payment_requested === "1" ||
-      sessionData?.additional_payment_requested === "true"
+    pDetails?.additional_payment_requested === 1 ||
+    pDetails?.additional_payment_requested === "1" ||
+    pDetails?.additional_payment_requested === "true" ||
+    sessionData?.additional_payment_requested === true ||
+    sessionData?.additional_payment_requested === 1 ||
+    sessionData?.additional_payment_requested === "1" ||
+    sessionData?.additional_payment_requested === "true"
   );
 
   const [serviceList, setServiceList] = useState<{ id: any; name: string }[]>(
@@ -548,13 +556,13 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
 
     const addServices =
       pDetails?.additional_services &&
-      Array.isArray(pDetails.additional_services) &&
-      pDetails.additional_services.length > 0
+        Array.isArray(pDetails.additional_services) &&
+        pDetails.additional_services.length > 0
         ? pDetails.additional_services
         : Array.isArray(sessionData?.additional_services) &&
           sessionData.additional_services.length > 0
-        ? sessionData.additional_services
-        : [];
+          ? sessionData.additional_services
+          : [];
 
     let serviceIds: any[] = addServices
       .map((srv: any) => srv.service_id ?? srv.id)
@@ -626,8 +634,8 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
       console.error("Error requesting additional payment:", err);
       toast.error(
         err?.response?.data?.message ||
-          err?.message ||
-          "Error requesting additional payment."
+        err?.message ||
+        "Error requesting additional payment."
       );
     } finally {
       setIsRequestingPayment(false);
@@ -845,8 +853,8 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
       console.error("Error resending verification code:", err);
       toast.error(
         err?.response?.data?.message ||
-          err?.message ||
-          "Error resending verification code"
+        err?.message ||
+        "Error resending verification code"
       );
     } finally {
       setIsResendingCode(false);
@@ -887,8 +895,8 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
       console.error("Error updating AI summary:", err);
       toast.error(
         err?.response?.data?.message ||
-          err?.message ||
-          "Error updating AI summary"
+        err?.message ||
+        "Error updating AI summary"
       );
     } finally {
       setIsSavingAiSummary(false);
@@ -1049,8 +1057,7 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
 
       if (response && response.success === true) {
         toast.success(
-          `${
-            type === "private" ? "Private" : "Public"
+          `${type === "private" ? "Private" : "Public"
           } notes submitted successfully!`
         );
       } else {
@@ -1060,8 +1067,8 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
       console.error(`Error submitting ${type} notes:`, err);
       toast.error(
         err?.response?.data?.message ||
-          err?.message ||
-          `Error submitting ${type} notes`
+        err?.message ||
+        `Error submitting ${type} notes`
       );
     } finally {
       if (type === "private") setSavingPrivateNotes(false);
@@ -1107,8 +1114,8 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
       console.error("Error sending consent form:", err);
       toast.error(
         err?.response?.data?.message ||
-          err?.message ||
-          "Failed to send consent form."
+        err?.message ||
+        "Failed to send consent form."
       );
     } finally {
       setIsSendingConsent(false);
@@ -1169,10 +1176,10 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
     consentFeedbackData?.have_feedback !== undefined
       ? consentFeedbackData?.have_feedback
       : consentFeedbackData?.data?.have_feedback !== undefined
-      ? consentFeedbackData?.data?.have_feedback
-      : sessionData?.have_feedback !== undefined
-      ? sessionData?.have_feedback
-      : sessionData?.data?.have_feedback;
+        ? consentFeedbackData?.data?.have_feedback
+        : sessionData?.have_feedback !== undefined
+          ? sessionData?.have_feedback
+          : sessionData?.data?.have_feedback;
 
   const showFeedbackCard =
     haveFeedbackFlag === true ||
@@ -1208,11 +1215,11 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
     rawMood && MOOD_MAP[rawMood]
       ? MOOD_MAP[rawMood]
       : {
-          emoji: rawMood ? feedbackObj?.emoji || "" : "",
-          label: rawMood
-            ? rawMood.charAt(0).toUpperCase() + rawMood.slice(1)
-            : "",
-        };
+        emoji: rawMood ? feedbackObj?.emoji || "" : "",
+        label: rawMood
+          ? rawMood.charAt(0).toUpperCase() + rawMood.slice(1)
+          : "",
+      };
 
   const moodEmoji = moodData.emoji;
   const moodStatus = moodData.label;
@@ -1226,10 +1233,10 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
 
   const ratingVal =
     feedbackObj?.patient_rating !== undefined &&
-    feedbackObj?.patient_rating !== null
+      feedbackObj?.patient_rating !== null
       ? Number(feedbackObj.patient_rating) || 0
       : Number(feedbackObj?.rating || feedbackObj?.patient_feedback?.rating) ||
-        0;
+      0;
 
   const feedbackComment =
     feedbackObj?.patient_comment ||
@@ -1321,9 +1328,8 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
                             </button>
                           ) : (
                             <Link
-                              href={`${startSessionUrl}${
-                                startSessionUrl.includes("?") ? "&" : "?"
-                              }is_rejoin=true`}
+                              href={`${startSessionUrl}${startSessionUrl.includes("?") ? "&" : "?"
+                                }is_rejoin=true`}
                               className="patient-link-cancel-session"
                               style={{
                                 backgroundColor: "#28a745",
@@ -1444,10 +1450,10 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
                           isStartedCall
                             ? { opacity: 0.6, cursor: "not-allowed" }
                             : {
-                                backgroundColor: "#6c2b3b",
-                                borderColor: "#6c2b3b",
-                                color: "#fff",
-                              }
+                              backgroundColor: "#6c2b3b",
+                              borderColor: "#6c2b3b",
+                              color: "#fff",
+                            }
                         }
                       >
                         Start Session
@@ -1529,7 +1535,7 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
                   <span className="dbt-pcard-bullet">•</span>{" "}
                   {sessionData?.gender
                     ? sessionData.gender.charAt(0).toUpperCase() +
-                      sessionData.gender.slice(1)
+                    sessionData.gender.slice(1)
                     : "Male"}
                 </p>
                 <div className="dbt-pcard-ids">
@@ -1747,40 +1753,40 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
                         {(() => {
                           const listToRender =
                             Array.isArray(sessionData?.previous_sessions) &&
-                            sessionData.previous_sessions.length > 0
+                              sessionData.previous_sessions.length > 0
                               ? sessionData.previous_sessions
                               : [
-                                  {
-                                    id: 1,
-                                    name: "Session 1",
-                                    date: "May 20, 2026",
-                                    details: "Anxiety & work stress",
-                                  },
-                                  {
-                                    id: 2,
-                                    name: "Session 2",
-                                    date: "May 22, 2026",
-                                    details: "Anxiety & work stress",
-                                  },
-                                  {
-                                    id: 3,
-                                    name: "Session 3",
-                                    date: "May 24, 2026",
-                                    details: "Anxiety & work stress",
-                                  },
-                                  {
-                                    id: 4,
-                                    name: "Session 4",
-                                    date: "May 26, 2026",
-                                    details: "Anxiety & work stress",
-                                  },
-                                  {
-                                    id: 5,
-                                    name: "Session 5",
-                                    date: "May 30, 2026",
-                                    details: "Depression",
-                                  },
-                                ];
+                                {
+                                  id: 1,
+                                  name: "Session 1",
+                                  date: "May 20, 2026",
+                                  details: "Anxiety & work stress",
+                                },
+                                {
+                                  id: 2,
+                                  name: "Session 2",
+                                  date: "May 22, 2026",
+                                  details: "Anxiety & work stress",
+                                },
+                                {
+                                  id: 3,
+                                  name: "Session 3",
+                                  date: "May 24, 2026",
+                                  details: "Anxiety & work stress",
+                                },
+                                {
+                                  id: 4,
+                                  name: "Session 4",
+                                  date: "May 26, 2026",
+                                  details: "Anxiety & work stress",
+                                },
+                                {
+                                  id: 5,
+                                  name: "Session 5",
+                                  date: "May 30, 2026",
+                                  details: "Depression",
+                                },
+                              ];
 
                           const filtered = listToRender.filter((item: any) => {
                             if (!prevSessionSearch.trim()) return true;
@@ -1868,8 +1874,93 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
                 </p>
               </div>
             </div>
-
             <div
+              className="patient-faqs-accordion"
+              id="patientFaqsAccordionContainer"
+            >
+              {Array.isArray(sessionData?.patient_intake_details) &&
+                sessionData.patient_intake_details.length > 0 ? (
+                sessionData.patient_intake_details.map(
+                  (item: any, idx: number) => (
+                    <div className="patient-faqs-item" key={idx}>
+                      <h2
+                        className="patient-faqs-header"
+                        id={`patientFaqsHeading${idx}`}
+                      >
+                        <button
+                          className="patient-faqs-button collapsed"
+                          type="button"
+                          data-bs-toggle="collapse"
+                          data-bs-target={`#patientFaqsCollapse${idx}`}
+                          aria-expanded="false"
+                          aria-controls={`patientFaqsCollapse${idx}`}
+                        >
+                          {idx + 1}.{" "}
+                          {item.question ||
+                            item.title ||
+                            item.label ||
+                            `Question ${idx + 1}`}
+                        </button>
+                      </h2>
+                      <div
+                        id={`patientFaqsCollapse${idx}`}
+                        className="accordion-collapse collapse"
+                        aria-labelledby={`patientFaqsHeading${idx}`}
+                        data-bs-parent="#patientFaqsAccordionContainer"
+                      >
+                        <div className="patient-faqs-body">
+                          {typeof item.answer === "string"
+                            ? item.answer
+                            : item.response ||
+                            item.value ||
+                            JSON.stringify(item)}
+                        </div>
+                      </div>
+                    </div>
+                  )
+                )
+              ) : sessionData?.patient_intake_details &&
+                typeof sessionData.patient_intake_details === "object" ? (
+                Object.entries(sessionData.patient_intake_details).map(
+                  ([key, val], idx) => (
+                    <div className="patient-faqs-item" key={idx}>
+                      <h2
+                        className="patient-faqs-header"
+                        id={`patientFaqsHeading${idx}`}
+                      >
+                        <button
+                          className="patient-faqs-button collapsed"
+                          type="button"
+                          data-bs-toggle="collapse"
+                          data-bs-target={`#patientFaqsCollapse${idx}`}
+                          aria-expanded="false"
+                          aria-controls={`patientFaqsCollapse${idx}`}
+                        >
+                          {idx + 1}. {INTAKE_QUESTION_LABELS[key] || key}
+                        </button>
+                      </h2>
+                      <div
+                        id={`patientFaqsCollapse${idx}`}
+                        className="accordion-collapse collapse"
+                        aria-labelledby={`patientFaqsHeading${idx}`}
+                        data-bs-parent="#patientFaqsAccordionContainer"
+                      >
+                        <div className="patient-faqs-body">
+                          {typeof val === "string" ? val : JSON.stringify(val)}
+                        </div>
+                      </div>
+                    </div>
+                  )
+                )
+              ) : (
+                <div className="p-3 text-muted">
+                  {sessionData?.patient_intake_details
+                    ? String(sessionData.patient_intake_details)
+                    : "No intake information shared by patient for this session."}
+                </div>
+              )}
+            </div>
+            {/* <div
               className="patient-faqs-accordion"
               id="patientFaqsAccordionContainer"
             >
@@ -1954,7 +2045,7 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
                     : "No intake information shared by patient for this session."}
                 </div>
               )}
-            </div>
+            </div> */}
           </div>
 
           <div className="ony-summary-v2-main-container">
@@ -2042,7 +2133,7 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
                   Added Services:
                 </span>
                 {Array.isArray(sessionData?.additional_services) &&
-                sessionData.additional_services.length > 0 ? (
+                  sessionData.additional_services.length > 0 ? (
                   sessionData.additional_services.map(
                     (srv: any, idx: number) => (
                       <div
@@ -2242,13 +2333,13 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
                       if (!isEditingAiSummary) {
                         const currentVal =
                           typeof sessionData?.post_session_ai_summary ===
-                          "string"
+                            "string"
                             ? sessionData.post_session_ai_summary
                             : sessionData?.post_session_ai_summary
-                            ? JSON.stringify(
+                              ? JSON.stringify(
                                 sessionData.post_session_ai_summary
                               )
-                            : "";
+                              : "";
                         setAiSummaryText(currentVal);
                       }
                       setIsEditingAiSummary(!isEditingAiSummary);
@@ -2317,7 +2408,7 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
                         </div>
                       ) : sessionData?.post_session_ai_summary ? (
                         typeof sessionData.post_session_ai_summary ===
-                        "string" ? (
+                          "string" ? (
                           <>
                             <h3 className="ps-part1-section-title">
                               Session Overview
@@ -2364,9 +2455,8 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
                 <div className="ps-part2-tabs-row">
                   <button
                     type="button"
-                    className={`ps-part2-tab ${
-                      activeDocTab === "therapist" ? "ps-part2-tab-active" : ""
-                    }`}
+                    className={`ps-part2-tab ${activeDocTab === "therapist" ? "ps-part2-tab-active" : ""
+                      }`}
                     onClick={() => setActiveDocTab("therapist")}
                   >
                     Shared by you{" "}
@@ -2376,9 +2466,8 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
                   </button>
                   <button
                     type="button"
-                    className={`ps-part2-tab ${
-                      activeDocTab === "patient" ? "ps-part2-tab-active" : ""
-                    }`}
+                    className={`ps-part2-tab ${activeDocTab === "patient" ? "ps-part2-tab-active" : ""
+                      }`}
                     onClick={() => setActiveDocTab("patient")}
                   >
                     Shared by Patient{" "}
@@ -2928,16 +3017,16 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
                         (Array.isArray(sessionData?.payment_details)
                           ? sessionData.payment_details[0]?.session_amount
                           : sessionData?.payment_details?.session_amount) ||
-                          sessionData?.session_price
+                        sessionData?.session_price
                       )}{" "}
                       (
                       {formatStatus(
                         (Array.isArray(sessionData?.payment_details)
                           ? sessionData.payment_details[0]
-                              ?.session_payment_status
+                            ?.session_payment_status
                           : sessionData?.payment_details
-                              ?.session_payment_status) ||
-                          sessionData?.session_status
+                            ?.session_payment_status) ||
+                        sessionData?.session_status
                       )}
                       )
                     </span>
@@ -2963,13 +3052,13 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
                           : sessionData?.payment_details;
                         const addServices =
                           pDetails?.additional_services &&
-                          Array.isArray(pDetails.additional_services) &&
-                          pDetails.additional_services.length > 0
+                            Array.isArray(pDetails.additional_services) &&
+                            pDetails.additional_services.length > 0
                             ? pDetails.additional_services
                             : Array.isArray(sessionData?.additional_services) &&
                               sessionData.additional_services.length > 0
-                            ? sessionData.additional_services
-                            : [];
+                              ? sessionData.additional_services
+                              : [];
 
                         if (addServices.length > 0) {
                           return addServices.map((srv: any, idx: number) => (
@@ -3002,13 +3091,13 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
                           : sessionData?.payment_details;
                         const addServices =
                           pDetails?.additional_services &&
-                          Array.isArray(pDetails.additional_services) &&
-                          pDetails.additional_services.length > 0
+                            Array.isArray(pDetails.additional_services) &&
+                            pDetails.additional_services.length > 0
                             ? pDetails.additional_services
                             : Array.isArray(sessionData?.additional_services) &&
                               sessionData.additional_services.length > 0
-                            ? sessionData.additional_services
-                            : [];
+                              ? sessionData.additional_services
+                              : [];
 
                         if (addServices.length > 0) {
                           return addServices.map((srv: any, idx: number) => (
@@ -3046,18 +3135,18 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
                       style={
                         isDisabled
                           ? {
-                              opacity: 0.6,
-                              cursor: "not-allowed",
-                              backgroundColor: "#8c7b83",
-                            }
+                            opacity: 0.6,
+                            cursor: "not-allowed",
+                            backgroundColor: "#8c7b83",
+                          }
                           : undefined
                       }
                     >
                       {isRequestingPayment
                         ? "Sending Request..."
                         : isAdditionalPaymentRequested
-                        ? "Payment Requested"
-                        : "Request Additional Payment"}
+                          ? "Payment Requested"
+                          : "Request Additional Payment"}
                     </button>
                   </div>
                 );
