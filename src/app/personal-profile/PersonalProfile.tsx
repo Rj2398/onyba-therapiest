@@ -1151,11 +1151,12 @@ const PersonalProfile = () => {
       });
       const formDataPayload = new FormData();
       const mode = getSessionModeParam(selectedModes);
+      const hasInPerson = selectedModes.some((m) => m?.toLowerCase().includes("person"));
       formDataPayload.append("session_mode", mode);
       formDataPayload.append("clinic_name", clinicNameInput);
-      formDataPayload.append("clinic_address", clinicAddressInput);
-      formDataPayload.append("clinic_latitude", String(clinicLatitude));
-      formDataPayload.append("clinic_longitude", String(clinicLongitude));
+      formDataPayload.append("clinic_address", hasInPerson ? clinicAddressInput : "");
+      formDataPayload.append("clinic_latitude", hasInPerson ? String(clinicLatitude) : "");
+      formDataPayload.append("clinic_longitude", hasInPerson ? String(clinicLongitude) : "");
       formDataPayload.append("service_id", formData.therapyTypes.join(","));
       formDataPayload.append("service_id[]", formData.therapyTypes.join(","));
 
@@ -1816,35 +1817,39 @@ const PersonalProfile = () => {
                     />
                   </div>
 
-                  <p className="onyba-prof-sub-title-text">Clinic address</p>
-                  <div style={{ position: "relative", marginBottom: "15px" }}>
-                    <Autocomplete
-                      apiKey="AIzaSyDcDl4RoLc2oLDDpkJqdhWOWHP0B4qBEqk"
-                      onPlaceSelected={(place) => {
-                        const address =
-                          place.formatted_address || place.name || "";
-                        const lat = place.geometry?.location?.lat();
-                        const lng = place.geometry?.location?.lng();
-                        setClinicAddressInput(address);
-                        setClinicLatitude(lat ? String(lat) : "");
-                        setClinicLongitude(lng ? String(lng) : "");
-                      }}
-                      style={{
-                        width: "100%",
-                        padding: "10px",
-                        borderRadius: "8px",
-                        border: "1px solid #ddd",
-                        background: "#fff",
-                        color: "#000",
-                        fontSize: "14px",
-                      }}
-                      placeholder="Enter clinic address"
-                      defaultValue={clinicAddressInput}
-                      onChange={(e: any) => {
-                        setClinicAddressInput(e.target.value);
-                      }}
-                    />
-                  </div>
+                  {selectedModes.some((m) => m?.toLowerCase().includes("person")) && (
+                    <>
+                      <p className="onyba-prof-sub-title-text">Clinic address</p>
+                      <div style={{ position: "relative", marginBottom: "15px" }}>
+                        <Autocomplete
+                          apiKey="AIzaSyDcDl4RoLc2oLDDpkJqdhWOWHP0B4qBEqk"
+                          onPlaceSelected={(place) => {
+                            const address =
+                              place.formatted_address || place.name || "";
+                            const lat = place.geometry?.location?.lat();
+                            const lng = place.geometry?.location?.lng();
+                            setClinicAddressInput(address);
+                            setClinicLatitude(lat ? String(lat) : "");
+                            setClinicLongitude(lng ? String(lng) : "");
+                          }}
+                          style={{
+                            width: "100%",
+                            padding: "10px",
+                            borderRadius: "8px",
+                            border: "1px solid #ddd",
+                            background: "#fff",
+                            color: "#000",
+                            fontSize: "14px",
+                          }}
+                          placeholder="Enter clinic address"
+                          defaultValue={clinicAddressInput}
+                          onChange={(e: any) => {
+                            setClinicAddressInput(e.target.value);
+                          }}
+                        />
+                      </div>
+                    </>
+                  )}
 
                   <div style={{ marginTop: "15px" }}>
                     <button
@@ -1930,27 +1935,31 @@ const PersonalProfile = () => {
                     </>
                   )}
 
-                  <p
-                    className="onyba-prof-sub-title-text"
-                    style={{
-                      marginTop:
-                        therapistProfile?.clinic_name || clinicNameInput
-                          ? "10px"
-                          : "15px",
-                    }}
-                  >
-                    Clinic Address
-                  </p>
-                  <div className="onyba-prof-address-card">
-                    <span className="onyba-prof-pin">
-                      <img src="images/location-profile-icon.svg" alt="" />
-                    </span>
-                    <p>
-                      {therapistProfile?.clinic_address ||
-                        clinicAddressInput ||
-                        "No clinic address set"}
-                    </p>
-                  </div>
+                  {selectedModes.some((m) => m?.toLowerCase().includes("person")) && (
+                    <>
+                      <p
+                        className="onyba-prof-sub-title-text"
+                        style={{
+                          marginTop:
+                            therapistProfile?.clinic_name || clinicNameInput
+                              ? "10px"
+                              : "15px",
+                        }}
+                      >
+                        Clinic Address
+                      </p>
+                      <div className="onyba-prof-address-card">
+                        <span className="onyba-prof-pin">
+                          <img src="images/location-profile-icon.svg" alt="" />
+                        </span>
+                        <p>
+                          {therapistProfile?.clinic_address ||
+                            clinicAddressInput ||
+                            "No clinic address set"}
+                        </p>
+                      </div>
+                    </>
+                  )}
                 </>
               )}
             </div>{" "}
