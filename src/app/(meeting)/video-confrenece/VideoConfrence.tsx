@@ -92,13 +92,13 @@ const getDocList = (docData: any) => {
       const ext = extMatch ? extMatch[1].toUpperCase() : "DOC";
       const fullUrl =
         trimmed.startsWith("http://") ||
-        trimmed.startsWith("https://") ||
-        trimmed.startsWith("data:")
+          trimmed.startsWith("https://") ||
+          trimmed.startsWith("data:")
           ? trimmed
           : `${Base_image_url.replace(/\/+$/, "")}/${trimmed.replace(
-              /^\/+/,
-              ""
-            )}`;
+            /^\/+/,
+            ""
+          )}`;
       return {
         id: idx,
         file_name: fileName,
@@ -115,9 +115,9 @@ const getDocList = (docData: any) => {
           rawUrl.startsWith("data:")
           ? rawUrl
           : `${Base_image_url.replace(/\/+$/, "")}/${rawUrl.replace(
-              /^\/+/,
-              ""
-            )}`
+            /^\/+/,
+            ""
+          )}`
         : "";
       const fileName =
         item.file_name ||
@@ -192,9 +192,8 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
       rawDoctorImg.startsWith("data:") ||
       rawDoctorImg.startsWith("/")
       ? rawDoctorImg
-      : `${Base_image_url}${
-          rawDoctorImg.startsWith("/") ? "" : "/"
-        }${rawDoctorImg}`
+      : `${Base_image_url}${rawDoctorImg.startsWith("/") ? "" : "/"
+      }${rawDoctorImg}`
     : "/images/dash-user-icon.svg";
 
   // Camera Device Presence Detection
@@ -302,12 +301,12 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
   //started call inlilzie
   const activeSessionId = String(
     rawSessionId ??
-      therapySessionId ??
-      videoCallSession?.therapy_session_id ??
-      searchParams.get("therapy_session_id") ??
-      searchParams.get("session_id") ??
-      searchParams.get("id") ??
-      ""
+    therapySessionId ??
+    videoCallSession?.therapy_session_id ??
+    searchParams.get("therapy_session_id") ??
+    searchParams.get("session_id") ??
+    searchParams.get("id") ??
+    ""
   ).trim();
   const [callStatus, setCallStatus] = useState<"ongoing" | "ended">("ongoing");
 
@@ -445,7 +444,7 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
             ) {
               try {
                 recognition.start();
-              } catch (e) {}
+              } catch (e) { }
             }
           };
 
@@ -466,7 +465,7 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
         if (recognitionRef.current) {
           try {
             recognitionRef.current.stop();
-          } catch (e) {}
+          } catch (e) { }
         }
         if (audioChunksRef.current.length > 0) {
           const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
@@ -490,7 +489,7 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
       if (recognitionRef.current) {
         try {
           recognitionRef.current.stop();
-        } catch (e) {}
+        } catch (e) { }
       }
       if (
         mediaRecorderRef.current &&
@@ -498,7 +497,7 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
       ) {
         try {
           mediaRecorderRef.current.stop();
-        } catch (e) {}
+        } catch (e) { }
       }
       if (audioStreamRef.current) {
         audioStreamRef.current.getTracks().forEach((track) => track.stop());
@@ -594,8 +593,8 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
       console.error("Error submitting private notes:", err);
       toast.error(
         err?.response?.data?.message ||
-          err?.message ||
-          "Error submitting private notes"
+        err?.message ||
+        "Error submitting private notes"
       );
     } finally {
       setIsSubmittingPrivateNotes(false);
@@ -682,13 +681,13 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
       if (docData) {
         const therapistDocs = getDocList(
           docData.therapist_document ||
-            docData.shared_by_therapist ||
-            docData.therapist_documents
+          docData.shared_by_therapist ||
+          docData.therapist_documents
         );
         const patientDocs = getDocList(
           docData.patient_document ||
-            docData.shared_by_patient ||
-            docData.patient_documents
+          docData.shared_by_patient ||
+          docData.patient_documents
         );
         setTherapistDocuments(therapistDocs);
         setPatientDocuments(patientDocs);
@@ -752,8 +751,8 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
         const uploadedFilePath = Array.isArray(response?.data)
           ? response.data[0]
           : response?.data?.file_url ||
-            response?.data?.url ||
-            response?.data?.document;
+          response?.data?.url ||
+          response?.data?.document;
 
         const uploadedDocObj = {
           id: Date.now(),
@@ -771,8 +770,8 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
       console.error("Error uploading document in VideoConference:", err);
       toast.error(
         err?.response?.data?.message ||
-          err?.message ||
-          "Error uploading document"
+        err?.message ||
+        "Error uploading document"
       );
     } finally {
       setIsUploadingDoc(false);
@@ -791,13 +790,13 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
         try {
           const res = val.toMillis();
           if (typeof res === "number" && !isNaN(res) && res > 0) return res;
-        } catch (e) {}
+        } catch (e) { }
       }
       if (typeof val?.toDate === "function") {
         try {
           const d = val.toDate();
           if (d && !isNaN(d.getTime())) return d.getTime();
-        } catch (e) {}
+        } catch (e) { }
       }
 
       if (
@@ -1039,7 +1038,7 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
 
     const tName = therapistData?.name
       ? `Dr. ${therapistData.name} ${therapistData.surname_one || ""}`.trim() +
-        " (Host)"
+      " (Host)"
       : `${doctorFullName} (Host)`;
 
     const tImg = therapistData?.profile_image
@@ -1052,9 +1051,9 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
 
     const pImg = patientData?.profile_image
       ? getFullImgUrl(
-          patientData.profile_image,
-          "/images/header-user-right-profile.svg"
-        )
+        patientData.profile_image,
+        "/images/header-user-right-profile.svg"
+      )
       : "/images/header-user-right-profile.svg";
 
     setTherapistDisplayName(tName);
@@ -1079,6 +1078,326 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
   );
 
   const router = useRouter();
+
+  const [showLeavePopup, setShowLeavePopup] = useState<boolean>(false);
+  const [isEndingCall, setIsEndingCall] = useState<boolean>(false);
+  const [isCallEnded, setIsCallEnded] = useState<boolean>(false);
+  const pendingDestinationRef = useRef<string | null>(null);
+
+  const isPatientJoined = Boolean(
+    remoteUsers.length > 0 ||
+    primaryRemoteUser ||
+    joinedCallData?.patient
+  );
+
+  const isCallActive = Boolean(!isCallEnded);
+
+  const executeRecordingUpload = async (blob: Blob, transcriptToSend: string) => {
+    const sessionId =
+      activeSessionId ||
+      rawSessionId ||
+      therapySessionId ||
+      videoCallSession.therapy_session_id ||
+      searchParams.get("therapy_session_id") ||
+      searchParams.get("session_id") ||
+      searchParams.get("id") ||
+      "";
+
+    const audioFile = new File(
+      [blob],
+      `session_recording_${sessionId}_${Date.now()}.webm`,
+      {
+        type: blob.type || "audio/webm",
+      }
+    );
+
+    const textToSend = (transcriptToSend || "").trim();
+
+    const formData = new FormData();
+    formData.append("therapy_session_id", String(sessionId));
+    formData.append("session_recording_url", audioFile);
+    formData.append(
+      "session_recording_text",
+      textToSend || "Session audio recording transcript."
+    );
+    formData.append(
+      "transcript",
+      textToSend || "Session audio recording transcript."
+    );
+
+    let token: string | undefined;
+    try {
+      const savedDetails = localStorage.getItem("loginUser");
+      const parsed = savedDetails ? JSON.parse(savedDetails) : null;
+      token = parsed?.token;
+    } catch (err) {
+      console.error("Error reading token:", err);
+    }
+
+    const res = await axios.post("/api/store-session-recording", formData, {
+      headers: {
+        Accept: "*/*",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    });
+
+    return res.data;
+  };
+
+  const handleConfirmLeaveAndEndSession = async () => {
+    setIsEndingCall(true);
+    const sessionId =
+      activeSessionId ||
+      rawSessionId ||
+      therapySessionId ||
+      videoCallSession.therapy_session_id ||
+      searchParams.get("therapy_session_id") ||
+      searchParams.get("session_id") ||
+      searchParams.get("id") ||
+      "";
+
+    try {
+      // 1. Stop voice recording if recording
+      let blobToUpload = audioBlob;
+      let transcriptToUpload =
+        transcriptTextRef.current ||
+        finalTranscriptRef.current ||
+        transcriptText ||
+        "Session audio recording transcript.";
+
+      if (
+        mediaRecorderRef.current &&
+        mediaRecorderRef.current.state === "recording"
+      ) {
+        try {
+          mediaRecorderRef.current.stop();
+        } catch (e) {
+          console.error("Recording stop error:", e);
+        }
+      }
+
+      if (!blobToUpload && audioChunksRef.current.length > 0) {
+        blobToUpload = new Blob(audioChunksRef.current, { type: "audio/webm" });
+      }
+
+      // 2. Update Firebase call status to "ended"
+      if (sessionId) {
+        try {
+          const callDocRef = doc(db, "video_session_calls", String(sessionId));
+          await setDoc(
+            callDocRef,
+            {
+              status: "ended",
+              updatedAt: serverTimestamp(),
+            },
+            { merge: true }
+          );
+        } catch (firebaseErr) {
+          console.error("Firebase update ended error:", firebaseErr);
+        }
+
+        // 3. Call therapist-end-call and therapist-refresh-token APIs
+        const payload = {
+          therapy_session_id: String(sessionId),
+        };
+
+        try {
+          await Promise.allSettled([
+            requestApi({
+              endpoint: "therapist-end-call",
+              method: "POST",
+              data: payload,
+              isFormData: false,
+            }),
+            requestApi({
+              endpoint: "therapist-refresh-token",
+              method: "POST",
+              data: payload,
+              isFormData: false,
+            }),
+          ]);
+        } catch (callEndErr) {
+          console.error("Error calling therapist-end-call API:", callEndErr);
+        }
+
+        // 4. Call session-end API
+        try {
+          const res = await requestApi({
+            endpoint: "session-end",
+            method: "POST",
+            data: payload,
+            isFormData: false,
+          });
+          console.log("session-end API response:", res);
+        } catch (sessionEndErr) {
+          console.error("Error calling session-end API:", sessionEndErr);
+        }
+
+        // 5. Upload recording and transcript via store-session-recording API
+        try {
+          const fallbackBlob =
+            blobToUpload && blobToUpload.size > 0
+              ? blobToUpload
+              : new Blob([""], { type: "audio/webm" });
+
+          const uploadRes = await executeRecordingUpload(
+            fallbackBlob,
+            transcriptToUpload
+          );
+          console.log("store-session-recording API response:", uploadRes);
+        } catch (uploadErr) {
+          console.error("Error uploading recording on leave:", uploadErr);
+        }
+
+        // 6. Clean up localStorage / sessionStorage
+        try {
+          localStorage.removeItem(`call_joined_${sessionId}`);
+          window.dispatchEvent(
+            new CustomEvent("callJoinedUpdated", { detail: null })
+          );
+          sessionStorage.removeItem("start_session_data");
+        } catch (e) { }
+      }
+
+      // 7. Stop local Agora tracks
+      try {
+        if (localMicrophoneTrack) {
+          localMicrophoneTrack.stop();
+          localMicrophoneTrack.close();
+        }
+        if (localCameraTrack) {
+          localCameraTrack.stop();
+          localCameraTrack.close();
+        }
+      } catch (e) { }
+
+      setIsCallEnded(true);
+      setShowLeavePopup(false);
+      toast.success("Session ended successfully.");
+
+      // 8. Redirect to the pending destination
+      const targetDest = pendingDestinationRef.current || "/dashboard";
+      if (targetDest === "back") {
+        router.back();
+      } else {
+        router.push(targetDest);
+      }
+    } catch (err) {
+      console.error("Error during leave and end session:", err);
+      setIsEndingCall(false);
+      setShowLeavePopup(false);
+      const targetDest = pendingDestinationRef.current || "/dashboard";
+      if (targetDest === "back") {
+        router.back();
+      } else {
+        router.push(targetDest);
+      }
+    }
+  };
+
+  const handleCancelLeave = () => {
+    setShowLeavePopup(false);
+    pendingDestinationRef.current = null;
+  };
+
+  // Intercept navigation clicks outside the conference area while therapist and patient are in the call
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const handleClickCapture = (e: MouseEvent) => {
+      if (!isCallActive) return;
+
+      const target = e.target as HTMLElement | null;
+      if (!target) return;
+
+      // Ignore clicks inside our leave popup
+      if (
+        target.closest("#sessionLeaveConfirmModal") ||
+        target.closest(".ps-leave-session-overlay")
+      ) {
+        return;
+      }
+
+      // Ignore intentional End Call / End Session buttons (they already open #endSessionModal)
+      if (
+        target.closest('[data-bs-target="#endSessionModal"]') ||
+        target.closest(".ps-session-dock-btn-end") ||
+        target.closest(".action-btn-outline")
+      ) {
+        return;
+      }
+
+      // Ignore "View Filled Form" which opens in a new tab
+      if (
+        target.closest('a[target="_blank"]') ||
+        (target.closest("button") &&
+          target.textContent?.includes("View Filled Form"))
+      ) {
+        return;
+      }
+
+      // If clicked inside conference workspace (video, notes, chat, upload, controls), don't intercept
+      const isInsideConference = Boolean(
+        target.closest(".ps-session-conference-main")
+      );
+      if (isInsideConference) {
+        return;
+      }
+
+      // User clicked outside the conference work area (Sidebar, Header, brand block, back button, nav link)
+      let destination: string = "/dashboard";
+      const anchor = target.closest("a");
+      if (anchor) {
+        const href = anchor.getAttribute("href");
+        if (href && href !== "#" && !href.startsWith("javascript:")) {
+          destination = href;
+        }
+      } else if (target.closest(".gl-header-panel-title")) {
+        destination = "/back-to-calendar";
+      } else if (target.closest(".gl-brand-block")) {
+        destination = "/dashboard";
+      } else if (target.closest(".gl-menu-item")) {
+        const a = target.closest(".gl-menu-item")?.querySelector("a");
+        const href = a?.getAttribute("href");
+        if (href && href !== "#") {
+          destination = href;
+        }
+      }
+
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+
+      pendingDestinationRef.current = destination;
+      setShowLeavePopup(true);
+    };
+
+    window.addEventListener("click", handleClickCapture, true);
+
+    const handlePopState = (e: PopStateEvent) => {
+      if (!isCallActive) return;
+      window.history.pushState(null, "", window.location.href);
+      pendingDestinationRef.current = "back";
+      setShowLeavePopup(true);
+    };
+
+    window.history.pushState(null, "", window.location.href);
+    window.addEventListener("popstate", handlePopState);
+
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (!isCallActive) return;
+      e.preventDefault();
+      e.returnValue = "";
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener("click", handleClickCapture, true);
+      window.removeEventListener("popstate", handlePopState);
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [isCallActive]);
 
   const handleEndCall = useCallback(async () => {
     if (typeof window !== "undefined") {
@@ -1144,7 +1463,7 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
           setJoinedCallData((prev: any) => prev || parsed);
           return parsed;
         }
-      } catch (e) {}
+      } catch (e) { }
       return null;
     };
 
@@ -1173,9 +1492,9 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
       const maxDurationSec =
         Number(
           currentCallData?.patient?.ai_chat_duration ||
-            currentCallData?.ai_chat_duration ||
-            currentCallData?.duration ||
-            1800
+          currentCallData?.ai_chat_duration ||
+          currentCallData?.duration ||
+          1800
         ) || 1800;
 
       const warningThresholdSec = Math.max(0, maxDurationSec - 300); // 5 min (300s) pehle
@@ -1204,7 +1523,7 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
         ) {
           try {
             mediaRecorderRef.current.stop();
-          } catch (e) {}
+          } catch (e) { }
         }
         handleEndCall();
       }
@@ -2158,16 +2477,15 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
 
                   const displayText =
                     effectiveFileUrl &&
-                    msgText.trim() === effectiveFileUrl.trim()
+                      msgText.trim() === effectiveFileUrl.trim()
                       ? ""
                       : msgText;
 
                   return (
                     <div
                       key={msg.id || index}
-                      className={`ps-session-chat-msg-bubble-line ${
-                        isDoctorMsg ? "ps-session-msg-row-user" : ""
-                      }`}
+                      className={`ps-session-chat-msg-bubble-line ${isDoctorMsg ? "ps-session-msg-row-user" : ""
+                        }`}
                     >
                       <div className="ps-session-chat-sender-avatar">
                         <img
@@ -2175,7 +2493,7 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
                             isDoctorMsg
                               ? therapistImgUrl || doctorProfileImgUrl
                               : patientImgUrl ||
-                                "/images/header-user-right-profile.svg"
+                              "/images/header-user-right-profile.svg"
                           }
                           alt="Avatar"
                           style={{
@@ -2193,9 +2511,9 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
                           style={
                             isImg && !displayText
                               ? {
-                                  padding: "4px",
-                                  backgroundColor: "transparent",
-                                }
+                                padding: "4px",
+                                backgroundColor: "transparent",
+                              }
                               : undefined
                           }
                         >
@@ -2292,8 +2610,8 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
                           {displayText
                             ? displayText
                             : !effectiveFileUrl
-                            ? msgText
-                            : null}
+                              ? msgText
+                              : null}
                         </div>
                         <span
                           className="ps-session-chat-time-text"
@@ -2371,9 +2689,8 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
 
             <div className="ps-session-tabs-row">
               <div
-                className={`ps-session-tab ${
-                  docTab === "therapist" ? "ps-session-active-tab" : ""
-                }`}
+                className={`ps-session-tab ${docTab === "therapist" ? "ps-session-active-tab" : ""
+                  }`}
                 style={{ cursor: "pointer" }}
                 onClick={() => setDocTab("therapist")}
               >
@@ -2383,9 +2700,8 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
                 </span>
               </div>
               <div
-                className={`ps-session-tab ${
-                  docTab === "patient" ? "ps-session-active-tab" : ""
-                }`}
+                className={`ps-session-tab ${docTab === "patient" ? "ps-session-active-tab" : ""
+                  }`}
                 style={{ cursor: "pointer" }}
                 onClick={() => setDocTab("patient")}
               >
@@ -2409,7 +2725,7 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
                 Loading documents...
               </div>
             ) : (docTab === "therapist" ? therapistDocuments : patientDocuments)
-                .length === 0 ? (
+              .length === 0 ? (
               <div
                 style={{
                   textAlign: "center",
@@ -2557,9 +2873,8 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
                       </span>
                     </div>
                     <svg
-                      className={`ps-session-status-icon-right ${
-                        micActive ? "ps-session-mic-on" : "ps-session-mic-off"
-                      }`}
+                      className={`ps-session-status-icon-right ${micActive ? "ps-session-mic-on" : "ps-session-mic-off"
+                        }`}
                       viewBox="0 0 24 24"
                       fill="none"
                       stroke="currentColor"
@@ -2609,11 +2924,10 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
                         </span>
                       </div>
                       <svg
-                        className={`ps-session-status-icon-right ${
-                          isPatientMicOn
-                            ? "ps-session-mic-on"
-                            : "ps-session-mic-off"
-                        }`}
+                        className={`ps-session-status-icon-right ${isPatientMicOn
+                          ? "ps-session-mic-on"
+                          : "ps-session-mic-off"
+                          }`}
                         viewBox="0 0 24 24"
                         fill="none"
                         stroke="currentColor"
@@ -2655,11 +2969,10 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
                         <span>Participant ({user.uid})</span>
                       </div>
                       <svg
-                        className={`ps-session-status-icon-right ${
-                          user.hasAudio
-                            ? "ps-session-mic-on"
-                            : "ps-session-mic-off"
-                        }`}
+                        className={`ps-session-status-icon-right ${user.hasAudio
+                          ? "ps-session-mic-on"
+                          : "ps-session-mic-off"
+                          }`}
                         viewBox="0 0 24 24"
                         fill="none"
                         stroke="currentColor"
@@ -2693,6 +3006,94 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
         getRecordingData={getRecordingData}
         onConfirmEnd={handleEndCall}
       />
+
+      {/* Leave Session Confirmation Modal */}
+      {showLeavePopup && (
+        <div
+          className="modal fade show"
+          id="sessionLeaveConfirmModal"
+          tabIndex={-1}
+          style={{
+            display: "block",
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100vw",
+            height: "100vh",
+            backgroundColor: "rgba(0, 0, 0, 0.65)",
+            zIndex: 999999,
+          }}
+          aria-modal="true"
+          role="dialog"
+        >
+          <div className="modal-dialog modal-dialog-centered onyba-end-dialog">
+            <div className="modal-content onyba-end-content">
+              <button
+                type="button"
+                className="onyba-end-close-cross"
+                onClick={handleCancelLeave}
+                disabled={isEndingCall}
+                aria-label="Close"
+              >
+                <img src="/images/close-btn-popup.svg" alt="&times;" />
+              </button>
+
+              <div className="modal-body onyba-end-body">
+                <div className="onyba-end-icon-circle">
+                  <img src="/images/call-cut.svg" alt="End Call" />
+                </div>
+
+                <h5 className="onyba-end-title">End Session & Leave?</h5>
+
+                <p className="onyba-end-desc">
+                  You are currently in an active session with the patient.<br />
+                  Leaving this page will end the session and save your recording.
+                </p>
+
+                <div className="onyba-end-info-panel">
+                  <div className="onyba-end-log-row">
+                    <span className="onyba-end-check-icon">
+                      <img src="/images/check-icon-popup.svg" alt="" />
+                    </span>
+                    <p>Session call will be ended</p>
+                  </div>
+                  <div className="onyba-end-log-row">
+                    <span className="onyba-end-check-icon">
+                      <img src="/images/check-icon-popup.svg" alt="" />
+                    </span>
+                    <p>Audio recording will be saved</p>
+                  </div>
+                  <div className="onyba-end-log-row">
+                    <span className="onyba-end-check-icon">
+                      <img src="/images/check-icon-popup.svg" alt="" />
+                    </span>
+                    <p>You will be redirected safely</p>
+                  </div>
+                </div>
+
+                <div className="onyba-end-actions-row">
+                  <button
+                    type="button"
+                    className="onyba-end-btn-cancel"
+                    onClick={handleCancelLeave}
+                    disabled={isEndingCall}
+                  >
+                    No, Stay
+                  </button>
+                  <button
+                    type="button"
+                    className="onyba-end-btn-confirm"
+                    onClick={handleConfirmLeaveAndEndSession}
+                    disabled={isEndingCall}
+                  >
+                    {isEndingCall ? "Ending Session..." : "Yes, End Session"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 };

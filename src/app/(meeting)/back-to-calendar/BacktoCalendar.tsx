@@ -92,6 +92,55 @@ const parseDocList = (docData: any) => {
   return [];
 };
 
+const getSessionSlotDurationSec = (
+  startTimeStr?: string,
+  endTimeStr?: string
+) => {
+  if (!startTimeStr || !endTimeStr) return 1800;
+  try {
+    const [sh, sm, ss] = startTimeStr.split(":").map(Number);
+    const [eh, em, es] = endTimeStr.split(":").map(Number);
+    const startSec = (sh || 0) * 3600 + (sm || 0) * 60 + (ss || 0);
+    const endSec = (eh || 0) * 3600 + (em || 0) * 60 + (es || 0);
+    const diff = endSec - startSec;
+    return diff > 0 ? diff : 1800;
+  } catch (e) {
+    return 1800;
+  }
+};
+
+const getSessionDateTime = (
+  dateStr?: string,
+  timeStr?: string
+): Date | null => {
+  if (!dateStr || !timeStr) return null;
+  try {
+    let year: number, month: number, day: number;
+    if (dateStr.includes("T")) {
+      const parsedDate = new Date(dateStr);
+      if (isNaN(parsedDate.getTime())) return null;
+      year = parsedDate.getFullYear();
+      month = parsedDate.getMonth() + 1;
+      day = parsedDate.getDate();
+    } else {
+      [year, month, day] = dateStr.split("-").map(Number);
+    }
+    const [hours, minutes, seconds] = timeStr.split(":").map(Number);
+    if (
+      isNaN(year) ||
+      isNaN(month) ||
+      isNaN(day) ||
+      isNaN(hours) ||
+      isNaN(minutes)
+    ) {
+      return null;
+    }
+    return new Date(year, month - 1, day, hours, minutes, seconds || 0);
+  } catch (e) {
+    return null;
+  }
+};
+
 const BacktoCalendarContent = () => {
   const searchParams = useSearchParams();
   const rawSessionId =
@@ -103,6 +152,11 @@ const BacktoCalendarContent = () => {
         localStorage.getItem("current_session_id")
       : null) ||
     "19";
+
+  const [sessionData, setSessionData] = useState<any>(null);
+  const warningShownRef = useRef<boolean>(false);
+  const endCallTriggeredRef = useRef<boolean>(false);
+  const isAutoEndingRef = useRef<boolean>(false);
 
   const [recordingTime, setRecordingTime] = useState(0);
   const [isRecording, setIsRecording] = useState(false);
@@ -188,6 +242,7 @@ const BacktoCalendarContent = () => {
 
       if (response && (response.success || response.status || response.data)) {
         const data = response.data || response;
+        setSessionData(data);
         const notes =
           data.therapist_private_notes ||
           data.private_notes ||
@@ -264,6 +319,255 @@ const BacktoCalendarContent = () => {
 
     return res.data;
   };
+
+  const handleAutoEndSession = useCallback(async () => {
+    if (!rawSessionId || isAutoEndingRef.current) return;
+    isAutoEndingRef.current = true;
+    endCallTriggeredRef.current = true;
+
+    // 1. If currently recording voice, stop recording and get the blob
+    let blobToUpload = audioBlob;
+    let transcriptToUpload =
+      transcriptTextRef.current.trim() ||
+      transcriptText.trim() ||
+      finalTranscriptRef.current.trim();
+
+    if (
+      mediaRecorderRef.current &&
+      mediaRecorderRef.current.state !== "inactive"
+    ) {
+      try {
+        mediaRecorderRef.current.stop();
+      } catch (e) {}
+    }
+    if (mediaRecorderRef.current?.stream) {
+      try {
+        mediaRecorderRef.current.stream
+          .getTracks()
+          .forEach((track) => track.stop());
+      } catch (e) {}
+    }
+    setIsRecording(false);
+    setIsPaused(false);
+    if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.stop();
+      } catch (e) {}
+    }
+
+    if (!blobToUpload && audioChunksRef.current.length > 0) {
+      blobToUpload = new Blob(audioChunksRef.current, { type: "audio/webm" });
+    }
+
+    const payload = {
+      therapy_session_id: String(rawSessionId),
+    };
+
+    // 2. Call therapist-end-call and therapist-refresh-token
+    try {
+      await Promise.allSettled([
+        requestApi({
+          endpoint: "therapist-end-call",
+          method: "POST",
+          data: payload,
+          isFormData: false,
+        }),
+        requestApi({
+          endpoint: "therapist-refresh-token",
+          method: "POST",
+          data: payload,
+          isFormData: false,
+        }),
+      ]);
+    } catch (err) {
+      console.error("Error calling therapist-end-call / refresh-token:", err);
+    }
+
+    // 3. Call session-end
+    try {
+      const res = await requestApi({
+        endpoint: "session-end",
+        method: "POST",
+        data: payload,
+        isFormData: false,
+      });
+      console.log("session-end API response:", res);
+    } catch (err) {
+      console.error("Error calling session-end API:", err);
+    }
+
+    // 4. Call store-session-recording
+    try {
+      const fallbackBlob =
+        blobToUpload && blobToUpload.size > 0
+          ? blobToUpload
+          : new Blob([""], { type: "audio/webm" });
+
+      const finalTranscript =
+        transcriptToUpload || "Session completed. Conversation auto-recorded.";
+
+      const uploadRes = await executeRecordingUpload(
+        fallbackBlob,
+        finalTranscript
+      );
+      console.log("store-session-recording API response:", uploadRes);
+    } catch (uploadErr) {
+      console.error(
+        "Error in executeRecordingUpload during auto-end:",
+        uploadErr
+      );
+    }
+
+    // 5. Clean up localStorage
+    try {
+      localStorage.removeItem(`call_joined_${rawSessionId}`);
+      window.dispatchEvent(
+        new CustomEvent("callJoinedUpdated", { detail: null })
+      );
+    } catch (e) {}
+
+    // 6. Notify user
+    toast.success("Session time ended. Session completed automatically.");
+
+    // 7. Open complete session modal or AI summary modal if bootstrap is available
+    if (typeof window !== "undefined") {
+      try {
+        const bootstrap = (window as any).bootstrap;
+        if (bootstrap) {
+          const completedModalEl =
+            document.getElementById("sessionCompletedModal") ||
+            document.getElementById("aiSummaryModal");
+          if (completedModalEl) {
+            const modalInstance =
+              bootstrap.Modal.getOrCreateInstance(completedModalEl);
+            modalInstance.show();
+          }
+        }
+      } catch (modalErr) {
+        console.error("Error opening completed modal:", modalErr);
+      }
+    }
+  }, [rawSessionId, audioBlob, transcriptText]);
+
+  // Session Slot End Time Monitor: 5 min pehle toast aur time pura hone par automatic end session
+  useEffect(() => {
+    if (!rawSessionId || typeof window === "undefined") return;
+
+    const checkTimer = () => {
+      if (endCallTriggeredRef.current || isAutoEndingRef.current) return;
+
+      const rawStatus = (
+        sessionData?.session_status ||
+        sessionData?.status ||
+        ""
+      )
+        .toLowerCase()
+        .trim();
+
+      if (
+        rawStatus === "completed" ||
+        rawStatus === "cancelled" ||
+        rawStatus === "canceled"
+      ) {
+        return;
+      }
+
+      let targetEndTimeMs: number | null = null;
+
+      // 1. Check if session_date and session_end_time are available today
+      if (sessionData?.session_date && sessionData?.session_end_time) {
+        const slotEndDate = getSessionDateTime(
+          sessionData.session_date,
+          sessionData.session_end_time
+        );
+        if (slotEndDate) {
+          const isToday =
+            slotEndDate.toDateString() === new Date().toDateString();
+          if (isToday && slotEndDate.getTime() > Date.now()) {
+            targetEndTimeMs = slotEndDate.getTime();
+          }
+        }
+      }
+
+      // 2. If not in future today, check call_joined_${rawSessionId} from storage or initialize it
+      if (!targetEndTimeMs) {
+        let currentCallData: any = null;
+        try {
+          const stored = localStorage.getItem(`call_joined_${rawSessionId}`);
+          if (stored) currentCallData = JSON.parse(stored);
+        } catch (e) {}
+
+        const slotDurationSec = getSessionSlotDurationSec(
+          sessionData?.session_start_time,
+          sessionData?.session_end_time
+        );
+
+        const maxDurationSec =
+          Number(
+            currentCallData?.patient?.ai_chat_duration ||
+              currentCallData?.ai_chat_duration ||
+              currentCallData?.duration ||
+              slotDurationSec
+          ) || slotDurationSec;
+
+        let startedMs: number | null = null;
+        if (currentCallData?.started_at) {
+          const parsed = new Date(currentCallData.started_at).getTime();
+          if (!isNaN(parsed) && parsed > 0) {
+            startedMs = parsed;
+          }
+        }
+
+        if (!startedMs) {
+          startedMs = Date.now();
+          try {
+            localStorage.setItem(
+              `call_joined_${rawSessionId}`,
+              JSON.stringify({
+                session_id: rawSessionId,
+                started_at: new Date(startedMs).toISOString(),
+                duration: maxDurationSec,
+              })
+            );
+            window.dispatchEvent(
+              new CustomEvent("callJoinedUpdated", {
+                detail: { started_at: new Date(startedMs).toISOString() },
+              })
+            );
+          } catch (e) {}
+        }
+
+        targetEndTimeMs = startedMs + maxDurationSec * 1000;
+      }
+
+      const remainingMs = targetEndTimeMs - Date.now();
+      const remainingSec = Math.floor(remainingMs / 1000);
+
+      // 5 min (300s) warning toast
+      if (
+        !warningShownRef.current &&
+        remainingSec <= 300 &&
+        remainingSec > 0
+      ) {
+        warningShownRef.current = true;
+        toast("Your time will be end in 5 minutes", {
+          icon: "⏳",
+          duration: 5000,
+        });
+      }
+
+      // End session automatically when time is reached
+      if (!endCallTriggeredRef.current && remainingSec <= 0) {
+        endCallTriggeredRef.current = true;
+        handleAutoEndSession();
+      }
+    };
+
+    checkTimer();
+    const intervalId = setInterval(checkTimer, 1000);
+    return () => clearInterval(intervalId);
+  }, [rawSessionId, sessionData, handleAutoEndSession]);
 
   const uploadRecordingData = async (blob: Blob, transcript: string) => {
     setIsSavingRecording(true);
