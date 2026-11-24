@@ -142,7 +142,7 @@ const INTAKE_QUESTION_LABELS: Record<string, string> = {
   past_difficulty: "What are the main challenges you are facing?",
   session_goal: "How long have you been experiencing this?",
   additional_details: "Have you had any past therapy or similar experiences?",
-  document: "Is there any past experience or event you’d like to share?",
+  document: "Shared Document / Supporting File",
 };
 const getDocList = (docData: any) => {
   if (!docData) return [];
@@ -2052,7 +2052,12 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
                         data-bs-parent="#patientFaqsAccordionContainer"
                       >
                         <div className="patient-faqs-body">
-                          {typeof val === "string" &&
+                          {val === null ||
+                            val === undefined ||
+                            (typeof val === "string" &&
+                              (val.trim() === "" || val.trim().toLowerCase() === "null")) ? (
+                            <span style={{ color: "#8c8c8c" }}>No file uploaded</span>
+                          ) : typeof val === "string" &&
                             (val.trim().startsWith("uploads/") ||
                               val.trim().startsWith("/uploads/") ||
                               /^https?:\/\//i.test(val.trim()) ||
