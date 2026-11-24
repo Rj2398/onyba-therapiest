@@ -557,7 +557,7 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
         const elem = videoPanelRef.current;
         if (elem) {
           if (elem.requestFullscreen) {
-            elem.requestFullscreen().catch(() => {});
+            elem.requestFullscreen().catch(() => { });
           } else if ((elem as any).webkitRequestFullscreen) {
             (elem as any).webkitRequestFullscreen();
           } else if ((elem as any).msRequestFullscreen) {
@@ -570,7 +570,7 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
           (document.fullscreenElement || (document as any).webkitFullscreenElement)
         ) {
           if (document.exitFullscreen) {
-            document.exitFullscreen().catch(() => {});
+            document.exitFullscreen().catch(() => { });
           } else if ((document as any).webkitExitFullscreen) {
             (document as any).webkitExitFullscreen();
           }
@@ -1961,9 +1961,8 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
       <div className="ps-session-page-grid">
         <div
           ref={videoPanelRef}
-          className={`ps-session-video-panel${
-            isVideoZoomed ? " is-fullscreen" : ""
-          }`}
+          className={`ps-session-video-panel${isVideoZoomed ? " is-fullscreen" : ""
+            }`}
         >
           {/* Main Video Viewport */}
           <div className="ps-session-video-viewport">
@@ -2008,7 +2007,77 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
                 </>
               )}
             </button>
+
             {primaryRemoteUser ? (
+              <RemoteUser
+                user={primaryRemoteUser}
+                playAudio={true}
+                playVideo={true}
+                style={{ width: "100%", height: "100%", objectFit: "cover" }}
+              />
+            ) : (
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "14px",
+                  height: "100%",
+                  width: "100%",
+                  color: "#fff",
+                  textAlign: "center",
+                }}
+              >
+                {patientImgUrl ? (
+                  <img
+                    src={patientImgUrl}
+                    alt={patientDisplayName || dynamicPatientName || "Participant"}
+                    style={{
+                      width: "84px",
+                      height: "84px",
+                      borderRadius: "50%",
+                      objectFit: "cover",
+                      border: "2px solid rgba(255, 255, 255, 0.3)",
+                    }}
+                  />
+                ) : (
+                  <div
+                    style={{
+                      width: "84px",
+                      height: "84px",
+                      borderRadius: "50%",
+                      backgroundColor: "rgba(255, 255, 255, 0.15)",
+                      border: "2px solid rgba(255, 255, 255, 0.3)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: "28px",
+                      fontWeight: 600,
+                      color: "#ffffff",
+                    }}
+                  >
+                    {(patientDisplayName || dynamicPatientName || "P")
+                      .charAt(0)
+                      .toUpperCase()}
+                  </div>
+                )}
+
+                <p
+                  style={{
+                    fontSize: "16px",
+                    color: "#ffffff",
+                    fontWeight: 500,
+                    margin: 0,
+                  }}
+                >
+                  Waiting for{" "}
+                  {patientDisplayName || dynamicPatientName || "participant"} to
+                  join...
+                </p>
+              </div>
+            )}
+            {/* {primaryRemoteUser ? (
               <RemoteUser
                 user={primaryRemoteUser}
                 playAudio={true}
@@ -2038,7 +2107,7 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
                   join...
                 </p>
               </div>
-            )}
+            )} */}
 
             {/* Remote User Top Left Olive Badge */}
             <div

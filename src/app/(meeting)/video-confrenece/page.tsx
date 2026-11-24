@@ -87,10 +87,12 @@ const VideoConferenceContent: React.FC = () => {
         setLoading(true);
         setError(null);
 
-        // 1. Check if sessionStorage has valid start_session_data for this therapySessionId
+        // 1. Check if sessionStorage/localStorage has valid start_session_data for this therapySessionId
         if (typeof window !== "undefined") {
           try {
-            const cachedDataStr = sessionStorage.getItem("start_session_data");
+            const cachedDataStr =
+              sessionStorage.getItem("start_session_data") ||
+              localStorage.getItem("start_session_data");
             if (cachedDataStr) {
               const cachedData = JSON.parse(cachedDataStr);
               const cachedSessionId = String(
@@ -103,7 +105,7 @@ const VideoConferenceContent: React.FC = () => {
                   cachedSessionId === String(therapySessionId))
               ) {
                 console.log(
-                  "Joining existing video call from sessionStorage:",
+                  "Joining existing video call from sessionStorage/localStorage:",
                   cachedData
                 );
                 const sessionData = formatVideoSession(
@@ -118,7 +120,7 @@ const VideoConferenceContent: React.FC = () => {
             }
           } catch (storageErr) {
             console.error(
-              "Error reading sessionStorage start_session_data:",
+              "Error reading start_session_data:",
               storageErr
             );
           }
@@ -151,6 +153,10 @@ const VideoConferenceContent: React.FC = () => {
 
               if (typeof window !== "undefined") {
                 sessionStorage.setItem(
+                  "start_session_data",
+                  JSON.stringify(sessionData)
+                );
+                localStorage.setItem(
                   "start_session_data",
                   JSON.stringify(sessionData)
                 );
@@ -194,6 +200,10 @@ const VideoConferenceContent: React.FC = () => {
               "start_session_data",
               JSON.stringify(sessionData)
             );
+            localStorage.setItem(
+              "start_session_data",
+              JSON.stringify(sessionData)
+            );
           }
 
           setSession(sessionData);
@@ -219,6 +229,7 @@ const VideoConferenceContent: React.FC = () => {
     if (typeof window !== "undefined") {
       try {
         sessionStorage.removeItem("start_session_data");
+        localStorage.removeItem("start_session_data");
       } catch (e) {
         console.error("Error clearing start_session_data:", e);
       }

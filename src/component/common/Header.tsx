@@ -323,11 +323,9 @@ const HeaderContent = ({ isMiniSidebar }: { isMiniSidebar: boolean }) => {
                                 type="button"
                                 className="action-btn-base action-btn-filled"
                                 onClick={() => {
-                                    const query =
-                                        searchParams && searchParams.toString()
-                                            ? `?${searchParams.toString()}`
-                                            : "";
-                                    window.open(`/final-back-to-agenda${query}`, "_blank");
+                                    const params = new URLSearchParams(searchParams?.toString() || "");
+                                    params.set("is_rejoin", "true");
+                                    window.open(`/final-back-to-agenda?${params.toString()}`, "_blank");
                                 }}
                             >
                                 View Filled Form

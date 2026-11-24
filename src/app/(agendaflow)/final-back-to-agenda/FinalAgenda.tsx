@@ -251,12 +251,84 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
     sessionData?.id ||
     initialSessionData?.id;
 
+  const effectiveSessionId =
+    session_id ||
+    searchParams.get("therapy_session_id") ||
+    searchParams.get("session_id") ||
+    searchParams.get("id") ||
+    sessionData?.therapy_session_id ||
+    sessionData?.id ||
+    initialSessionData?.id ||
+    "";
+
+  const effectivePatientName =
+    sessionData?.name ||
+    sessionData?.patient_name ||
+    searchParams.get("patient_name") ||
+    searchParams.get("patient") ||
+    searchParams.get("name") ||
+    "";
+
   const isRejoin = searchParams?.get("is_rejoin") === "true";
 
-  const startSessionUrl =
-    searchParams && searchParams.toString()
-      ? `/video-confrenece?${searchParams.toString()}`
-      : "/video-confrenece";
+  const buildVideoCallUrl = (isRejoinParam: boolean = false) => {
+    const params = new URLSearchParams(searchParams?.toString() || "");
+    if (effectiveSessionId) {
+      params.set("therapy_session_id", String(effectiveSessionId));
+    }
+    if (effectivePatientName) {
+      params.set("patient_name", String(effectivePatientName));
+    }
+    if (isRejoinParam) {
+      params.set("is_rejoin", "true");
+    }
+    return `/video-confrenece?${params.toString()}`;
+  };
+
+  const startSessionUrl = buildVideoCallUrl(false);
+
+  const handleBackToVideoCall = (e?: React.MouseEvent) => {
+    if (e) e.preventDefault();
+
+    if (sessionData?.start_session) {
+      try {
+        const payload = {
+          ...sessionData.start_session,
+          therapy_session_id: String(effectiveSessionId),
+          patient_name: effectivePatientName,
+          is_rejoin: true,
+        };
+        sessionStorage.setItem("start_session_data", JSON.stringify(payload));
+        localStorage.setItem("start_session_data", JSON.stringify(payload));
+      } catch (err) {}
+    }
+
+    if (
+      typeof window !== "undefined" &&
+      window.opener &&
+      !window.opener.closed
+    ) {
+      try {
+        window.opener.focus();
+        window.close();
+        return;
+      } catch (err) {
+        console.warn("Could not focus or close window opener:", err);
+      }
+    }
+
+    if (
+      typeof document !== "undefined" &&
+      document.referrer &&
+      document.referrer.includes("/video-confrenece")
+    ) {
+      router.back();
+      return;
+    }
+
+    const targetUrl = buildVideoCallUrl(true);
+    router.push(targetUrl);
+  };
 
   const [otp, setOtp] = useState(["", "", "", "", ""]);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -1339,52 +1411,19 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
                             Start Session
                           </button>
 
-                          {isRejoin ? (
-                            <button
-                              type="button"
-                              className="patient-link-cancel-session"
-                              style={{
-                                backgroundColor: "#28a745",
-                                borderColor: "#28a745",
-                                color: "#fff",
-                                cursor: "pointer",
-                              }}
-                              onClick={() => {
-                                window.close();
-                              }}
-                            >
-                              Back To Video Call
-                            </button>
-                          ) : (
-                            <Link
-                              href={`${startSessionUrl}${startSessionUrl.includes("?") ? "&" : "?"
-                                }is_rejoin=true`}
-                              className="patient-link-cancel-session"
-                              style={{
-                                backgroundColor: "#28a745",
-                                borderColor: "#28a745",
-                                color: "#fff",
-                              }}
-                              onClick={() => {
-                                if (sessionData?.start_session) {
-                                  sessionStorage.setItem(
-                                    "start_session_data",
-                                    JSON.stringify({
-                                      ...sessionData.start_session,
-                                      patient_name: sessionData.name || "",
-                                      is_rejoin: true,
-                                    })
-                                  );
-                                } else {
-                                  sessionStorage.removeItem(
-                                    "start_session_data"
-                                  );
-                                }
-                              }}
-                            >
-                              Back To Video Call
-                            </Link>
-                          )}
+                          <button
+                            type="button"
+                            className="patient-link-cancel-session"
+                            style={{
+                              backgroundColor: "#28a745",
+                              borderColor: "#28a745",
+                              color: "#fff",
+                              cursor: "pointer",
+                            }}
+                            onClick={handleBackToVideoCall}
+                          >
+                            Back To Video Call
+                          </button>
                         </>
                       ) : (
                         <Link
@@ -1419,15 +1458,21 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
                             }
 
                             if (sessionData?.start_session) {
-                              sessionStorage.setItem(
-                                "start_session_data",
-                                JSON.stringify({
+                              try {
+                                const payload = {
                                   ...sessionData.start_session,
-                                  patient_name: sessionData.name || "",
-                                })
-                              );
-                            } else {
-                              sessionStorage.removeItem("start_session_data");
+                                  therapy_session_id: String(effectiveSessionId),
+                                  patient_name: effectivePatientName,
+                                };
+                                sessionStorage.setItem(
+                                  "start_session_data",
+                                  JSON.stringify(payload)
+                                );
+                                localStorage.setItem(
+                                  "start_session_data",
+                                  JSON.stringify(payload)
+                                );
+                              } catch (err) {}
                             }
                           }}
                           style={{
