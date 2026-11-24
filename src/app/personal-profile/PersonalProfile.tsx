@@ -1153,7 +1153,7 @@ const PersonalProfile = () => {
       const mode = getSessionModeParam(selectedModes);
       const hasInPerson = selectedModes.some((m) => m?.toLowerCase().includes("person"));
       formDataPayload.append("session_mode", mode);
-      formDataPayload.append("clinic_name", clinicNameInput);
+      formDataPayload.append("clinic_name", hasInPerson ? clinicNameInput : "");
       formDataPayload.append("clinic_address", hasInPerson ? clinicAddressInput : "");
       formDataPayload.append("clinic_latitude", hasInPerson ? String(clinicLatitude) : "");
       formDataPayload.append("clinic_longitude", hasInPerson ? String(clinicLongitude) : "");
@@ -1798,27 +1798,27 @@ const PersonalProfile = () => {
                     )}
                   </div>
 
-                  <p className="onyba-prof-sub-title-text">Clinic name</p>
-                  <div style={{ position: "relative", marginBottom: "15px" }}>
-                    <input
-                      type="text"
-                      value={clinicNameInput}
-                      onChange={(e) => setClinicNameInput(e.target.value)}
-                      placeholder="Enter clinic name"
-                      style={{
-                        width: "100%",
-                        padding: "10px",
-                        borderRadius: "8px",
-                        border: "1px solid #ddd",
-                        background: "#fff",
-                        color: "#000",
-                        fontSize: "14px",
-                      }}
-                    />
-                  </div>
-
                   {selectedModes.some((m) => m?.toLowerCase().includes("person")) && (
                     <>
+                      <p className="onyba-prof-sub-title-text">Clinic name</p>
+                      <div style={{ position: "relative", marginBottom: "15px" }}>
+                        <input
+                          type="text"
+                          value={clinicNameInput}
+                          onChange={(e) => setClinicNameInput(e.target.value)}
+                          placeholder="Enter clinic name"
+                          style={{
+                            width: "100%",
+                            padding: "10px",
+                            borderRadius: "8px",
+                            border: "1px solid #ddd",
+                            background: "#fff",
+                            color: "#000",
+                            fontSize: "14px",
+                          }}
+                        />
+                      </div>
+
                       <p className="onyba-prof-sub-title-text">Clinic address</p>
                       <div style={{ position: "relative", marginBottom: "15px" }}>
                         <Autocomplete
@@ -1913,30 +1913,30 @@ const PersonalProfile = () => {
                     </>
                   )}
 
-                  {(therapistProfile?.clinic_name || clinicNameInput) && (
-                    <>
-                      <p
-                        className="onyba-prof-sub-title-text"
-                        style={{ marginTop: "15px" }}
-                      >
-                        Clinic Name
-                      </p>
-                      <p
-                        style={{
-                          fontSize: "14px",
-                          fontWeight: "500",
-                          color: "#333",
-                          marginTop: "4px",
-                          marginBottom: "10px",
-                        }}
-                      >
-                        {therapistProfile?.clinic_name || clinicNameInput}
-                      </p>
-                    </>
-                  )}
-
                   {selectedModes.some((m) => m?.toLowerCase().includes("person")) && (
                     <>
+                      {(therapistProfile?.clinic_name || clinicNameInput) && (
+                        <>
+                          <p
+                            className="onyba-prof-sub-title-text"
+                            style={{ marginTop: "15px" }}
+                          >
+                            Clinic Name
+                          </p>
+                          <p
+                            style={{
+                              fontSize: "14px",
+                              fontWeight: "500",
+                              color: "#333",
+                              marginTop: "4px",
+                              marginBottom: "10px",
+                            }}
+                          >
+                            {therapistProfile?.clinic_name || clinicNameInput}
+                          </p>
+                        </>
+                      )}
+
                       <p
                         className="onyba-prof-sub-title-text"
                         style={{

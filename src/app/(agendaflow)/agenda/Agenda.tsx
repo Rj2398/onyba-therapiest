@@ -376,17 +376,14 @@ const AgendaContent = () => {
         if (parts.length >= 2) {
             const clock = parts[0];
             const period = parts[1].toUpperCase();
-            const [h, m] = clock.split(":");
-            if (h && m) {
-                return `${h.padStart(2, "0")}:${m.padStart(2, "0")}${period}`;
-            }
+            let [h, m] = clock.split(":").map(Number);
+            if (period === "PM" && h !== 12) h += 12;
+            if (period === "AM" && h === 12) h = 0;
+            return `${String(h).padStart(2, "0")}:${String(m || 0).padStart(2, "0")}`;
         }
         let [hour, minute] = clean.split(":").map(Number);
         if (!isNaN(hour) && !isNaN(minute)) {
-            const period = hour >= 12 ? "PM" : "AM";
-            hour = hour % 12;
-            if (hour === 0) hour = 12;
-            return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}${period}`;
+            return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
         }
         return timeStr;
     };
@@ -430,8 +427,8 @@ const AgendaContent = () => {
         };
     };
 
-    const CALENDAR_START = "06:00 AM";
-    const CALENDAR_END = "11:00 PM";
+    const CALENDAR_START = "06:00";
+    const CALENDAR_END = "23:00";
     const SLOT_HEIGHT = 34; // Upgraded slot height for spacious card content visibility
 
     const calendarStartMinutes = getMinutes(CALENDAR_START);
@@ -442,12 +439,9 @@ const AgendaContent = () => {
         const totalSlots = Math.floor((calendarEndMinutes - calendarStartMinutes) / 15);
         for (let i = 0; i <= totalSlots; i++) {
             const totalMinutes = calendarStartMinutes + i * 15;
-            let hour = Math.floor(totalMinutes / 60);
+            const hour = Math.floor(totalMinutes / 60);
             const minute = totalMinutes % 60;
-            const period = hour >= 12 ? "PM" : "AM";
-            hour = hour % 12;
-            if (hour === 0) hour = 12;
-            slots.push(`${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")} ${period}`);
+            slots.push(`${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`);
         }
         return slots;
     }, [calendarStartMinutes, calendarEndMinutes]);
@@ -484,18 +478,12 @@ const AgendaContent = () => {
     const lineTop =
         (nowRel / SLOT_MINUTES) * SLOT_HEIGHT;
 
-    const currentTimeText = now.toLocaleTimeString("en-US", {
-        hour: "numeric",
-        minute: "2-digit",
-    });
+    const currentTimeText = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
 
     const minutesToTimeStr = (totalMinutes: number) => {
-        let hour = Math.floor(totalMinutes / 60);
+        const hour = Math.floor(totalMinutes / 60);
         const minute = totalMinutes % 60;
-        const period = hour >= 12 ? "PM" : "AM";
-        hour = hour % 12;
-        if (hour === 0) hour = 12;
-        return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")} ${period}`;
+        return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
     };
 
     const format24HrWithSeconds = (timeInput: number | string): string => {
@@ -795,7 +783,7 @@ const AgendaContent = () => {
                                                         <div className="agd-ev-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
                                                             <span className="agd-ev-time" style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: 600, color: '#2b2b2b' }}>
                                                                 <img src="/images/agenda-clock-icon.svg" alt="" style={{ width: '13px', height: '13px' }} />
-                                                                {formatDisplayTime(event.startTime)}-{formatDisplayTime(event.endTime)}
+                                                                {formatDisplayTime(event.startTime)} - {formatDisplayTime(event.endTime)}
                                                             </span>
                                                             <button
                                                                 className="right-agenda-icon"

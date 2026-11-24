@@ -765,6 +765,10 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
     }
 
     const otpCode = otp.join("");
+    if (!isSessionVerified && otpCode.length !== 5) {
+      toast.error("Please enter the verification code first.");
+      return;
+    }
     setVerifyingOtp(true);
     try {
       let response: any = null;
@@ -1442,49 +1446,80 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
                     </>
                   ) : (
                     <>
-                      <button
-                        type="button"
-                        className="patient-link-start-session"
-                        onClick={handleStartSessionNotOnline}
-                        style={
-                          isStartedCall
-                            ? { opacity: 0.6, cursor: "not-allowed" }
-                            : {
+                      {isSessionVerified ? (
+                        <>
+                          {isStartedCall ? (
+                            <>
+                              <button
+                                type="button"
+                                className="patient-link-start-session"
+                                disabled
+                                style={{
+                                  opacity: 0.6,
+                                  cursor: "not-allowed",
+                                  backgroundColor: "#9e9e9e",
+                                  borderColor: "#9e9e9e",
+                                }}
+                              >
+                                Start Session
+                              </button>
+
+                              <Link
+                                href={`/back-to-calendar?therapy_session_id=${session_id}`}
+                                className="patient-link-cancel-session"
+                                style={{
+                                  backgroundColor: "#28a745",
+                                  borderColor: "#28a745",
+                                  color: "#fff",
+                                  cursor: "pointer",
+                                }}
+                              >
+                                Back To Session
+                              </Link>
+                            </>
+                          ) : (
+                            <button
+                              type="button"
+                              className="patient-link-start-session"
+                              onClick={handleStartSessionNotOnline}
+                              style={{
+                                backgroundColor: "#6c2b3b",
+                                borderColor: "#6c2b3b",
+                                color: "#fff",
+                              }}
+                            >
+                              Start Session
+                            </button>
+                          )}
+
+                          <button
+                            type="button"
+                            className="patient-link-start-session"
+                            data-bs-toggle="modal"
+                            data-bs-target="#endSessionModal"
+                            style={{
                               backgroundColor: "#6c2b3b",
                               borderColor: "#6c2b3b",
                               color: "#fff",
-                            }
-                        }
-                      >
-                        Start Session
-                      </button>
+                            }}
+                          >
+                            End Session
+                          </button>
 
-                      <button
-                        type="button"
-                        className="patient-link-start-session"
-                        data-bs-toggle="modal"
-                        data-bs-target="#endSessionModal"
-                        style={{
-                          backgroundColor: "#6c2b3b",
-                          borderColor: "#6c2b3b",
-                          color: "#fff",
-                        }}
-                      >
-                        End Session
-                      </button>
+                          {canReschedule && (
+                            <button
+                              type="button"
+                              className="patient-link-back-to-patients"
+                              onClick={() => setShowRescheduleModal(true)}
+                            >
+                              <img src="images/reschedule.svg" alt="" />
+                              Reschedule
+                            </button>
+                          )}
+                        </>
+                      ) : null}
 
-                      {canReschedule && (
-                        <button
-                          type="button"
-                          className="patient-link-back-to-patients"
-                          onClick={() => setShowRescheduleModal(true)}
-                        >
-                          <img src="images/reschedule.svg" alt="" />
-                          Reschedule
-                        </button>
-                      )}
-
-                      {isUpcoming && (
+                      {(isUpcoming || !isSessionVerified) && (
                         <button
                           type="button"
                           className="patient-link-cancel-session"

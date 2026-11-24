@@ -693,7 +693,11 @@ const MyProfile = () => {
     });
     if (errors[field]) setErrors((prev: any) => ({ ...prev, [field]: null }));
     if (field === "sessionMode" && item === "in_person") {
-      setErrors((prev: any) => ({ ...prev, clinicAddress: null }));
+      setErrors((prev: any) => ({
+        ...prev,
+        clinicAddress: null,
+        clinic_name: null,
+      }));
     }
   };
 
@@ -946,9 +950,6 @@ const MyProfile = () => {
   const validateForm = () => {
     const newErrors: any = {};
 
-    if (!formData.userImage && !formData.profile_image_url) {
-      newErrors.profile_image = "Profile picture is required";
-    }
     if (!formData.full_name || !formData.full_name.trim()) {
       newErrors.full_name = "Full Name is required";
     }
@@ -1072,7 +1073,10 @@ const MyProfile = () => {
                 ? "in_person"
                 : formData.sessionMode.join(",");
         payload.append("session_mode", sessionModeValue);
-        payload.append("clinic_name", formData.clinic_name || "");
+        payload.append(
+          "clinic_name",
+          hasInPerson ? (formData.clinic_name || "") : ""
+        );
         payload.append(
           "clinic_address",
           hasInPerson ? (formData.clinicAddress || "") : ""
@@ -1818,28 +1822,6 @@ const MyProfile = () => {
                     </div>
                   )}
                 </div>
-                <div className="col-md-4">
-                  <label className="tp-label">Clinic Name</label>
-                  <input
-                    type="text"
-                    className="tp-input"
-                    placeholder="Enter clinic name"
-                    name="clinic_name"
-                    value={formData.clinic_name || ""}
-                    onChange={handleInputChange}
-                  />
-                  {errors.clinic_name && (
-                    <div
-                      style={{
-                        color: "red",
-                        fontSize: "12px",
-                        marginTop: "4px",
-                      }}
-                    >
-                      {errors.clinic_name}
-                    </div>
-                  )}
-                </div>
               </div>
             </section>
 
@@ -2064,6 +2046,34 @@ const MyProfile = () => {
 
                 {formData.sessionMode.includes("in_person") && (
                   <div className="row">
+                    <div className="col-md-4">
+                      <label className="tp-label">Clinic Name</label>
+                      <input
+                        type="text"
+                        className="tp-input"
+                        placeholder="Enter clinic name"
+                        name="clinic_name"
+                        value={formData.clinic_name || ""}
+                        onChange={handleInputChange}
+                        style={{
+                          backgroundColor: "#ffffff",
+                          border: "1px solid #f0f0f0",
+                          borderRadius: "50px",
+                          boxShadow: "0px 4px 16px rgba(0, 0, 0, 0.04)",
+                        }}
+                      />
+                      {errors.clinic_name && (
+                        <div
+                          style={{
+                            color: "red",
+                            fontSize: "12px",
+                            marginTop: "4px",
+                          }}
+                        >
+                          {errors.clinic_name}
+                        </div>
+                      )}
+                    </div>
                     <div className="col-md-4">
                       <label className="tp-label">Clinic Address*</label>
                       <div
