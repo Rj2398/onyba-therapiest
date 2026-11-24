@@ -2077,37 +2077,6 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
                 </p>
               </div>
             )}
-            {/* {primaryRemoteUser ? (
-              <RemoteUser
-                user={primaryRemoteUser}
-                playAudio={true}
-                playVideo={true}
-                style={{ width: "100%", height: "100%", objectFit: "cover" }}
-              />
-            ) : (
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  height: "100%",
-                  width: "100%",
-                  color: "#fff",
-                }}
-              >
-                <p
-                  style={{
-                    fontSize: "16px",
-                    color: "#ffffff",
-                    fontWeight: 500,
-                  }}
-                >
-                  Waiting for{" "}
-                  {patientDisplayName || dynamicPatientName || "participant"} to
-                  join...
-                </p>
-              </div>
-            )} */}
 
             {/* Remote User Top Left Olive Badge */}
             <div
