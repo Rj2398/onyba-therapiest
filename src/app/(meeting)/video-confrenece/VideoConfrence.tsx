@@ -2029,10 +2029,13 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
                   textAlign: "center",
                 }}
               >
-                {patientImgUrl &&
-                  patientImgUrl !== "/images/header-user-right-profile.svg" ? (
+                {typeof patientImgUrl === "string" &&
+                  patientImgUrl
+                    .replace(/\\\//g, "/")
+                    .trim()
+                    .startsWith("https://onyba.tgastaging.com/") ? (
                   <img
-                    src={patientImgUrl}
+                    src={patientImgUrl.replace(/\\\//g, "/").trim()}
                     alt={patientDisplayName || dynamicPatientName || "Participant"}
                     onError={() => setPatientImgUrl("")}
                     style={{
