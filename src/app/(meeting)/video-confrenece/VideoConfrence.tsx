@@ -546,7 +546,35 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
   const [isSubmittingPrivateNotes, setIsSubmittingPrivateNotes] =
     useState<boolean>(false);
   const [isNotesExpanded, setIsNotesExpanded] = useState<boolean>(false);
+  const [isVideoZoomed, setIsVideoZoomed] = useState<boolean>(false);
   const privateNotesEditorRef = useRef<HTMLDivElement>(null);
+
+  const toggleZoomScreen = useCallback(() => {
+    setIsVideoZoomed((prev) => {
+      const next = !prev;
+      setTimeout(() => {
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new Event("resize"));
+        }
+      }, 100);
+      return next;
+    });
+  }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isVideoZoomed) {
+        setIsVideoZoomed(false);
+        setTimeout(() => {
+          if (typeof window !== "undefined") {
+            window.dispatchEvent(new Event("resize"));
+          }
+        }, 100);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isVideoZoomed]);
 
   const execNotesCommand = (command: string, value?: string) => {
     document.execCommand(command, false, value);
@@ -1275,25 +1303,166 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
       setShowLeavePopup(false);
       toast.success("Session ended successfully.");
 
-      // 8. Redirect to the pending destination
-      const targetDest = pendingDestinationRef.current || "/dashboard";
-      if (targetDest === "back") {
-        router.back();
-      } else {
-        router.push(targetDest);
-      }
+      // 8. Seedha dashboard par bhejein
+      router.replace("/dashboard");
     } catch (err) {
       console.error("Error during leave and end session:", err);
       setIsEndingCall(false);
       setShowLeavePopup(false);
-      const targetDest = pendingDestinationRef.current || "/dashboard";
-      if (targetDest === "back") {
-        router.back();
-      } else {
-        router.push(targetDest);
-      }
+      router.replace("/dashboard");
     }
   };
+
+  // const handleConfirmLeaveAndEndSession = async () => {
+  //   setIsEndingCall(true);
+  //   const sessionId =
+  //     activeSessionId ||
+  //     rawSessionId ||
+  //     therapySessionId ||
+  //     videoCallSession.therapy_session_id ||
+  //     searchParams.get("therapy_session_id") ||
+  //     searchParams.get("session_id") ||
+  //     searchParams.get("id") ||
+  //     "";
+
+  //   try {
+  //     // 1. Stop voice recording if recording
+  //     let blobToUpload = audioBlob;
+  //     let transcriptToUpload =
+  //       transcriptTextRef.current ||
+  //       finalTranscriptRef.current ||
+  //       transcriptText ||
+  //       "Session audio recording transcript.";
+
+  //     if (
+  //       mediaRecorderRef.current &&
+  //       mediaRecorderRef.current.state === "recording"
+  //     ) {
+  //       try {
+  //         mediaRecorderRef.current.stop();
+  //       } catch (e) {
+  //         console.error("Recording stop error:", e);
+  //       }
+  //     }
+
+  //     if (!blobToUpload && audioChunksRef.current.length > 0) {
+  //       blobToUpload = new Blob(audioChunksRef.current, { type: "audio/webm" });
+  //     }
+
+  //     // 2. Update Firebase call status to "ended"
+  //     if (sessionId) {
+  //       try {
+  //         const callDocRef = doc(db, "video_session_calls", String(sessionId));
+  //         await setDoc(
+  //           callDocRef,
+  //           {
+  //             status: "ended",
+  //             updatedAt: serverTimestamp(),
+  //           },
+  //           { merge: true }
+  //         );
+  //       } catch (firebaseErr) {
+  //         console.error("Firebase update ended error:", firebaseErr);
+  //       }
+
+  //       // 3. Call therapist-end-call and therapist-refresh-token APIs
+  //       const payload = {
+  //         therapy_session_id: String(sessionId),
+  //       };
+
+  //       try {
+  //         await Promise.allSettled([
+  //           requestApi({
+  //             endpoint: "therapist-end-call",
+  //             method: "POST",
+  //             data: payload,
+  //             isFormData: false,
+  //           }),
+  //           requestApi({
+  //             endpoint: "therapist-refresh-token",
+  //             method: "POST",
+  //             data: payload,
+  //             isFormData: false,
+  //           }),
+  //         ]);
+  //       } catch (callEndErr) {
+  //         console.error("Error calling therapist-end-call API:", callEndErr);
+  //       }
+
+  //       // 4. Call session-end API
+  //       try {
+  //         const res = await requestApi({
+  //           endpoint: "session-end",
+  //           method: "POST",
+  //           data: payload,
+  //           isFormData: false,
+  //         });
+  //         console.log("session-end API response:", res);
+  //       } catch (sessionEndErr) {
+  //         console.error("Error calling session-end API:", sessionEndErr);
+  //       }
+
+  //       // 5. Upload recording and transcript via store-session-recording API
+  //       try {
+  //         const fallbackBlob =
+  //           blobToUpload && blobToUpload.size > 0
+  //             ? blobToUpload
+  //             : new Blob([""], { type: "audio/webm" });
+
+  //         const uploadRes = await executeRecordingUpload(
+  //           fallbackBlob,
+  //           transcriptToUpload
+  //         );
+  //         console.log("store-session-recording API response:", uploadRes);
+  //       } catch (uploadErr) {
+  //         console.error("Error uploading recording on leave:", uploadErr);
+  //       }
+
+  //       // 6. Clean up localStorage / sessionStorage
+  //       try {
+  //         localStorage.removeItem(`call_joined_${sessionId}`);
+  //         window.dispatchEvent(
+  //           new CustomEvent("callJoinedUpdated", { detail: null })
+  //         );
+  //         sessionStorage.removeItem("start_session_data");
+  //       } catch (e) { }
+  //     }
+
+  //     // 7. Stop local Agora tracks
+  //     try {
+  //       if (localMicrophoneTrack) {
+  //         localMicrophoneTrack.stop();
+  //         localMicrophoneTrack.close();
+  //       }
+  //       if (localCameraTrack) {
+  //         localCameraTrack.stop();
+  //         localCameraTrack.close();
+  //       }
+  //     } catch (e) { }
+
+  //     setIsCallEnded(true);
+  //     setShowLeavePopup(false);
+  //     toast.success("Session ended successfully.");
+
+  //     // 8. Redirect to the pending destination
+  //     const targetDest = pendingDestinationRef.current || "/dashboard";
+  //     if (targetDest === "back") {
+  //       router.back();
+  //     } else {
+  //       router.push(targetDest);
+  //     }
+  //   } catch (err) {
+  //     console.error("Error during leave and end session:", err);
+  //     setIsEndingCall(false);
+  //     setShowLeavePopup(false);
+  //     const targetDest = pendingDestinationRef.current || "/dashboard";
+  //     if (targetDest === "back") {
+  //       router.back();
+  //     } else {
+  //       router.push(targetDest);
+  //     }
+  //   }
+  // };
 
   const handleCancelLeave = () => {
     setShowLeavePopup(false);
@@ -1594,6 +1763,43 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
           height: 100% !important;
           min-height: 480px;
           position: relative;
+          transition: border-radius 0.2s ease;
+        }
+        .ps-session-video-panel.is-fullscreen {
+          position: fixed !important;
+          top: 0 !important;
+          left: 0 !important;
+          width: 100vw !important;
+          height: 100vh !important;
+          max-width: 100vw !important;
+          max-height: 100vh !important;
+          border-radius: 0 !important;
+          z-index: 99999 !important;
+          margin: 0 !important;
+        }
+        .ps-session-zoom-top-btn {
+          position: absolute;
+          top: 16px;
+          right: 16px;
+          z-index: 20;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          background-color: rgba(0, 0, 0, 0.6);
+          color: #ffffff;
+          border: 1px solid rgba(255, 255, 255, 0.25);
+          border-radius: 20px;
+          padding: 6px 14px;
+          font-size: 13px;
+          font-weight: 500;
+          cursor: pointer;
+          backdrop-filter: blur(6px);
+          transition: all 0.2s ease;
+        }
+        .ps-session-zoom-top-btn:hover {
+          background-color: rgba(0, 0, 0, 0.85);
+          border-color: rgba(255, 255, 255, 0.45);
+          transform: scale(1.03);
         }
         .ps-session-video-viewport {
           flex: 1 1 0 !important;
@@ -1646,9 +1852,54 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
         }
       `}</style>
       <div className="ps-session-page-grid">
-        <div className="ps-session-video-panel">
+        <div
+          className={`ps-session-video-panel${
+            isVideoZoomed ? " is-fullscreen" : ""
+          }`}
+        >
           {/* Main Video Viewport */}
           <div className="ps-session-video-viewport">
+            {/* Top Right Zoom / Small Screen Toggle Button */}
+            <button
+              type="button"
+              onClick={toggleZoomScreen}
+              className="ps-session-zoom-top-btn"
+              title={isVideoZoomed ? "Small Screen (Exit Zoom)" : "Zoom Full Screen"}
+            >
+              {isVideoZoomed ? (
+                <>
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3" />
+                  </svg>
+                  <span>Small Screen</span>
+                </>
+              ) : (
+                <>
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
+                  </svg>
+                  <span>Zoom Screen</span>
+                </>
+              )}
+            </button>
             {primaryRemoteUser ? (
               <RemoteUser
                 user={primaryRemoteUser}
@@ -2011,6 +2262,49 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
                 </svg>
               </div>
               {cameraActive ? "Camera Off" : "Camera On"}
+            </button>
+
+            {/* Zoom / Fullscreen Button */}
+            <button
+              type="button"
+              className="ps-session-dock-btn"
+              onClick={toggleZoomScreen}
+              title={isVideoZoomed ? "Small Screen (Exit Zoom)" : "Zoom Full Screen"}
+            >
+              <div
+                className="ps-session-dock-icon-circle"
+                style={{
+                  backgroundColor: isVideoZoomed ? "#603741" : undefined,
+                  color: isVideoZoomed ? "#fff" : undefined,
+                }}
+              >
+                {isVideoZoomed ? (
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    style={{ width: "20px", height: "20px" }}
+                  >
+                    <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3" />
+                  </svg>
+                ) : (
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    style={{ width: "20px", height: "20px" }}
+                  >
+                    <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
+                  </svg>
+                )}
+              </div>
+              {isVideoZoomed ? "Small Screen" : "Zoom Screen"}
             </button>
 
             {/* <button className="ps-session-dock-btn">
