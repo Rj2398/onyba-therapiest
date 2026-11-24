@@ -9,7 +9,7 @@ import toast from "react-hot-toast";
 import { Base_image_url } from "@/src/config";
 import { requestApi } from "@/src/utils/api";
 import axios from "axios";
-import { API_BASE_URL } from "@/src/config";
+import { API_BASE_URL, } from "@/src/config";
 import { uploadMedia } from "@/src/utils/formdataApi";
 
 export interface FinalAgendaProps {
@@ -300,7 +300,7 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
         };
         sessionStorage.setItem("start_session_data", JSON.stringify(payload));
         localStorage.setItem("start_session_data", JSON.stringify(payload));
-      } catch (err) {}
+      } catch (err) { }
     }
 
     if (
@@ -1472,7 +1472,7 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
                                   "start_session_data",
                                   JSON.stringify(payload)
                                 );
-                              } catch (err) {}
+                              } catch (err) { }
                             }
                           }}
                           style={{
@@ -1978,6 +1978,7 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
                   Pre-filled information shared by the patient during booking.
                 </p>
               </div>
+
             </div>
             <div
               className="patient-faqs-accordion"
@@ -2051,7 +2052,34 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
                         data-bs-parent="#patientFaqsAccordionContainer"
                       >
                         <div className="patient-faqs-body">
-                          {typeof val === "string" ? val : JSON.stringify(val)}
+                          {typeof val === "string" &&
+                            (val.trim().startsWith("uploads/") ||
+                              val.trim().startsWith("/uploads/") ||
+                              /^https?:\/\//i.test(val.trim()) ||
+                              /\.(pdf|doc|docx|jpg|jpeg|png|webp|gif)$/i.test(val.trim())) ? (
+                            <a
+                              href={
+                                /^https?:\/\//i.test(val.trim())
+                                  ? val.trim()
+                                  : `${Base_image_url.replace(/\/+$/, "")}/${val
+                                    .trim()
+                                    .replace(/^\/+/, "")}`
+                              }
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style={{
+                                color: "#603741",
+                                fontWeight: 600,
+                                textDecoration: "underline",
+                              }}
+                            >
+                              View File
+                            </a>
+                          ) : typeof val === "string" ? (
+                            val
+                          ) : (
+                            JSON.stringify(val)
+                          )}
                         </div>
                       </div>
                     </div>
