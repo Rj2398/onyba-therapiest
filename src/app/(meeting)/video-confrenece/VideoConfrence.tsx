@@ -2029,10 +2029,12 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
                   textAlign: "center",
                 }}
               >
-                {patientImgUrl ? (
+                {patientImgUrl &&
+                  patientImgUrl !== "/images/header-user-right-profile.svg" ? (
                   <img
                     src={patientImgUrl}
                     alt={patientDisplayName || dynamicPatientName || "Participant"}
+                    onError={() => setPatientImgUrl("")}
                     style={{
                       width: "84px",
                       height: "84px",
@@ -2058,6 +2060,7 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
                     }}
                   >
                     {(patientDisplayName || dynamicPatientName || "P")
+                      .trim()
                       .charAt(0)
                       .toUpperCase()}
                   </div>
