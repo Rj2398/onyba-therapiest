@@ -547,33 +547,90 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
     useState<boolean>(false);
   const [isNotesExpanded, setIsNotesExpanded] = useState<boolean>(false);
   const [isVideoZoomed, setIsVideoZoomed] = useState<boolean>(false);
+  const videoPanelRef = useRef<HTMLDivElement>(null);
   const privateNotesEditorRef = useRef<HTMLDivElement>(null);
 
   const toggleZoomScreen = useCallback(() => {
     setIsVideoZoomed((prev) => {
       const next = !prev;
+      if (next) {
+        const elem = videoPanelRef.current;
+        if (elem) {
+          if (elem.requestFullscreen) {
+            elem.requestFullscreen().catch(() => {});
+          } else if ((elem as any).webkitRequestFullscreen) {
+            (elem as any).webkitRequestFullscreen();
+          } else if ((elem as any).msRequestFullscreen) {
+            (elem as any).msRequestFullscreen();
+          }
+        }
+      } else {
+        if (
+          typeof document !== "undefined" &&
+          (document.fullscreenElement || (document as any).webkitFullscreenElement)
+        ) {
+          if (document.exitFullscreen) {
+            document.exitFullscreen().catch(() => {});
+          } else if ((document as any).webkitExitFullscreen) {
+            (document as any).webkitExitFullscreen();
+          }
+        }
+      }
+
       setTimeout(() => {
         if (typeof window !== "undefined") {
           window.dispatchEvent(new Event("resize"));
         }
-      }, 100);
+      }, 150);
       return next;
     });
   }, []);
 
+  // Sync state if user exits via browser ESC or browser UI
   useEffect(() => {
+    const handleFullscreenChange = () => {
+      const isFull = Boolean(
+        document.fullscreenElement || (document as any).webkitFullscreenElement
+      );
+      setIsVideoZoomed(isFull);
+      setTimeout(() => {
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new Event("resize"));
+        }
+      }, 150);
+    };
+
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    document.addEventListener("webkitfullscreenchange", handleFullscreenChange);
+
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape" && isVideoZoomed) {
-        setIsVideoZoomed(false);
-        setTimeout(() => {
-          if (typeof window !== "undefined") {
-            window.dispatchEvent(new Event("resize"));
-          }
-        }, 100);
+        toggleZoomScreen();
       }
     };
     window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+      document.removeEventListener(
+        "webkitfullscreenchange",
+        handleFullscreenChange
+      );
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isVideoZoomed, toggleZoomScreen]);
+
+  // Toggle body class when zoomed to hide header and sidebar
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    if (isVideoZoomed) {
+      document.body.classList.add("video-zoomed-active");
+    } else {
+      document.body.classList.remove("video-zoomed-active");
+    }
+    return () => {
+      document.body.classList.remove("video-zoomed-active");
+    };
   }, [isVideoZoomed]);
 
   const execNotesCommand = (command: string, value?: string) => {
@@ -1754,6 +1811,46 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
           min-height: 520px;
           overflow: visible !important;
         }
+        body.video-zoomed-active {
+          overflow: hidden !important;
+        }
+        body.video-zoomed-active .gl-sidebar,
+        body.video-zoomed-active .gl-header,
+        body.video-zoomed-active .ps-session-right-sidebar {
+          display: none !important;
+        }
+        body.video-zoomed-active .gl-dashboard-layout {
+          padding: 0 !important;
+          margin: 0 !important;
+          background: #000000 !important;
+        }
+        body.video-zoomed-active .gl-main-content-wrapper {
+          width: 100vw !important;
+          max-width: 100vw !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          background: #000000 !important;
+        }
+        body.video-zoomed-active .ps-session-conference-main {
+          padding: 0 !important;
+          margin: 0 !important;
+          width: 100vw !important;
+          height: 100vh !important;
+          min-height: 100vh !important;
+          max-height: 100vh !important;
+          overflow: hidden !important;
+          background: #000000 !important;
+        }
+        body.video-zoomed-active .ps-session-page-grid {
+          display: block !important;
+          width: 100vw !important;
+          height: 100vh !important;
+          max-width: 100vw !important;
+          max-height: 100vh !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          overflow: hidden !important;
+        }
         .ps-session-video-panel {
           display: flex !important;
           flex-direction: column !important;
@@ -1769,13 +1866,23 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
           position: fixed !important;
           top: 0 !important;
           left: 0 !important;
+          right: 0 !important;
+          bottom: 0 !important;
           width: 100vw !important;
           height: 100vh !important;
           max-width: 100vw !important;
           max-height: 100vh !important;
           border-radius: 0 !important;
-          z-index: 99999 !important;
+          z-index: 9999999 !important;
           margin: 0 !important;
+          background-color: #000000 !important;
+        }
+        .ps-session-video-panel:fullscreen,
+        .ps-session-video-panel:-webkit-full-screen {
+          width: 100vw !important;
+          height: 100vh !important;
+          border-radius: 0 !important;
+          background-color: #000000 !important;
         }
         .ps-session-zoom-top-btn {
           position: absolute;
@@ -1853,6 +1960,7 @@ const VideoRoomInner: React.FC<VideoConferenceProps> = ({
       `}</style>
       <div className="ps-session-page-grid">
         <div
+          ref={videoPanelRef}
           className={`ps-session-video-panel${
             isVideoZoomed ? " is-fullscreen" : ""
           }`}
