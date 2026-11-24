@@ -50,12 +50,37 @@ const formatTime = (timeStr?: string) => {
   }
 };
 
-const formatTimeRange = (start?: string, end?: string) => {
+// const formatTimeRange = (start?: string, end?: string) => {
+//   if (!start && !end) return "";
+//   if (start && !end) return formatTime(start);
+//   if (!start && end) return formatTime(end);
+//   return `${formatTime(start)} - ${formatTime(end)}`;
+// };
+
+const formatTimeRange = (start?: string, end?: string): string => {
+  const to24Hour = (raw?: string): string => {
+    if (!raw) return "";
+    const formatted = formatTime(raw).trim(); // e.g., "3:00 PM"
+    const match = formatted.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)?$/i);
+    if (!match) return formatted.replace(/\s*(AM|PM)/gi, "").trim();
+
+    let hours = Number(match[1]);
+    const minutes = match[2];
+    const period = match[3]?.toUpperCase();
+
+    if (period === "PM" && hours !== 12) hours += 12;
+    if (period === "AM" && hours === 12) hours = 0;
+
+    return `${String(hours).padStart(2, "0")}:${minutes}`;
+  };
+
   if (!start && !end) return "";
-  if (start && !end) return formatTime(start);
-  if (!start && end) return formatTime(end);
-  return `${formatTime(start)} - ${formatTime(end)}`;
+  if (start && !end) return to24Hour(start);
+  if (!start && end) return to24Hour(end);
+  return `${to24Hour(start)} - ${to24Hour(end)}`;
 };
+
+
 
 const getSessionDateTime = (
   dateStr?: string,
@@ -1629,7 +1654,7 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
               <div className="dbt-pcard-info-row">
                 Date -:{" "}
                 <span>
-                  {formatDate(sessionData?.session_date) || "Aug 06, 2026"}
+                  {formatDate(sessionData?.session_date)}
                 </span>
               </div>
               <div className="dbt-pcard-info-row">
@@ -1638,7 +1663,7 @@ const FinalAgendaContent: React.FC<FinalAgendaProps> = ({
                   {formatTimeRange(
                     sessionData?.session_start_time,
                     sessionData?.session_end_time
-                  ) || "5:00 PM - 6:00 PM"}
+                  )}
                 </span>
               </div>
             </div>
