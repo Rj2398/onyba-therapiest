@@ -9573,13 +9573,13 @@ div#accordionExample .accordion-item {
 }
 
 .agd-popup-flex-col-left {
-  flex: 1 1 55%;
+  flex: 1 1 52%;
   min-width: 280px;
 }
 
 .agd-popup-flex-col-right {
-  flex: 1 1 38%;
-  min-width: 220px;
+  flex: 1 1 44%;
+  min-width: 280px;
 }
 
 /* Calendar Internal Styles */
@@ -9653,14 +9653,13 @@ div#accordionExample .accordion-item {
 
 /* Styled Checkboxes for Time Slots */
 .agd-popup-time-slots-container {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
   gap: 8px;
 }
 
 .agd-popup-time-checkbox-wrapper {
-  flex: 1 1 30%;
-  min-width: 65px;
+  width: 100%;
   position: relative;
 }
 
@@ -9675,15 +9674,20 @@ div#accordionExample .accordion-item {
 }
 
 .agd-popup-time-label {
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border: 1px solid #ccc;
   border-radius: 20px;
-  padding: 8px 0;
-  font-size: 0.85rem;
+  padding: 8px 12px;
+  font-size: 0.82rem;
+  line-height: 1;
   color: #495057;
   text-align: center;
   transition: all 0.2s;
   user-select: none;
+  min-height: 38px;
+  white-space: nowrap;
 }
 
 .agd-popup-time-input:hover + .agd-popup-time-label {

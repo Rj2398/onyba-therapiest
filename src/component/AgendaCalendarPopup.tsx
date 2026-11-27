@@ -1,8 +1,10 @@
 "use client";
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useRef } from "react";
 import toast from "react-hot-toast";
 import { requestApi } from "@/src/utils/api";
 import { GiLegArmor } from "react-icons/gi";
+import Link from "next/dist/client/link";
+import AddPatientPopup, { getTherapistId } from "./AddPatientPopup";
 
 export interface Patient {
   id: string;
@@ -27,6 +29,8 @@ export interface DayAvailability {
   date: string;
   slots: Slot[];
 }
+
+const getSlotKey = (slot: Slot) => `${slot.start_time}-${slot.end_time}`;
 
 export interface AgendaCalendarPopupProps {
   isOpen: boolean;
@@ -58,6 +62,8 @@ const AgendaCalendarPopup: React.FC<AgendaCalendarPopupProps> = ({
   isReschedule = false,
   onSubmit,
 }) => {
+  const availabilityRequestRef = useRef(0);
+
   // Remote Data State
   const [patientList, setPatientList] = useState<Patient[]>([]);
   const [serviceList, setServiceList] = useState<Service[]>([]);
@@ -69,9 +75,10 @@ const AgendaCalendarPopup: React.FC<AgendaCalendarPopupProps> = ({
   // Form State
   const [selectedPatientId, setSelectedPatientId] = useState<string>("");
   const [selectedServiceId, setSelectedServiceId] = useState<string>("");
-  const [selectedSlotId, setSelectedSlotId] = useState<string>("");
+  const [selectedSlotKey, setSelectedSlotKey] = useState<string>("");
   const [familyCount, setFamilyCount] = useState<string>("");
   const [remarks, setRemarks] = useState<string>("");
+  const [isAddPatientOpen, setIsAddPatientOpen] = useState<boolean>(false);
 
   // Status State
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -119,9 +126,11 @@ const AgendaCalendarPopup: React.FC<AgendaCalendarPopupProps> = ({
   // Selected slot entity
   const selectedSlot = useMemo(() => {
     return (
-      currentAvailableSlots.find((s) => String(s.id) === selectedSlotId) || null
+      currentAvailableSlots.find(
+        (slot) => getSlotKey(slot) === selectedSlotKey
+      ) || null
     );
-  }, [currentAvailableSlots, selectedSlotId]);
+  }, [currentAvailableSlots, selectedSlotKey]);
 
   const formatSlotTime = (timeStr: string) => {
     if (!timeStr) return "";
@@ -129,45 +138,95 @@ const AgendaCalendarPopup: React.FC<AgendaCalendarPopupProps> = ({
     return `${parts[0]}:${parts[1]}`;
   };
 
-  // 1. Fetch Patients Dropdown
-  useEffect(() => {
-    if (!isOpen) return;
+  // 1. Fetch Patients Dropdown (filtered according to therapist ID)
+  const fetchPatients = async (selectId?: string, fallbackName?: string) => {
+    try {
+      const therapistId = getTherapistId();
+      const formData = new FormData();
+      if (therapistId) {
+        formData.append("therapist_id", therapistId);
+        formData.append("user_id", therapistId);
+      }
+      const res = await requestApi({
+        endpoint: "get-patients-dropdown",
+        method: "POST",
+        data: formData,
+        isFormData: true,
+      });
 
-    const fetchPatients = async () => {
-      try {
-        const formData = new FormData();
-        const res = await requestApi({
-          endpoint: "get-patients-dropdown",
-          method: "POST",
-          data: formData,
-          isFormData: true,
-        });
+      console.log("Logged-in Therapist ID:", therapistId);
+      console.log("Patients API Response:", res?.data);
+
+      if (res && (res.success || res.code === 200) && Array.isArray(res.data)) {
+        let list: Patient[] = res.data
+          .filter((item: any) => {
+            if (!item?.name || String(item.name).trim() === "") return false;
+            const itemTherapistId =
+              item.therapist_id ||
+              item.therapistId ||
+              item.therapist_uid ||
+              item.user_id;
+            if (therapistId && itemTherapistId) {
+              return String(itemTherapistId) === String(therapistId);
+            }
+            return true;
+          })
+          .map((item: any) => ({
+            id: String(item.id),
+            name: String(item.name).trim(),
+            userType: item.userType || "clinic_patient",
+          }));
 
         if (
-          res &&
-          (res.success || res.code === 200) &&
-          Array.isArray(res.data)
+          selectId &&
+          !list.some((p: Patient) => String(p.id) === String(selectId))
         ) {
-          const list = res.data
-            .filter(
-              (item: any) => item?.name && String(item.name).trim() !== ""
-            )
-            .map((item: any) => ({
-              id: String(item.id),
-              name: String(item.name).trim(),
-              userType: item.userType || "clinic_patient",
-            }));
-
-          setPatientList(list);
-          if (list.length > 0) {
-            setSelectedPatientId((prev) => (prev ? prev : list[0].id));
-          }
+          list.unshift({
+            id: String(selectId),
+            name: fallbackName || "New Patient",
+            userType: "clinic_patient",
+          });
         }
-      } catch (err) {
-        console.error("Error fetching patients dropdown:", err);
-      }
-    };
 
+        setPatientList(list);
+        if (selectId) {
+          const match = list.find(
+            (p: Patient) => String(p.id) === String(selectId)
+          );
+          if (match) {
+            setSelectedPatientId(String(match.id));
+          } else if (list.length > 0) {
+            setSelectedPatientId(list[0].id);
+          }
+        } else if (list.length > 0) {
+          setSelectedPatientId((prev) => (prev ? prev : list[0].id));
+        }
+      }
+    } catch (err) {
+      console.error("Error fetching patients dropdown:", err);
+    }
+  };
+
+  const handlePatientAdded = async (
+    newPatient?: any,
+    newPatientName?: string
+  ) => {
+    setIsAddPatientOpen(false);
+    const newId =
+      newPatient?.id ||
+      newPatient?.patient_id ||
+      newPatient?.data?.id ||
+      (typeof newPatient === "object" && newPatient !== null
+        ? Object.values(newPatient).find(
+            (v: any) => v && typeof v === "object" && (v as any).id
+          )
+        : undefined);
+
+    await fetchPatients(newId ? String(newId) : undefined, newPatientName);
+  };
+
+  useEffect(() => {
+    if (!isOpen) return;
     fetchPatients();
   }, [isOpen]);
 
@@ -208,15 +267,64 @@ const AgendaCalendarPopup: React.FC<AgendaCalendarPopupProps> = ({
   }, [isOpen]);
 
   // 3. Fetch Therapist Availability
+  // useEffect(() => {
+  //   if (!isOpen) return;
+
+  //   const fetchAvailability = async () => {
+  //     setIsLoadingAvailability(true);
+  //     try {
+  //       const yearMonth = `${year}-${String(month + 1).padStart(2, "0")}`;
+  //       const formData = new FormData();
+  //       formData.append("year_month", yearMonth);
+  //       for
+
+  //       const res = await requestApi({
+  //         endpoint: "get-therapist-availability",
+  //         method: "POST",
+  //         data: formData,
+  //         isFormData: true,
+  //       });
+
+  //       if (res && (res.success || res.code === 200) && res.data) {
+  //         setHolidays(res.data.holidays || []);
+
+  //         const map: Record<string, Slot[]> = {};
+  //         if (Array.isArray(res.data.availability)) {
+  //           res.data.availability.forEach((dayData: DayAvailability) => {
+  //             map[dayData.date] = dayData.slots || [];
+  //           });
+  //         }
+  //         setAvailabilityMap(map);
+  //       }
+  //     } catch (err) {
+  //       console.error("Error fetching therapist availability:", err);
+  //     } finally {
+  //       setIsLoadingAvailability(false);
+  //     }
+  //   };
+
+  //   fetchAvailability();
+  // }, [isOpen, year, month]);
+
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen || !selectedPatientId) {
+      setAvailabilityMap({});
+      return;
+    }
+
+    const requestId = ++availabilityRequestRef.current;
 
     const fetchAvailability = async () => {
       setIsLoadingAvailability(true);
+      setAvailabilityMap({});
+      setSelectedSlotKey("");
+
       try {
         const yearMonth = `${year}-${String(month + 1).padStart(2, "0")}`;
+
         const formData = new FormData();
         formData.append("year_month", yearMonth);
+        formData.append("patient_id", selectedPatientId);
 
         const res = await requestApi({
           endpoint: "get-therapist-availability",
@@ -225,40 +333,67 @@ const AgendaCalendarPopup: React.FC<AgendaCalendarPopupProps> = ({
           isFormData: true,
         });
 
+        // Ignore outdated API responses
+        if (requestId !== availabilityRequestRef.current) return;
+
         if (res && (res.success || res.code === 200) && res.data) {
           setHolidays(res.data.holidays || []);
 
           const map: Record<string, Slot[]> = {};
+
           if (Array.isArray(res.data.availability)) {
             res.data.availability.forEach((dayData: DayAvailability) => {
-              map[dayData.date] = dayData.slots || [];
+              // Remove duplicate slots for the same date
+              const uniqueSlots = Array.from(
+                new Map(
+                  (dayData.slots || []).map((slot: Slot) => [
+                    `${slot.start_time}-${slot.end_time}`,
+                    slot,
+                  ])
+                ).values()
+              );
+
+              map[dayData.date] = uniqueSlots;
             });
           }
+
           setAvailabilityMap(map);
         }
       } catch (err) {
-        console.error("Error fetching therapist availability:", err);
+        if (requestId === availabilityRequestRef.current) {
+          console.error("Availability error:", err);
+        }
       } finally {
-        setIsLoadingAvailability(false);
+        if (requestId === availabilityRequestRef.current) {
+          setIsLoadingAvailability(false);
+        }
       }
     };
 
     fetchAvailability();
-  }, [isOpen, year, month]);
+
+    return () => {
+      availabilityRequestRef.current++;
+    };
+  }, [isOpen, year, month, selectedPatientId]);
 
   // Auto select valid slot when current day slots update
+  // useEffect(() => {
+  //   if (currentAvailableSlots.length > 0) {
+  //     const isCurrentStillValid = currentAvailableSlots.some(
+  //       (slot) => getSlotKey(slot) === selectedSlotKey
+  //     );
+  //     if (!isCurrentStillValid) {
+  //       setSelectedSlotKey(getSlotKey(currentAvailableSlots[0]));
+  //     }
+  //   } else {
+  //     setSelectedSlotKey("");
+  //   }
+  // }, [currentAvailableSlots]);
+
   useEffect(() => {
-    if (currentAvailableSlots.length > 0) {
-      const isCurrentStillValid = currentAvailableSlots.some(
-        (s) => String(s.id) === selectedSlotId
-      );
-      if (!isCurrentStillValid) {
-        setSelectedSlotId(String(currentAvailableSlots[0].id));
-      }
-    } else {
-      setSelectedSlotId("");
-    }
-  }, [currentAvailableSlots]);
+    setSelectedSlotKey("");
+  }, [selectedDateString, availabilityMap]);
 
   const isPrevMonthDisabled = useMemo(() => {
     const today = new Date();
@@ -272,27 +407,27 @@ const AgendaCalendarPopup: React.FC<AgendaCalendarPopupProps> = ({
     if (isPrevMonthDisabled) return;
     setCurrentDate(new Date(year, month - 1, 1));
     setSelectedDay(null);
-    setSelectedSlotId("");
+    setSelectedSlotKey("");
   };
 
   const handleNextMonth = () => {
     setCurrentDate(new Date(year, month + 1, 1));
     setSelectedDay(null);
-    setSelectedSlotId("");
+    setSelectedSlotKey("");
   };
 
   const handleMonthChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newMonth = parseInt(e.target.value, 10);
     setCurrentDate(new Date(year, newMonth, 1));
     setSelectedDay(null);
-    setSelectedSlotId("");
+    setSelectedSlotKey("");
   };
 
   const handleYearChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newYear = parseInt(e.target.value, 10);
     setCurrentDate(new Date(newYear, month, 1));
     setSelectedDay(null);
-    setSelectedSlotId("");
+    setSelectedSlotKey("");
   };
 
   const selectedPatient = patientList.find(
@@ -419,10 +554,7 @@ const AgendaCalendarPopup: React.FC<AgendaCalendarPopupProps> = ({
         isFormData: true,
       });
 
-      if (
-        response &&
-        (response.success)
-      ) {
+      if (response && response.success) {
         toast.success("Appointment created successfully!");
         if (onSubmit) {
           onSubmit({
@@ -446,8 +578,8 @@ const AgendaCalendarPopup: React.FC<AgendaCalendarPopupProps> = ({
       console.error("Error creating appointment:", err);
       toast.error(
         err?.response?.data?.message ||
-        err?.message ||
-        "Error processing request"
+          err?.message ||
+          "Error processing request"
       );
     } finally {
       setIsSubmitting(false);
@@ -463,13 +595,16 @@ const AgendaCalendarPopup: React.FC<AgendaCalendarPopupProps> = ({
     return () => {
       document.body.style.overflow = "";
     };
-  }, [isOpen]);
+  }, [isOpen, isAddPatientOpen]);
 
   if (!isOpen) return null;
 
   return (
     <>
-      <div className="modal show agd-custom-modal d-block">
+      <div
+        className="modal show agd-custom-modal d-block"
+        style={{ display: isAddPatientOpen ? "none" : "block" }}
+      >
         <div className="modal-dialog modal-lg modal-dialog-centered">
           <div className="modal-content">
             <div className="modal-header">
@@ -497,7 +632,17 @@ const AgendaCalendarPopup: React.FC<AgendaCalendarPopupProps> = ({
               <div className="modal-body">
                 {/* Patient Selection */}
                 <div className="agd-popup-form-group">
-                  <label className="agd-popup-label">Patient Name*</label>
+                  <label className="agd-popup-label">
+                    Patient Name*{" "}
+                    <button
+                      type="button"
+                      onClick={() => setIsAddPatientOpen(true)}
+                      className="dbt4-cta-add-patient"
+                      style={{ border: "none", cursor: "pointer" }}
+                    >
+                      <img src="/images/add-icon.svg" alt="" /> Add Patients
+                    </button>
+                  </label>
                   <select
                     className="agd-popup-select"
                     id="agdPatientField"
@@ -596,9 +741,13 @@ const AgendaCalendarPopup: React.FC<AgendaCalendarPopupProps> = ({
                           <img
                             src="/images/left-icon-agenda.svg"
                             alt="Previous Month"
-                            onClick={isPrevMonthDisabled ? undefined : handlePrevMonth}
+                            onClick={
+                              isPrevMonthDisabled ? undefined : handlePrevMonth
+                            }
                             style={{
-                              cursor: isPrevMonthDisabled ? "not-allowed" : "pointer",
+                              cursor: isPrevMonthDisabled
+                                ? "not-allowed"
+                                : "pointer",
                               opacity: isPrevMonthDisabled ? 0.3 : 1,
                               width: "14px",
                               height: "14px",
@@ -705,39 +854,39 @@ const AgendaCalendarPopup: React.FC<AgendaCalendarPopupProps> = ({
                     <div className="agd-popup-time-slots-container">
                       {isLoadingAvailability ? (
                         <p className="text-muted small p-2">Loading slots...</p>
-                      ) : currentAvailableSlots.length === 0 ? (
+                      ) : currentAvailableSlots.length > 0 ? (
+                        currentAvailableSlots.map((slot) => (
+                          <div
+                            className="agd-popup-time-checkbox-wrapper"
+                            key={getSlotKey(slot)}
+                          >
+                            <input
+                              type="checkbox"
+                              name="time_slots"
+                              value={String(slot.id)}
+                              className="agd-popup-time-input"
+                              checked={selectedSlotKey === getSlotKey(slot)}
+                              onChange={() => {
+                                setSelectedSlotKey((prev) =>
+                                  prev === getSlotKey(slot)
+                                    ? ""
+                                    : getSlotKey(slot)
+                                );
+                              }}
+                            />
+
+                            <span className="agd-popup-time-label">
+                              {formatSlotTime(slot.start_time)} -{" "}
+                              {formatSlotTime(slot.end_time)}
+                            </span>
+                          </div>
+                        ))
+                      ) : (
                         <p className="text-muted small p-2">
                           {selectedDay
                             ? "No slots available for this date."
                             : "Select a date to view slots."}
                         </p>
-                      ) : (
-                        currentAvailableSlots.map((slot) => {
-                          const startTime = formatSlotTime(slot.start_time);
-                          const endTime = formatSlotTime(slot.end_time);
-                          const slotLabel = `${startTime} - ${endTime}`;
-
-                          return (
-                            <div
-                              className="agd-popup-time-checkbox-wrapper"
-                              key={slot.id}
-                            >
-                              <input
-                                type="checkbox"
-                                name="time_slots"
-                                value={String(slot.id)}
-                                className="agd-popup-time-input"
-                                checked={selectedSlotId === String(slot.id)}
-                                onChange={() =>
-                                  setSelectedSlotId(String(slot.id))
-                                }
-                              />
-                              <span className="agd-popup-time-label">
-                                {slotLabel}
-                              </span>
-                            </div>
-                          );
-                        })
                       )}
                     </div>
                   </div>
@@ -801,7 +950,7 @@ const AgendaCalendarPopup: React.FC<AgendaCalendarPopupProps> = ({
                     <div className="agd-popup-summary-item">
                       <span className="agd-popup-summary-lbl">User Type</span>
                       <span className="agd-popup-summary-val">
-                        clinic_patient
+                        clinic patient
                       </span>
                     </div>
                     <div className="agd-popup-summary-item">
@@ -881,8 +1030,8 @@ const AgendaCalendarPopup: React.FC<AgendaCalendarPopupProps> = ({
                       ? "Rescheduling..."
                       : "Creating..."
                     : isReschedule
-                      ? "Reschedule appointment"
-                      : "Create appointment"}
+                    ? "Reschedule appointment"
+                    : "Create appointment"}
                 </button>
               </div>
             </form>
@@ -890,9 +1039,17 @@ const AgendaCalendarPopup: React.FC<AgendaCalendarPopupProps> = ({
         </div>
       </div>
 
-      <div
-        className="modal-backdrop fade show"
-        style={{ width: "100%", height: "100%" }}
+      {!isAddPatientOpen && (
+        <div
+          className="modal-backdrop fade show"
+          style={{ width: "100%", height: "100%" }}
+        />
+      )}
+
+      <AddPatientPopup
+        isOpen={isAddPatientOpen}
+        onClose={() => setIsAddPatientOpen(false)}
+        onSuccess={handlePatientAdded}
       />
     </>
   );
