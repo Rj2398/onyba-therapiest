@@ -1,12 +1,12 @@
-import React from 'react'
-import EarningReport from './EarningReport'
+import React from "react";
+import EarningReport from "./EarningReport";
 
 const page = () => {
   return (
     <div>
-      <EarningReport/>
+      <EarningReport />
     </div>
-  )
-}
+  );
+};
 
-export default page
+export default page;
