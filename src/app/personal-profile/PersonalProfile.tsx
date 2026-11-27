@@ -301,6 +301,9 @@ const PersonalProfile = () => {
   const [clinicNameInput, setClinicNameInput] = useState(
     therapistProfile?.clinic_name || ""
   );
+  const [streetNameInput, setStreetNameInput] = useState(
+    therapistProfile?.street_name || ""
+  );
   const [clinicAddressInput, setClinicAddressInput] = useState(
     therapistProfile?.clinic_address || ""
   );
@@ -503,6 +506,7 @@ const PersonalProfile = () => {
       }
 
       setClinicNameInput(therapistProfile.clinic_name || "");
+      setStreetNameInput(therapistProfile.street_name || "");
       setClinicAddressInput(therapistProfile.clinic_address || "");
       setClinicLatitude(therapistProfile.clinic_latitude || "");
       setClinicLongitude(therapistProfile.clinic_longitude || "");
@@ -1207,6 +1211,7 @@ const PersonalProfile = () => {
       );
       formDataPayload.append("session_mode", mode);
       formDataPayload.append("clinic_name", hasInPerson ? clinicNameInput : "");
+      formDataPayload.append("street_name", hasInPerson ? streetNameInput : "");
       formDataPayload.append(
         "clinic_address",
         hasInPerson ? clinicAddressInput : ""
@@ -1898,6 +1903,25 @@ const PersonalProfile = () => {
                         Clinic address
                       </p>
                       <div
+                        style={{ position: "relative", marginBottom: "10px" }}
+                      >
+                        <input
+                          type="text"
+                          value={streetNameInput}
+                          onChange={(e) => setStreetNameInput(e.target.value)}
+                          placeholder="Street address"
+                          style={{
+                            width: "100%",
+                            padding: "10px",
+                            borderRadius: "8px",
+                            border: "1px solid #ddd",
+                            background: "#fff",
+                            color: "#000",
+                            fontSize: "14px",
+                          }}
+                        />
+                      </div>
+                      <div
                         style={{ position: "relative", marginBottom: "15px" }}
                       >
                         <Autocomplete
@@ -2034,9 +2058,15 @@ const PersonalProfile = () => {
                           <img src="images/location-profile-icon.svg" alt="" />
                         </span>
                         <p>
-                          {therapistProfile?.clinic_address ||
-                            clinicAddressInput ||
-                            "No clinic address set"}
+                          {(() => {
+                            const street =
+                              therapistProfile?.street_name || streetNameInput;
+                            const addr =
+                              therapistProfile?.clinic_address ||
+                              clinicAddressInput;
+                            if (street && addr) return `${street}, ${addr}`;
+                            return street || addr || "No clinic address set";
+                          })()}
                         </p>
                       </div>
                     </>
